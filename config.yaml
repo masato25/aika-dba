@@ -33,6 +33,16 @@ llm:
   port: 8080              # 本地 LLM 端口 (用於本地服務)
   timeout_seconds: 60     # LLM 請求超時時間
 
+# 向量存儲設定
+vectorstore:
+  enabled: true           # 啟用向量存儲
+  database_path: "data/knowledge_vector.db"  # SQLite 數據庫路徑
+  embedder_type: "qwen"   # 嵌入生成器類型: simple, qwen, llm
+  qwen_model_path: "models/orca-mini-3b-gguf:Q4_0.gguf"  # 更適合嵌入的輕量級模型
+  embedding_dimension: 256  # 嵌入向量維度（減少以提升性能）
+  chunk_size: 1000        # 知識塊大小
+  chunk_overlap: 200      # 塊重疊大小
+
 # 安全設定
 security:
   enable_sql_sandbox: true  # 啟用 SQL 沙箱模式

@@ -10,12 +10,13 @@ import (
 
 // Config 應用程式配置結構
 type Config struct {
-	Database DatabaseConfig `yaml:"database"`
-	App      AppConfig      `yaml:"app"`
-	Schema   SchemaConfig   `yaml:"schema"`
-	LLM      LLMConfig      `yaml:"llm"`
-	Security SecurityConfig `yaml:"security"`
-	Logging  LoggingConfig  `yaml:"logging"`
+	Database    DatabaseConfig    `yaml:"database"`
+	App         AppConfig         `yaml:"app"`
+	Schema      SchemaConfig      `yaml:"schema"`
+	LLM         LLMConfig         `yaml:"llm"`
+	VectorStore VectorStoreConfig `yaml:"vectorstore"`
+	Security    SecurityConfig    `yaml:"security"`
+	Logging     LoggingConfig     `yaml:"logging"`
 }
 
 // DatabaseConfig 資料庫配置
@@ -52,6 +53,17 @@ type LLMConfig struct {
 	Host           string `yaml:"host"` // 本地 LLM 主機
 	Port           int    `yaml:"port"` // 本地 LLM 端口
 	TimeoutSeconds int    `yaml:"timeout_seconds"`
+}
+
+// VectorStoreConfig 向量存儲配置
+type VectorStoreConfig struct {
+	Enabled            bool   `yaml:"enabled"`
+	DatabasePath       string `yaml:"database_path"`
+	EmbedderType       string `yaml:"embedder_type"`
+	QwenModelPath      string `yaml:"qwen_model_path"`
+	EmbeddingDimension int    `yaml:"embedding_dimension"`
+	ChunkSize          int    `yaml:"chunk_size"`
+	ChunkOverlap       int    `yaml:"chunk_overlap"`
 }
 
 // SecurityConfig 安全配置

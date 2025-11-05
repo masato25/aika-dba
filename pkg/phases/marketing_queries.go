@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
 // MarketingScenario 行銷分析場景 (保留結構體定義以防將來需要)
@@ -28,19 +29,56 @@ type MarketingScenariosConfig struct {
 
 // MarketingQueryRunner 行銷查詢測試執行器
 type MarketingQueryRunner struct {
-	config    *config.Config
-	db        *sql.DB
-	llmClient *LLMClient
-	client    *http.Client
+	config           *config.Config
+	db               *sql.DB
+	llmClient        *LLMClient
+	client           *http.Client
+	knowledgeIndexer *vectorstore.KnowledgeIndexer
 }
 
 // NewMarketingQueryRunner 創建行銷查詢測試執行器
 func NewMarketingQueryRunner(cfg *config.Config, db *sql.DB) *MarketingQueryRunner {
+	// 初始化嵌入生成器
+	var embedder vectorstore.Embedder
+
+	switch cfg.VectorStore.EmbedderType {
+	case "qwen":
+		embedder = vectorstore.NewQwenEmbedder(cfg.VectorStore.QwenModelPath, cfg.VectorStore.EmbeddingDimension)
+	case "simple":
+		embedder = vectorstore.NewSimpleHashEmbedder(cfg.VectorStore.EmbeddingDimension)
+	default:
+		log.Printf("Unknown embedder type: %s, using simple hash", cfg.VectorStore.EmbedderType)
+		embedder = vectorstore.NewSimpleHashEmbedder(cfg.VectorStore.EmbeddingDimension)
+	}
+
+	// 初始化向量索引器
+	vectorDBPath := cfg.VectorStore.DatabasePath
+	indexer, err := vectorstore.NewKnowledgeIndexer(vectorDBPath, embedder)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize knowledge indexer: %v", err)
+		log.Printf("Falling back to traditional knowledge loading")
+		indexer = nil
+	} else {
+		// 檢查是否需要索引知識庫
+		if stats, err := indexer.GetStats(); err == nil {
+			if totalChunks, ok := stats["total_chunks"].(int); ok && totalChunks == 0 {
+				// 索引知識庫
+				knowledgeDir := "knowledge"
+				if err := indexer.IndexKnowledgeBase(knowledgeDir); err != nil {
+					log.Printf("Warning: Failed to index knowledge base: %v", err)
+				} else {
+					log.Printf("Knowledge base indexed successfully")
+				}
+			}
+		}
+	}
+
 	return &MarketingQueryRunner{
-		config:    cfg,
-		db:        db,
-		llmClient: NewLLMClient(cfg),
-		client:    &http.Client{},
+		config:           cfg,
+		db:               db,
+		llmClient:        NewLLMClient(cfg),
+		client:           &http.Client{},
+		knowledgeIndexer: indexer,
 	}
 }
 
@@ -101,11 +139,14 @@ func (m *MarketingQueryRunner) Run() error {
 
 // generateQueryWithLLM 使用LLM生成查詢，包含知識庫支持
 func (m *MarketingQueryRunner) generateQueryWithLLM(scenario string) (string, error) {
-	// 讀取知識庫內容
-	knowledge, err := m.loadKnowledgeBase()
+	// 使用向量存儲搜索相關知識
+	knowledge, err := m.loadKnowledgeWithVectorSearch(scenario)
 	if err != nil {
-		log.Printf("Failed to load knowledge base: %v", err)
-		return "", err
+		log.Printf("Vector search failed, falling back to full knowledge load: %v", err)
+		knowledge, err = m.loadKnowledgeBase()
+		if err != nil {
+			return "", err
+		}
 	}
 
 	prompt := fmt.Sprintf(`你是一個資深行銷分析專家，需要根據用戶需求和資料庫知識生成PostgreSQL SQL查詢。
@@ -248,13 +289,47 @@ func (m *MarketingQueryRunner) loadKnowledgeBase() (string, error) {
 	return knowledge.String(), nil
 }
 
+// loadKnowledgeWithVectorSearch 使用向量搜索載入相關知識
+func (m *MarketingQueryRunner) loadKnowledgeWithVectorSearch(scenario string) (string, error) {
+	if m.knowledgeIndexer == nil {
+		return "", fmt.Errorf("knowledge indexer not initialized")
+	}
+
+	// 搜索相關知識塊
+	results, err := m.knowledgeIndexer.SearchKnowledge(scenario, 5) // 獲取前5個最相關的塊
+	if err != nil {
+		return "", fmt.Errorf("failed to search knowledge: %v", err)
+	}
+
+	if len(results) == 0 {
+		return "", fmt.Errorf("no relevant knowledge found")
+	}
+
+	// 組合相關知識
+	var knowledge strings.Builder
+	knowledge.WriteString("=== 相關資料庫知識 ===\n")
+
+	for i, result := range results {
+		knowledge.WriteString(fmt.Sprintf("知識塊 %d:\n", i+1))
+		knowledge.WriteString(result.Content)
+		knowledge.WriteString("\n\n")
+	}
+
+	log.Printf("Retrieved %d relevant knowledge chunks using vector search", len(results))
+	return knowledge.String(), nil
+}
+
 // generateIntelligentFallbackQuery 提供簡單的LLM查詢生成，包含基本表結構信息
 func (m *MarketingQueryRunner) generateIntelligentFallbackQuery(scenario string) string {
-	// 載入知識庫作為上下文
-	knowledge, err := m.loadKnowledgeBase()
+	// 優先使用向量搜索載入知識庫
+	knowledge, err := m.loadKnowledgeWithVectorSearch(scenario)
 	if err != nil {
-		log.Printf("Failed to load knowledge base: %v", err)
-		knowledge = "知識庫載入失敗，使用基本表結構信息。"
+		log.Printf("Vector search failed in fallback, using full knowledge: %v", err)
+		knowledge, err = m.loadKnowledgeBase()
+		if err != nil {
+			log.Printf("Failed to load knowledge base: %v", err)
+			knowledge = "知識庫載入失敗，使用基本表結構信息。"
+		}
 	}
 
 	// 提供基本的表結構信息（如果知識庫太大或失敗）
