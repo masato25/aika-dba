@@ -1,5 +1,5 @@
 -- Auto-generated dimension rules by Phase 2.5
--- Generated on: 2025-11-05 18:10:48
+-- Generated on: 2025-11-05 22:23:49
 -- Database: ecommerce_db
 
 -- Helper functions

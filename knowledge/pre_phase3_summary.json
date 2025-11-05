@@ -2,44 +2,43 @@
   "business_summary": {
     "business_relationships": [
       "訂單包含商品 (Orders contain Products)",
+      "商品屬於分類 (Products belong to Categories)",
       "顧客評論商品 (Customers review Products)",
-      "訂單需要運送 (Orders require Shipping)",
-      "商品屬於分類 (Products belong to Categories)"
+      "訂單需要運送 (Orders require Shipping)"
     ],
     "core_business_processes": [
       "顧客管理 (Customer Management)",
       "商品目錄管理 (Product Catalog Management)"
     ],
     "key_business_entities": [
-      "顧客 (Customer)",
       "商品 (Product)",
-      "商品分類 (Category)"
+      "商品分類 (Category)",
+      "顧客 (Customer)"
     ],
     "overall_business_domain": "通用商業系統 (General Business System)",
     "table_categories": {
       "content_reviews": [],
       "customer_management": [
-        "shipments",
-        "returns",
-        "customers",
         "orders",
+        "payments",
+        "returns",
         "customer_addresses",
+        "customers",
+        "shipments",
         "coupons",
-        "inventory_transactions"
+        "inventory_transactions",
+        "order_items"
       ],
       "inventory_management": [],
       "marketing_promotion": [],
       "order_management": [],
-      "other": [
-        "payments"
-      ],
+      "other": [],
       "product_management": [
-        "categories",
+        "reviews",
+        "product_variants",
         "products",
         "shopping_carts",
-        "order_items",
-        "reviews",
-        "product_variants"
+        "categories"
       ],
       "shipping_logistics": []
     }
@@ -157,5 +156,5 @@
       }
     ]
   },
-  "timestamp": "2025-11-05T18:26:50.957956+08:00"
+  "timestamp": "2025-11-05T22:23:43.844754+08:00"
 }

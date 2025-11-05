@@ -71,23 +71,27 @@
           "name": "dim_product",
           "type": "product",
           "description": "Product dimension table - automatically identified product-related table",
-          "source_table": "inventory_transactions",
+          "source_table": "product_variants",
           "key_fields": [
             "id"
           ],
           "attributes": [
             "id",
             "product_id",
-            "variant_id",
-            "transaction_type",
-            "quantity",
-            "previous_quantity",
-            "new_quantity",
-            "reference_type",
-            "reference_id",
-            "notes",
-            "created_by",
-            "created_at"
+            "sku",
+            "name",
+            "price",
+            "cost_price",
+            "compare_at_price",
+            "weight",
+            "dimensions",
+            "inventory_quantity",
+            "option1",
+            "option2",
+            "option3",
+            "is_active",
+            "created_at",
+            "updated_at"
           ],
           "business_use": "Used for product-related business analysis"
         }
@@ -101,17 +105,20 @@
           "name": "dim_date",
           "type": "time",
           "description": "Time dimension table - automatically identified time-related table",
-          "source_table": "categories",
+          "source_table": "customer_addresses",
           "key_fields": [
             "id"
           ],
           "attributes": [
             "id",
-            "name",
-            "description",
-            "parent_id",
-            "sort_order",
-            "is_active",
+            "customer_id",
+            "address_type",
+            "is_default",
+            "street_address",
+            "city",
+            "state",
+            "postal_code",
+            "country",
             "created_at",
             "updated_at"
           ],
@@ -127,41 +134,7 @@
     {
       "name": "fact_sales",
       "description": "Sales fact table - records sales transactions",
-      "source_table": "inventory_transactions",
-      "measures": [
-        "quantity",
-        "amount",
-        "total",
-        "discount"
-      ],
-      "dimensions": [
-        "dim_date",
-        "dim_customer",
-        "dim_product",
-        "dim_location"
-      ]
-    },
-    {
-      "name": "fact_sales",
-      "description": "Sales fact table - records sales transactions",
       "source_table": "payments",
-      "measures": [
-        "quantity",
-        "amount",
-        "total",
-        "discount"
-      ],
-      "dimensions": [
-        "dim_date",
-        "dim_customer",
-        "dim_product",
-        "dim_location"
-      ]
-    },
-    {
-      "name": "fact_sales",
-      "description": "Sales fact table - records sales transactions",
-      "source_table": "returns",
       "measures": [
         "quantity",
         "amount",
@@ -195,7 +168,24 @@
     {
       "name": "fact_sales",
       "description": "Sales fact table - records sales transactions",
-      "source_table": "shopping_carts",
+      "source_table": "shipments",
+      "measures": [
+        "quantity",
+        "amount",
+        "total",
+        "discount"
+      ],
+      "dimensions": [
+        "dim_date",
+        "dim_customer",
+        "dim_product",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "fact_sales",
+      "description": "Sales fact table - records sales transactions",
+      "source_table": "inventory_transactions",
       "measures": [
         "quantity",
         "amount",
@@ -246,7 +236,24 @@
     {
       "name": "fact_sales",
       "description": "Sales fact table - records sales transactions",
-      "source_table": "shipments",
+      "source_table": "returns",
+      "measures": [
+        "quantity",
+        "amount",
+        "total",
+        "discount"
+      ],
+      "dimensions": [
+        "dim_date",
+        "dim_customer",
+        "dim_product",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "fact_sales",
+      "description": "Sales fact table - records sales transactions",
+      "source_table": "shopping_carts",
       "measures": [
         "quantity",
         "amount",
@@ -277,5 +284,5 @@
     "total_dimensions": 4,
     "total_fact_tables": 8
   },
-  "timestamp": "2025-11-05T18:27:21.974456+08:00"
+  "timestamp": "2025-11-05T22:23:51.613461+08:00"
 }
