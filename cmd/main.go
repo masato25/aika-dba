@@ -15,6 +15,8 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/analyzer"
+	"github.com/masato25/aika-dba/pkg/phases"
 )
 
 // APIServer API 服務器
@@ -99,76 +101,21 @@ func runServer(db *sql.DB, cfg *config.Config) {
 
 // runPhase1 執行 Phase 1: 統計分析
 func runPhase1(db *sql.DB, cfg *config.Config) {
-	log.Println("=== Starting Phase 1: Statistical Analysis ===")
+	analyzer := analyzer.NewDatabaseAnalyzer(db)
+	runner := phases.NewPhase1Runner(analyzer, cfg)
 
-	// 簡化版本：只是顯示一個消息
-	log.Println("Phase 1 functionality is not yet implemented")
-	log.Println("This would analyze database schema and statistics")
-
-	// 創建一個示例輸出
-	output := map[string]interface{}{
-		"message":   "Phase 1 analysis placeholder",
-		"status":    "coming_soon",
-		"database":  cfg.Database.DBName,
-		"timestamp": time.Now(),
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 1 failed: %v", err)
 	}
-
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		log.Fatalf("Failed to marshal analysis results: %v", err)
-	}
-
-	outputFile := "phase1_analysis.json"
-	err = writeToFile(outputFile, data)
-	if err != nil {
-		log.Fatalf("Failed to write analysis results to file: %v", err)
-	}
-
-	log.Printf("Phase 1 analysis completed. Results saved to %s", outputFile)
 }
 
 // runPhase2 執行 Phase 2: AI 分析
 func runPhase2(db *sql.DB, cfg *config.Config) {
-	log.Println("=== Starting Phase 2: AI Analysis ===")
+	runner := phases.NewPhase2Runner(cfg)
 
-	// 簡化版本：只是顯示一個消息
-	log.Println("Phase 2 functionality is not yet implemented")
-	log.Println("This would perform AI-powered database analysis")
-
-	// 檢查 LLM 配置
-	log.Printf("LLM Configuration:")
-	log.Printf("  Provider: %s", cfg.LLM.Provider)
-	log.Printf("  Model: %s", cfg.LLM.Model)
-	log.Printf("  Host: %s", cfg.LLM.Host)
-	log.Printf("  Port: %d", cfg.LLM.Port)
-	log.Printf("  Base URL: %s", cfg.LLM.BaseURL)
-
-	// 創建一個示例輸出
-	output := map[string]interface{}{
-		"message":  "Phase 2 AI analysis placeholder",
-		"status":   "coming_soon",
-		"database": cfg.Database.DBName,
-		"llm_config": map[string]interface{}{
-			"provider": cfg.LLM.Provider,
-			"model":    cfg.LLM.Model,
-			"host":     cfg.LLM.Host,
-			"port":     cfg.LLM.Port,
-		},
-		"timestamp": time.Now(),
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 2 failed: %v", err)
 	}
-
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		log.Fatalf("Failed to marshal AI analysis results: %v", err)
-	}
-
-	outputFile := "phase2_analysis.json"
-	err = writeToFile(outputFile, data)
-	if err != nil {
-		log.Fatalf("Failed to write AI analysis results to file: %v", err)
-	}
-
-	log.Printf("Phase 2 AI analysis completed. Results saved to %s", outputFile)
 }
 
 func main() {

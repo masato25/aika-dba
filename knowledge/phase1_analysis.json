@@ -1,0 +1,3148 @@
+{
+  "database": "ecommerce_db",
+  "database_type": "postgres",
+  "tables": {
+    "categories": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "parent_id",
+            "constraint_name": "categories_parent_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "categories"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "name"
+            ],
+            "constraint_name": "categories_name_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "name"
+          ],
+          "definition": "CREATE UNIQUE INDEX categories_name_key ON public.categories USING btree (name)",
+          "is_unique": true,
+          "name": "categories_name_key"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (id)",
+          "is_unique": true,
+          "name": "categories_pkey"
+        }
+      ],
+      "samples": [
+        {
+          "created_at": "2025-11-05T03:46:50.135112Z",
+          "description": "男性服飾",
+          "id": 54,
+          "is_active": true,
+          "name": "男裝",
+          "parent_id": 48,
+          "sort_order": 1,
+          "updated_at": "2025-11-05T03:46:50.135112Z"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.135112Z",
+          "description": "女性服飾",
+          "id": 55,
+          "is_active": true,
+          "name": "女裝",
+          "parent_id": 48,
+          "sort_order": 2,
+          "updated_at": "2025-11-05T03:46:50.135112Z"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.135112Z",
+          "description": "智慧手機和平板電腦",
+          "id": 52,
+          "is_active": true,
+          "name": "手機",
+          "parent_id": 47,
+          "sort_order": 1,
+          "updated_at": "2025-11-05T03:46:50.135112Z"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.135112Z",
+          "description": "筆記型電腦和配件",
+          "id": 53,
+          "is_active": true,
+          "name": "筆電",
+          "parent_id": 47,
+          "sort_order": 2,
+          "updated_at": "2025-11-05T03:46:50.135112Z"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.135112Z",
+          "description": "烹飪和餐具",
+          "id": 56,
+          "is_active": true,
+          "name": "廚房用品",
+          "parent_id": 49,
+          "sort_order": 1,
+          "updated_at": "2025-11-05T03:46:50.135112Z"
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('categories_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 100,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "parent_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "sort_order",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_active",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "40 kB",
+        "row_count": 11,
+        "table_size": "8192 bytes",
+        "total_size": "48 kB"
+      }
+    },
+    "coupons": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "code"
+            ],
+            "constraint_name": "coupons_code_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "code"
+          ],
+          "definition": "CREATE UNIQUE INDEX coupons_code_key ON public.coupons USING btree (code)",
+          "is_unique": true,
+          "name": "coupons_code_key"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX coupons_pkey ON public.coupons USING btree (id)",
+          "is_unique": true,
+          "name": "coupons_pkey"
+        }
+      ],
+      "samples": [
+        {
+          "applicable_categories": null,
+          "applicable_products": null,
+          "code": "WELCOME10",
+          "created_at": "2025-11-05T03:46:50.142111Z",
+          "description": "新註冊用戶首次購物9折",
+          "discount_type": "percentage",
+          "discount_value": "10.00",
+          "expires_at": "2026-11-05T03:46:50.142111Z",
+          "id": 7,
+          "is_active": true,
+          "maximum_discount": null,
+          "minimum_amount": "500.00",
+          "name": "新用戶優惠",
+          "starts_at": "2025-11-05T03:46:50.142111Z",
+          "updated_at": "2025-11-05T03:46:50.142111Z",
+          "usage_count": 0,
+          "usage_limit": 1000
+        },
+        {
+          "applicable_categories": null,
+          "applicable_products": null,
+          "code": "SUMMER20",
+          "created_at": "2025-11-05T03:46:50.142111Z",
+          "description": "全館8折優惠",
+          "discount_type": "percentage",
+          "discount_value": "20.00",
+          "expires_at": "2026-02-05T03:46:50.142111Z",
+          "id": 8,
+          "is_active": true,
+          "maximum_discount": null,
+          "minimum_amount": "1000.00",
+          "name": "夏日特惠",
+          "starts_at": "2025-11-05T03:46:50.142111Z",
+          "updated_at": "2025-11-05T03:46:50.142111Z",
+          "usage_count": 0,
+          "usage_limit": 500
+        },
+        {
+          "applicable_categories": null,
+          "applicable_products": null,
+          "code": "FLASH500",
+          "created_at": "2025-11-05T03:46:50.142111Z",
+          "description": "滿3000折500",
+          "discount_type": "fixed_amount",
+          "discount_value": "500.00",
+          "expires_at": "2025-11-12T03:46:50.142111Z",
+          "id": 9,
+          "is_active": true,
+          "maximum_discount": null,
+          "minimum_amount": "3000.00",
+          "name": "閃購優惠",
+          "starts_at": "2025-11-05T03:46:50.142111Z",
+          "updated_at": "2025-11-05T03:46:50.142111Z",
+          "usage_count": 0,
+          "usage_limit": 200
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('coupons_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "code",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 255,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 20,
+          "name": "discount_type",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "discount_value",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "minimum_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "maximum_discount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "usage_limit",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "usage_count",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "starts_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "expires_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_active",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "applicable_products",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "applicable_categories",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "40 kB",
+        "row_count": 3,
+        "table_size": "8192 bytes",
+        "total_size": "48 kB"
+      }
+    },
+    "customer_addresses": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "customer_id",
+            "constraint_name": "customer_addresses_customer_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "customers"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "customer_id",
+              "address_type",
+              "is_default"
+            ],
+            "constraint_name": "customer_addresses_customer_id_address_type_is_default_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "customer_id",
+            "address_type",
+            "is_default"
+          ],
+          "definition": "CREATE UNIQUE INDEX customer_addresses_customer_id_address_type_is_default_key ON public.customer_addresses USING btree (customer_id, address_type, is_default)",
+          "is_unique": true,
+          "name": "customer_addresses_customer_id_address_type_is_default_key"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX customer_addresses_pkey ON public.customer_addresses USING btree (id)",
+          "is_unique": true,
+          "name": "customer_addresses_pkey"
+        },
+        {
+          "columns": [
+            "customer_id"
+          ],
+          "definition": "CREATE INDEX idx_customer_addresses_customer_id ON public.customer_addresses USING btree (customer_id)",
+          "is_unique": false,
+          "name": "idx_customer_addresses_customer_id"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('customer_addresses_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "customer_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "'shipping'::character varying",
+          "max_length": 20,
+          "name": "address_type",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "false",
+          "max_length": 0,
+          "name": "is_default",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "street_address",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 100,
+          "name": "city",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 100,
+          "name": "state",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 20,
+          "name": "postal_code",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'Taiwan'::character varying",
+          "max_length": 100,
+          "name": "country",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "56 kB",
+        "row_count": 0,
+        "table_size": "8192 bytes",
+        "total_size": "64 kB"
+      }
+    },
+    "customers": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "email"
+            ],
+            "constraint_name": "customers_email_key"
+          },
+          {
+            "columns": [
+              "uuid"
+            ],
+            "constraint_name": "customers_uuid_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "email"
+          ],
+          "definition": "CREATE UNIQUE INDEX customers_email_key ON public.customers USING btree (email)",
+          "is_unique": true,
+          "name": "customers_email_key"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX customers_pkey ON public.customers USING btree (id)",
+          "is_unique": true,
+          "name": "customers_pkey"
+        },
+        {
+          "columns": [
+            "uuid"
+          ],
+          "definition": "CREATE UNIQUE INDEX customers_uuid_key ON public.customers USING btree (uuid)",
+          "is_unique": true,
+          "name": "customers_uuid_key"
+        },
+        {
+          "columns": [
+            "is_active"
+          ],
+          "definition": "CREATE INDEX idx_customers_active ON public.customers USING btree (is_active)",
+          "is_unique": false,
+          "name": "idx_customers_active"
+        },
+        {
+          "columns": [
+            "email"
+          ],
+          "definition": "CREATE INDEX idx_customers_email ON public.customers USING btree (email)",
+          "is_unique": false,
+          "name": "idx_customers_email"
+        },
+        {
+          "columns": [
+            "uuid"
+          ],
+          "definition": "CREATE INDEX idx_customers_uuid ON public.customers USING btree (uuid)",
+          "is_unique": false,
+          "name": "idx_customers_uuid"
+        }
+      ],
+      "samples": [
+        {
+          "created_at": "2025-11-05T03:46:50.136361Z",
+          "customer_type": "premium",
+          "date_of_birth": null,
+          "email": "alice.johnson@email.com",
+          "gender": "female",
+          "id": 45,
+          "is_active": true,
+          "last_login": null,
+          "loyalty_points": 2500,
+          "name": "Alice Johnson",
+          "phone": "+886-912345678",
+          "registration_date": "2025-09-05T03:46:50.137605Z",
+          "total_orders": 15,
+          "total_spent": "25000.00",
+          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "uuid": "d9817f8d-763a-4d83-bbca-85c754f63c9a"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.136361Z",
+          "customer_type": "regular",
+          "date_of_birth": null,
+          "email": "bob.smith@email.com",
+          "gender": "male",
+          "id": 46,
+          "is_active": true,
+          "last_login": null,
+          "loyalty_points": 120,
+          "name": "Bob Smith",
+          "phone": "+886-987654321",
+          "registration_date": "2025-09-05T03:46:50.137605Z",
+          "total_orders": 3,
+          "total_spent": "1200.00",
+          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "uuid": "806c7820-ed64-471b-9d98-bf7f9bce35d3"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.136361Z",
+          "customer_type": "vip",
+          "date_of_birth": null,
+          "email": "carol.davis@email.com",
+          "gender": "female",
+          "id": 47,
+          "is_active": true,
+          "last_login": null,
+          "loyalty_points": 4500,
+          "name": "Carol Davis",
+          "phone": "+886-955511122",
+          "registration_date": "2025-09-05T03:46:50.137605Z",
+          "total_orders": 28,
+          "total_spent": "45000.00",
+          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "uuid": "eb0122e0-eb26-4381-9b6a-bdbce01f462e"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.136361Z",
+          "customer_type": "regular",
+          "date_of_birth": null,
+          "email": "david.wilson@email.com",
+          "gender": "male",
+          "id": 48,
+          "is_active": true,
+          "last_login": null,
+          "loyalty_points": 35,
+          "name": "David Wilson",
+          "phone": "+886-933344455",
+          "registration_date": "2025-09-05T03:46:50.137605Z",
+          "total_orders": 1,
+          "total_spent": "350.00",
+          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "uuid": "f1b5f2f9-bbee-4b97-a7b6-8ddc5aac9921"
+        },
+        {
+          "created_at": "2025-11-05T03:46:50.136361Z",
+          "customer_type": "premium",
+          "date_of_birth": null,
+          "email": "emma.brown@email.com",
+          "gender": "female",
+          "id": 49,
+          "is_active": true,
+          "last_login": null,
+          "loyalty_points": 850,
+          "name": "Emma Brown",
+          "phone": "+886-966677788",
+          "registration_date": "2025-09-05T03:46:50.137605Z",
+          "total_orders": 8,
+          "total_spent": "8500.00",
+          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "uuid": "491825c4-7290-4688-8830-389dea64052b"
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('customers_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "uuid_generate_v4()",
+          "max_length": 0,
+          "name": "uuid",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "uuid"
+        },
+        {
+          "max_length": 255,
+          "name": "email",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 100,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 20,
+          "name": "phone",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "date_of_birth",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "date"
+        },
+        {
+          "max_length": 10,
+          "name": "gender",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "registration_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "last_login",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_active",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "'regular'::character varying",
+          "max_length": 20,
+          "name": "customer_type",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "total_orders",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "total_spent",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "loyalty_points",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "96 kB",
+        "row_count": 10,
+        "table_size": "8192 bytes",
+        "total_size": "104 kB"
+      }
+    },
+    "inventory_transactions": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "product_id",
+            "constraint_name": "inventory_transactions_product_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "products"
+          },
+          {
+            "column": "variant_id",
+            "constraint_name": "inventory_transactions_variant_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "product_variants"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "product_id"
+          ],
+          "definition": "CREATE INDEX idx_inventory_transactions_product_id ON public.inventory_transactions USING btree (product_id)",
+          "is_unique": false,
+          "name": "idx_inventory_transactions_product_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX inventory_transactions_pkey ON public.inventory_transactions USING btree (id)",
+          "is_unique": true,
+          "name": "inventory_transactions_pkey"
+        }
+      ],
+      "samples": [],
+      "schema": [
+        {
+          "default": "nextval('inventory_transactions_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "variant_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 20,
+          "name": "transaction_type",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "quantity",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "previous_quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "new_quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "reference_type",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "reference_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "notes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 100,
+          "name": "created_by",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
+      }
+    },
+    "order_items": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "order_id",
+            "constraint_name": "order_items_order_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "orders"
+          },
+          {
+            "column": "product_id",
+            "constraint_name": "order_items_product_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "products"
+          },
+          {
+            "column": "variant_id",
+            "constraint_name": "order_items_variant_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "product_variants"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_order_items_order_id ON public.order_items USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_order_items_order_id"
+        },
+        {
+          "columns": [
+            "product_id"
+          ],
+          "definition": "CREATE INDEX idx_order_items_product_id ON public.order_items USING btree (product_id)",
+          "is_unique": false,
+          "name": "idx_order_items_product_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX order_items_pkey ON public.order_items USING btree (id)",
+          "is_unique": true,
+          "name": "order_items_pkey"
+        }
+      ],
+      "samples": [],
+      "schema": [
+        {
+          "default": "nextval('order_items_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "variant_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "sku",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 255,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "quantity",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "price",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "cost_price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "total",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "properties",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "56 kB",
+        "row_count": 8,
+        "table_size": "8192 bytes",
+        "total_size": "64 kB"
+      }
+    },
+    "orders": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "customer_id",
+            "constraint_name": "orders_customer_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "customers"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "order_number"
+            ],
+            "constraint_name": "orders_order_number_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "customer_id"
+          ],
+          "definition": "CREATE INDEX idx_orders_customer_id ON public.orders USING btree (customer_id)",
+          "is_unique": false,
+          "name": "idx_orders_customer_id"
+        },
+        {
+          "columns": [
+            "ordered_at"
+          ],
+          "definition": "CREATE INDEX idx_orders_ordered_at ON public.orders USING btree (ordered_at)",
+          "is_unique": false,
+          "name": "idx_orders_ordered_at"
+        },
+        {
+          "columns": [
+            "status"
+          ],
+          "definition": "CREATE INDEX idx_orders_status ON public.orders USING btree (status)",
+          "is_unique": false,
+          "name": "idx_orders_status"
+        },
+        {
+          "columns": [
+            "order_number"
+          ],
+          "definition": "CREATE UNIQUE INDEX orders_order_number_key ON public.orders USING btree (order_number)",
+          "is_unique": true,
+          "name": "orders_order_number_key"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (id)",
+          "is_unique": true,
+          "name": "orders_pkey"
+        }
+      ],
+      "samples": [
+        {
+          "billing_address": null,
+          "cancelled_at": null,
+          "confirmed_at": null,
+          "created_at": "2025-11-05T03:47:39.742118Z",
+          "currency": "TWD",
+          "customer_id": 45,
+          "delivered_at": null,
+          "discount_amount": "0.00",
+          "email": "alice.johnson@email.com",
+          "fulfillment_status": "fulfilled",
+          "id": 21,
+          "notes": null,
+          "order_number": "ORD-2024-001",
+          "ordered_at": "2025-10-06T03:47:39.742118Z",
+          "payment_method": "credit_card",
+          "payment_status": "paid",
+          "shipped_at": null,
+          "shipping_address": null,
+          "shipping_amount": "150.00",
+          "shipping_method": "standard",
+          "status": "delivered",
+          "subtotal": "36500.00",
+          "tags": null,
+          "tax_amount": "2920.00",
+          "total": "39570.00",
+          "updated_at": "2025-11-05T03:47:39.742118Z"
+        },
+        {
+          "billing_address": null,
+          "cancelled_at": null,
+          "confirmed_at": null,
+          "created_at": "2025-11-05T03:47:39.742118Z",
+          "currency": "TWD",
+          "customer_id": 46,
+          "delivered_at": null,
+          "discount_amount": "0.00",
+          "email": "bob.smith@email.com",
+          "fulfillment_status": "fulfilled",
+          "id": 22,
+          "notes": null,
+          "order_number": "ORD-2024-002",
+          "ordered_at": "2025-10-21T03:47:39.742118Z",
+          "payment_method": "credit_card",
+          "payment_status": "paid",
+          "shipped_at": null,
+          "shipping_address": null,
+          "shipping_amount": "80.00",
+          "shipping_method": "standard",
+          "status": "shipped",
+          "subtotal": "1200.00",
+          "tags": null,
+          "tax_amount": "96.00",
+          "total": "1376.00",
+          "updated_at": "2025-11-05T03:47:39.742118Z"
+        },
+        {
+          "billing_address": null,
+          "cancelled_at": null,
+          "confirmed_at": null,
+          "created_at": "2025-11-05T03:47:39.742118Z",
+          "currency": "TWD",
+          "customer_id": 47,
+          "delivered_at": null,
+          "discount_amount": "0.00",
+          "email": "carol.davis@email.com",
+          "fulfillment_status": "partial",
+          "id": 23,
+          "notes": null,
+          "order_number": "ORD-2024-003",
+          "ordered_at": "2025-11-02T03:47:39.742118Z",
+          "payment_method": "bank_transfer",
+          "payment_status": "paid",
+          "shipped_at": null,
+          "shipping_address": null,
+          "shipping_amount": "0.00",
+          "shipping_method": "express",
+          "status": "processing",
+          "subtotal": "33500.00",
+          "tags": null,
+          "tax_amount": "2680.00",
+          "total": "36180.00",
+          "updated_at": "2025-11-05T03:47:39.742118Z"
+        },
+        {
+          "billing_address": null,
+          "cancelled_at": null,
+          "confirmed_at": null,
+          "created_at": "2025-11-05T03:47:39.742118Z",
+          "currency": "TWD",
+          "customer_id": 48,
+          "delivered_at": null,
+          "discount_amount": "0.00",
+          "email": "david.wilson@email.com",
+          "fulfillment_status": "unfulfilled",
+          "id": 24,
+          "notes": null,
+          "order_number": "ORD-2024-004",
+          "ordered_at": "2025-11-04T03:47:39.742118Z",
+          "payment_method": "credit_card",
+          "payment_status": "paid",
+          "shipped_at": null,
+          "shipping_address": null,
+          "shipping_amount": "80.00",
+          "shipping_method": "standard",
+          "status": "confirmed",
+          "subtotal": "350.00",
+          "tags": null,
+          "tax_amount": "28.00",
+          "total": "458.00",
+          "updated_at": "2025-11-05T03:47:39.742118Z"
+        },
+        {
+          "billing_address": null,
+          "cancelled_at": null,
+          "confirmed_at": null,
+          "created_at": "2025-11-05T03:47:39.742118Z",
+          "currency": "TWD",
+          "customer_id": 49,
+          "delivered_at": null,
+          "discount_amount": "0.00",
+          "email": "emma.brown@email.com",
+          "fulfillment_status": "unfulfilled",
+          "id": 25,
+          "notes": null,
+          "order_number": "ORD-2024-005",
+          "ordered_at": "2025-11-05T01:47:39.742118Z",
+          "payment_method": "credit_card",
+          "payment_status": "pending",
+          "shipped_at": null,
+          "shipping_address": null,
+          "shipping_amount": "150.00",
+          "shipping_method": "express",
+          "status": "pending",
+          "subtotal": "8900.00",
+          "tags": null,
+          "tax_amount": "712.00",
+          "total": "9762.00",
+          "updated_at": "2025-11-05T03:47:39.742118Z"
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('orders_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "order_number",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "customer_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 255,
+          "name": "email",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'pending'::character varying",
+          "max_length": 30,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'pending'::character varying",
+          "max_length": 20,
+          "name": "payment_status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'unfulfilled'::character varying",
+          "max_length": 20,
+          "name": "fulfillment_status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "subtotal",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "tax_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "shipping_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "discount_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "total",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "'TWD'::character varying",
+          "max_length": 3,
+          "name": "currency",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "billing_address",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "shipping_address",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 50,
+          "name": "payment_method",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 100,
+          "name": "shipping_method",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "notes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "tags",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "ARRAY"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "ordered_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "confirmed_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "shipped_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "delivered_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "cancelled_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "88 kB",
+        "row_count": 5,
+        "table_size": "8192 bytes",
+        "total_size": "96 kB"
+      }
+    },
+    "payments": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "order_id",
+            "constraint_name": "payments_order_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "orders"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "transaction_id"
+            ],
+            "constraint_name": "payments_transaction_id_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_payments_order_id ON public.payments USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_payments_order_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)",
+          "is_unique": true,
+          "name": "payments_pkey"
+        },
+        {
+          "columns": [
+            "transaction_id"
+          ],
+          "definition": "CREATE UNIQUE INDEX payments_transaction_id_key ON public.payments USING btree (transaction_id)",
+          "is_unique": true,
+          "name": "payments_transaction_id_key"
+        }
+      ],
+      "samples": [
+        {
+          "amount": "39570.00",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "currency": "TWD",
+          "gateway_response": null,
+          "id": 13,
+          "order_id": 21,
+          "payment_method": "credit_card",
+          "processed_at": "2025-10-06T03:47:59.137775Z",
+          "status": "completed",
+          "transaction_id": "txn_abc123",
+          "updated_at": "2025-11-05T03:47:59.137775Z"
+        },
+        {
+          "amount": "1376.00",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "currency": "TWD",
+          "gateway_response": null,
+          "id": 14,
+          "order_id": 22,
+          "payment_method": "credit_card",
+          "processed_at": "2025-10-21T03:47:59.137775Z",
+          "status": "completed",
+          "transaction_id": "txn_def456",
+          "updated_at": "2025-11-05T03:47:59.137775Z"
+        },
+        {
+          "amount": "36180.00",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "currency": "TWD",
+          "gateway_response": null,
+          "id": 15,
+          "order_id": 23,
+          "payment_method": "bank_transfer",
+          "processed_at": "2025-11-02T03:47:59.137775Z",
+          "status": "completed",
+          "transaction_id": "txn_ghi789",
+          "updated_at": "2025-11-05T03:47:59.137775Z"
+        },
+        {
+          "amount": "458.00",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "currency": "TWD",
+          "gateway_response": null,
+          "id": 16,
+          "order_id": 24,
+          "payment_method": "credit_card",
+          "processed_at": "2025-11-04T03:47:59.137775Z",
+          "status": "completed",
+          "transaction_id": "txn_jkl012",
+          "updated_at": "2025-11-05T03:47:59.137775Z"
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('payments_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "amount",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "'TWD'::character varying",
+          "max_length": 3,
+          "name": "currency",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 50,
+          "name": "payment_method",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 255,
+          "name": "transaction_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'pending'::character varying",
+          "max_length": 20,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "gateway_response",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "processed_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "56 kB",
+        "row_count": 4,
+        "table_size": "8192 bytes",
+        "total_size": "64 kB"
+      }
+    },
+    "product_variants": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "product_id",
+            "constraint_name": "product_variants_product_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "products"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "sku"
+            ],
+            "constraint_name": "product_variants_sku_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "product_id"
+          ],
+          "definition": "CREATE INDEX idx_product_variants_product_id ON public.product_variants USING btree (product_id)",
+          "is_unique": false,
+          "name": "idx_product_variants_product_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX product_variants_pkey ON public.product_variants USING btree (id)",
+          "is_unique": true,
+          "name": "product_variants_pkey"
+        },
+        {
+          "columns": [
+            "sku"
+          ],
+          "definition": "CREATE UNIQUE INDEX product_variants_sku_key ON public.product_variants USING btree (sku)",
+          "is_unique": true,
+          "name": "product_variants_sku_key"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('product_variants_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "sku",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 255,
+          "name": "name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "cost_price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "compare_at_price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "weight",
+          "nullable": true,
+          "precision": 8,
+          "scale": 3,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "dimensions",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "inventory_quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 100,
+          "name": "option1",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 100,
+          "name": "option2",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 100,
+          "name": "option3",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_active",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "32 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "32 kB"
+      }
+    },
+    "products": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "category_id",
+            "constraint_name": "products_category_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "categories"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "sku"
+            ],
+            "constraint_name": "products_sku_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "is_active"
+          ],
+          "definition": "CREATE INDEX idx_products_active ON public.products USING btree (is_active)",
+          "is_unique": false,
+          "name": "idx_products_active"
+        },
+        {
+          "columns": [
+            "category_id"
+          ],
+          "definition": "CREATE INDEX idx_products_category_id ON public.products USING btree (category_id)",
+          "is_unique": false,
+          "name": "idx_products_category_id"
+        },
+        {
+          "columns": [
+            "sku"
+          ],
+          "definition": "CREATE INDEX idx_products_sku ON public.products USING btree (sku)",
+          "is_unique": false,
+          "name": "idx_products_sku"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)",
+          "is_unique": true,
+          "name": "products_pkey"
+        },
+        {
+          "columns": [
+            "sku"
+          ],
+          "definition": "CREATE UNIQUE INDEX products_sku_key ON public.products USING btree (sku)",
+          "is_unique": true,
+          "name": "products_sku_key"
+        }
+      ],
+      "samples": [
+        {
+          "category_id": 52,
+          "compare_at_price": null,
+          "cost_price": "28000.00",
+          "created_at": "2025-11-05T03:47:21.416644Z",
+          "description": "最新款 iPhone 15 Pro，搭載 A17 Pro 晶片，128GB 儲存空間",
+          "dimensions": null,
+          "id": 31,
+          "images": null,
+          "inventory_policy": "deny",
+          "inventory_quantity": 50,
+          "is_active": true,
+          "is_featured": true,
+          "name": "iPhone 15 Pro 128GB",
+          "price": "35900.00",
+          "seo_description": null,
+          "seo_title": null,
+          "short_description": null,
+          "sku": "PHONE-IP15-128",
+          "tags": "{手機,Apple,5G}",
+          "updated_at": "2025-11-05T03:47:21.416644Z",
+          "weight": null
+        },
+        {
+          "category_id": 52,
+          "compare_at_price": null,
+          "cost_price": "26000.00",
+          "created_at": "2025-11-05T03:47:21.416644Z",
+          "description": "三星 Galaxy S23 Ultra，S Pen 支援，256GB 儲存空間",
+          "dimensions": null,
+          "id": 32,
+          "images": null,
+          "inventory_policy": "deny",
+          "inventory_quantity": 30,
+          "is_active": true,
+          "is_featured": true,
+          "name": "Samsung Galaxy S23 Ultra 256GB",
+          "price": "32900.00",
+          "seo_description": null,
+          "seo_title": null,
+          "short_description": null,
+          "sku": "PHONE-S23-256",
+          "tags": "{手機,Samsung,5G,\"S Pen\"}",
+          "updated_at": "2025-11-05T03:47:21.416644Z",
+          "weight": null
+        },
+        {
+          "category_id": 53,
+          "compare_at_price": null,
+          "cost_price": "75000.00",
+          "created_at": "2025-11-05T03:47:21.416644Z",
+          "description": "MacBook Pro 14吋，搭載 M2 晶片，16GB RAM，512GB SSD",
+          "dimensions": null,
+          "id": 33,
+          "images": null,
+          "inventory_policy": "deny",
+          "inventory_quantity": 20,
+          "is_active": true,
+          "is_featured": true,
+          "name": "MacBook Pro 14吋 M2",
+          "price": "89900.00",
+          "seo_description": null,
+          "seo_title": null,
+          "short_description": null,
+          "sku": "LAPTOP-MBP14",
+          "tags": "{筆電,Apple,M2}",
+          "updated_at": "2025-11-05T03:47:21.416644Z",
+          "weight": null
+        },
+        {
+          "category_id": 54,
+          "compare_at_price": null,
+          "cost_price": "180.00",
+          "created_at": "2025-11-05T03:47:21.416644Z",
+          "description": "100% 純棉材質，舒適透氣，經典圓領設計",
+          "dimensions": null,
+          "id": 34,
+          "images": null,
+          "inventory_policy": "deny",
+          "inventory_quantity": 200,
+          "is_active": true,
+          "is_featured": false,
+          "name": "純棉圓領T恤 男款 M碼",
+          "price": "450.00",
+          "seo_description": null,
+          "seo_title": null,
+          "short_description": null,
+          "sku": "TSHIRT-COTTON-M",
+          "tags": "{T恤,男裝,純棉}",
+          "updated_at": "2025-11-05T03:47:21.416644Z",
+          "weight": null
+        },
+        {
+          "category_id": 55,
+          "compare_at_price": null,
+          "cost_price": "200.00",
+          "created_at": "2025-11-05T03:47:21.416644Z",
+          "description": "100% 純棉材質，修身版型，時尚設計",
+          "dimensions": null,
+          "id": 35,
+          "images": null,
+          "inventory_policy": "deny",
+          "inventory_quantity": 150,
+          "is_active": true,
+          "is_featured": false,
+          "name": "純棉圓領T恤 女款 M碼",
+          "price": "480.00",
+          "seo_description": null,
+          "seo_title": null,
+          "short_description": null,
+          "sku": "TSHIRT-COTTON-W",
+          "tags": "{T恤,女裝,純棉}",
+          "updated_at": "2025-11-05T03:47:21.416644Z",
+          "weight": null
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('products_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 50,
+          "name": "sku",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 255,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 500,
+          "name": "short_description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "category_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "price",
+          "nullable": false,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "cost_price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "compare_at_price",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "weight",
+          "nullable": true,
+          "precision": 8,
+          "scale": 3,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "dimensions",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "inventory_quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "'deny'::character varying",
+          "max_length": 20,
+          "name": "inventory_policy",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_active",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "max_length": 0,
+          "name": "is_featured",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "tags",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "ARRAY"
+        },
+        {
+          "max_length": 0,
+          "name": "images",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 255,
+          "name": "seo_title",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "seo_description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "88 kB",
+        "row_count": 10,
+        "table_size": "8192 bytes",
+        "total_size": "96 kB"
+      }
+    },
+    "returns": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "customer_id",
+            "constraint_name": "returns_customer_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "customers"
+          },
+          {
+            "column": "order_id",
+            "constraint_name": "returns_order_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "orders"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_returns_order_id ON public.returns USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_returns_order_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX returns_pkey ON public.returns USING btree (id)",
+          "is_unique": true,
+          "name": "returns_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('returns_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "customer_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 100,
+          "name": "reason",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'requested'::character varying",
+          "max_length": 20,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "refund_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "items",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "notes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "requested_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "approved_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "received_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "refunded_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
+      }
+    },
+    "reviews": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "customer_id",
+            "constraint_name": "reviews_customer_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "customers"
+          },
+          {
+            "column": "order_id",
+            "constraint_name": "reviews_order_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "orders"
+          },
+          {
+            "column": "product_id",
+            "constraint_name": "reviews_product_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "products"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "product_id"
+          ],
+          "definition": "CREATE INDEX idx_reviews_product_id ON public.reviews USING btree (product_id)",
+          "is_unique": false,
+          "name": "idx_reviews_product_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX reviews_pkey ON public.reviews USING btree (id)",
+          "is_unique": true,
+          "name": "reviews_pkey"
+        }
+      ],
+      "samples": [
+        {
+          "content": "iPhone 15 Pro 表現超乎預期，相機和效能都非常棒！",
+          "created_at": "2025-11-05T03:48:15.000062Z",
+          "customer_id": 45,
+          "helpful_votes": 0,
+          "id": 25,
+          "images": null,
+          "is_verified": true,
+          "order_id": 21,
+          "product_id": 31,
+          "rating": 5,
+          "status": "approved",
+          "title": "非常滿意！",
+          "updated_at": "2025-11-05T03:48:15.000062Z"
+        },
+        {
+          "content": "純棉材質穿起來很舒服，尺碼也很合身",
+          "created_at": "2025-11-05T03:48:15.000062Z",
+          "customer_id": 46,
+          "helpful_votes": 0,
+          "id": 26,
+          "images": null,
+          "is_verified": true,
+          "order_id": 22,
+          "product_id": 34,
+          "rating": 4,
+          "status": "approved",
+          "title": "品質不錯",
+          "updated_at": "2025-11-05T03:48:15.000062Z"
+        },
+        {
+          "content": "防滑效果很好，厚度適中，非常適合居家瑜伽",
+          "created_at": "2025-11-05T03:48:15.000062Z",
+          "customer_id": 46,
+          "helpful_votes": 0,
+          "id": 27,
+          "images": null,
+          "is_verified": true,
+          "order_id": 22,
+          "product_id": 39,
+          "rating": 5,
+          "status": "approved",
+          "title": "瑜伽墊很棒",
+          "updated_at": "2025-11-05T03:48:15.000062Z"
+        },
+        {
+          "content": "S Pen 功能很實用，拍照效果也很好",
+          "created_at": "2025-11-05T03:48:15.000062Z",
+          "customer_id": 47,
+          "helpful_votes": 0,
+          "id": 28,
+          "images": null,
+          "is_verified": true,
+          "order_id": 23,
+          "product_id": 32,
+          "rating": 5,
+          "status": "approved",
+          "title": "三星手機真心不錯",
+          "updated_at": "2025-11-05T03:48:15.000062Z"
+        },
+        {
+          "content": "磨豆功能很方便，咖啡味道也很棒",
+          "created_at": "2025-11-05T03:48:15.000062Z",
+          "customer_id": 47,
+          "helpful_votes": 0,
+          "id": 29,
+          "images": null,
+          "is_verified": true,
+          "order_id": 23,
+          "product_id": 36,
+          "rating": 4,
+          "status": "approved",
+          "title": "咖啡機好用",
+          "updated_at": "2025-11-05T03:48:15.000062Z"
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('reviews_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "customer_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "rating",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 255,
+          "name": "title",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "content",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "images",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "ARRAY"
+        },
+        {
+          "default": "false",
+          "max_length": 0,
+          "name": "is_verified",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "0",
+          "max_length": 0,
+          "name": "helpful_votes",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "'pending'::character varying",
+          "max_length": 20,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "40 kB",
+        "row_count": 6,
+        "table_size": "8192 bytes",
+        "total_size": "48 kB"
+      }
+    },
+    "shipments": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "order_id",
+            "constraint_name": "shipments_order_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "orders"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "tracking_number"
+            ],
+            "constraint_name": "shipments_tracking_number_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_shipments_order_id ON public.shipments USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_shipments_order_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX shipments_pkey ON public.shipments USING btree (id)",
+          "is_unique": true,
+          "name": "shipments_pkey"
+        },
+        {
+          "columns": [
+            "tracking_number"
+          ],
+          "definition": "CREATE UNIQUE INDEX shipments_tracking_number_key ON public.shipments USING btree (tracking_number)",
+          "is_unique": true,
+          "name": "shipments_tracking_number_key"
+        }
+      ],
+      "samples": [
+        {
+          "carrier": "SF Express",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "delivered_at": null,
+          "dimensions": null,
+          "estimated_delivery": "2025-10-16T03:47:59.137775Z",
+          "id": 10,
+          "notes": null,
+          "order_id": 21,
+          "shipped_at": "2025-10-11T03:47:59.137775Z",
+          "shipping_address": null,
+          "status": "delivered",
+          "tracking_number": "SF123456789",
+          "updated_at": "2025-11-05T03:47:59.137775Z",
+          "weight": null
+        },
+        {
+          "carrier": "SF Express",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "delivered_at": null,
+          "dimensions": null,
+          "estimated_delivery": "2025-11-07T03:47:59.137775Z",
+          "id": 11,
+          "notes": null,
+          "order_id": 22,
+          "shipped_at": "2025-10-26T03:47:59.137775Z",
+          "shipping_address": null,
+          "status": "shipped",
+          "tracking_number": "SF987654321",
+          "updated_at": "2025-11-05T03:47:59.137775Z",
+          "weight": null
+        },
+        {
+          "carrier": "DHL",
+          "created_at": "2025-11-05T03:47:59.137775Z",
+          "delivered_at": null,
+          "dimensions": null,
+          "estimated_delivery": "2025-11-08T03:47:59.137775Z",
+          "id": 12,
+          "notes": null,
+          "order_id": 23,
+          "shipped_at": "2025-11-03T03:47:59.137775Z",
+          "shipping_address": null,
+          "status": "in_transit",
+          "tracking_number": "DHL555666777",
+          "updated_at": "2025-11-05T03:47:59.137775Z",
+          "weight": null
+        }
+      ],
+      "schema": [
+        {
+          "default": "nextval('shipments_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 100,
+          "name": "tracking_number",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 50,
+          "name": "carrier",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'pending'::character varying",
+          "max_length": 20,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "shipped_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "delivered_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "estimated_delivery",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "shipping_address",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "weight",
+          "nullable": true,
+          "precision": 8,
+          "scale": 3,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "dimensions",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "max_length": 0,
+          "name": "notes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "56 kB",
+        "row_count": 3,
+        "table_size": "8192 bytes",
+        "total_size": "64 kB"
+      }
+    },
+    "shopping_carts": {
+      "constraints": {
+        "foreign_keys": [
+          {
+            "column": "customer_id",
+            "constraint_name": "shopping_carts_customer_id_fkey",
+            "referenced_column": "id",
+            "referenced_table": "customers"
+          }
+        ],
+        "primary_keys": [
+          "id"
+        ],
+        "unique_keys": [
+          {
+            "columns": [
+              "session_id"
+            ],
+            "constraint_name": "shopping_carts_session_id_key"
+          }
+        ]
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX shopping_carts_pkey ON public.shopping_carts USING btree (id)",
+          "is_unique": true,
+          "name": "shopping_carts_pkey"
+        },
+        {
+          "columns": [
+            "session_id"
+          ],
+          "definition": "CREATE UNIQUE INDEX shopping_carts_session_id_key ON public.shopping_carts USING btree (session_id)",
+          "is_unique": true,
+          "name": "shopping_carts_session_id_key"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('shopping_carts_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 255,
+          "name": "session_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "customer_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "default": "'[]'::jsonb",
+          "max_length": 0,
+          "name": "items",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "jsonb"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "subtotal",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "0.00",
+          "max_length": 0,
+          "name": "total",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "(CURRENT_TIMESTAMP + '30 days'::interval)",
+          "max_length": 0,
+          "name": "expires_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
+      }
+    }
+  },
+  "tables_count": 14,
+  "timestamp": "2025-11-05T13:23:54.132509+08:00"
+}
