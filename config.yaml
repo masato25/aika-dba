@@ -26,7 +26,7 @@ schema:
 # LLM 設定
 llm:
   provider: "local"        # LLM 提供者: openai, local
-  model: "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF:Q4_K_M"  # 模型名稱
+  model: "test"  # 模型名稱 - 使用簡單名稱測試
   api_key: ""             # API 金鑰 (建議使用環境變數 OPENAI_API_KEY)
   base_url: ""            # 自定義 API 端點 (建議使用環境變數 OPENAI_BASE_URL)
   host: "localhost"       # 本地 LLM 主機 (用於本地服務)
