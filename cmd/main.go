@@ -136,10 +136,28 @@ func runPhase4(db *sql.DB, cfg *config.Config) {
 	}
 }
 
+// runMarketingQueries 執行行銷查詢測試
+func runMarketingQueries(db *sql.DB, cfg *config.Config, scenarioName string) {
+	runner := phases.NewMarketingQueryRunner(cfg, db)
+
+	if scenarioName != "" {
+		// 執行單一場景
+		if err := runner.RunScenario(scenarioName); err != nil {
+			log.Fatalf("Marketing query for scenario '%s' failed: %v", scenarioName, err)
+		}
+	} else {
+		// 執行所有場景測試
+		if err := runner.Run(); err != nil {
+			log.Fatalf("Marketing queries test failed: %v", err)
+		}
+	}
+}
+
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4, marketing")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
+	var scenario = flag.String("scenario", "", "Marketing scenario to run (leave empty to run all scenarios)")
 	flag.Parse()
 
 	// 載入 .env 文件
@@ -181,7 +199,9 @@ func main() {
 		runPhase3(cfg)
 	case "phase4":
 		runPhase4(db, cfg)
+	case "marketing":
+		runMarketingQueries(db, cfg, *scenario)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4, marketing", *command)
 	}
 }
