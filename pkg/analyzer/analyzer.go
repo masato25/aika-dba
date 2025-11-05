@@ -149,8 +149,8 @@ func (a *DatabaseAnalyzer) GetTableConstraints(tableName string) (map[string]int
 			if err := fkRows.Scan(&constraintName, &columnName, &refTable, &refColumn); err == nil {
 				fks = append(fks, map[string]interface{}{
 					"constraint_name":   constraintName,
-					"column":           columnName,
-					"referenced_table": refTable,
+					"column":            columnName,
+					"referenced_table":  refTable,
 					"referenced_column": refColumn,
 				})
 			}
@@ -184,7 +184,7 @@ func (a *DatabaseAnalyzer) GetTableConstraints(tableName string) (map[string]int
 		for constraintName, columns := range ukMap {
 			uks = append(uks, map[string]interface{}{
 				"constraint_name": constraintName,
-				"columns":        columns,
+				"columns":         columns,
 			})
 		}
 		constraints["unique_keys"] = uks

@@ -111,7 +111,7 @@ func runPhase1(db *sql.DB, cfg *config.Config) {
 
 // runPhase2 執行 Phase 2: AI 分析
 func runPhase2(db *sql.DB, cfg *config.Config) {
-	runner := phases.NewPhase2Runner(cfg)
+	runner := phases.NewPhase2Runner(cfg, db)
 
 	if err := runner.Run(); err != nil {
 		log.Fatalf("Phase 2 failed: %v", err)

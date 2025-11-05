@@ -1,0 +1,220 @@
+{
+  "analysis_results": {
+    "categories": {
+      "table_name": "categories",
+      "analysis": "### 表格設計評估\n\n#### 1. 構造合理性\n- **id**: 使用 `integer` 类型作为主键，并采用自增（`DEFAULT nextval('categories_id_seq'::regclass)`），这是良好的设计，因为自增主键可以确保数据的唯一性和可预测性。\n- **name**: 使用 `character varying` 类型，并设置为 NOT NULL，这是合理的，因为类别名称是分类的基本属性，不能为空。\n- **description**: 使用 `text` 类型，可以存储更多的文本信息，这在需要详细描述类别时非常有用。\n- **parent_id**: 使用 `integer` 类型，并设置为 NULL，表示该类别没有父类。这在设计分类树结构时是合理的。\n- **sort_order**: 使用 `integer` 类型，并设置为默认值 0，可以方便地排序类别。\n- **is_active**: 使用 `boolean` 类型，并设置为默认值 true，可以轻松地管理是否启用该类别。\n- **created_at**: 使用 `timestamp with time zone` 类型，并设置为默认值 CURRENT_TIMESTAMP，可以记录类别创建时间。\n- **updated_at**: 使用 `timestamp with time zone` 类型，并设置为默认值 CURRENT_TIMESTAMP，可以记录类别更新时间。\n\n#### 2. 命名規範\n- 表名 `categories` 已經使用了英文，符合规范。\n- 字段名也使用了英文，符合规范。\n\n### 性能優化建議\n\n#### 1. 索引\n- **categories_name_key**: 已经创建为唯一索引，可以快速查找类别名称，但需要注意的是，对于大量数据，唯一索引可能会导致性能下降，因为需要检查唯一性约束。\n- **categories_pkey**: 已经创建为唯一索引，可以快速查找类别ID，性能良好。\n\n#### 2. 查詢優化\n- 如果需要频繁查询类别名称，可以考虑在 `name` 字段上创建全文索引或使用 LIKE 操作符时创建前缀索引。\n- 如果需要频繁排序类别，可以考虑在 `sort_order` 字段上创建索引。\n\n### 數據完整性分析\n\n#### 1. 约束\n- 主鍵约束 `[id]` 已经存在，确保数据的唯一性和完整性。\n- 外鍵约束：没有外键约束。\n- 唯一鍵约束 `[name]` 已经存在，确保类别名称的唯一性。\n\n#### 2. 数据質量\n- 数据量为 11 条，数据质量尚可，但需要定期检查和维护数据完整性。\n\n### 潛在問題識別\n\n1. **唯一性约束**：`name` 字段上的唯一约束可能会导致性能问题，特别是在大量数据时。\n2. **数据量**：数据量为 11 条，如果需要处理大量数据，可能需要考虑扩展表结构。\n\n### 改進建議\n\n1. **索引优化**：\n   - 如果需要频繁查询类别名称，可以考虑在 `name` 字段上创建全文索引或使用 LIKE 操作符时创建前缀索引。\n   - 如果需要频繁排序类别，可以考虑在 `sort_order` 字段上创建索引。\n\n2. **数据量管理**：\n   - 如果数据量增加，考虑扩展表结构，如增加更多的字段或使用分区表来管理数据。\n\n3. **性能监控**：\n   - 定期监控表的性能，特别是对于频繁查询的字段，确保性能满足需求。\n\n通过这些分析和建议，可以确保 `categories` 表的设计合理、性能优化、数据完整，并能够处理未来的数据增长。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:38:08.463559+08:00"
+    },
+    "coupons": {
+      "table_name": "coupons",
+      "analysis": "### 表格設計評估\n\n#### 構造合理性：\n- **字段設計**：表格設計合理，包含了所有必要的信息，如 `id`、`code`、`name`、`description`、`discount_type`、`discount_value`、`minimum_amount`、`maximum_discount`、`usage_limit`、`usage_count`、`starts_at`、`expires_at`、`is_active`、`applicable_products`、`applicable_categories`、`created_at` 和 `updated_at`。這些字段清晰地描述了 coupons 的基本信息和使用规则。\n- **外键约束**：目前没有外键约束，但根据需求，可能需要在某些字段之间建立外键约束，比如与产品或分类相关的字段。\n\n#### 命名規範：\n- **字段命名**：字段命名清晰，如 `id`、`code`、`name`、`discount_type` 等，符合 SQL 的命名规范。\n- **表名**：表名 `coupons` 為單數，符合 SQL 的命名规范。\n\n### 性能優化建議\n\n#### 索引：\n- **唯一索引**：已经创建了 `coupons_code_key` 和 `coupons_pkey`，确保了 `code` 和 `id` 的唯一性。\n- **其他索引**：考虑在 `is_active`、`usage_limit`、`usage_count`、`starts_at` 和 `expires_at` 上创建索引，以加快查询速度，特别是当需要过滤或排序时。\n\n#### 查詢優化：\n- **使用索引**：在查询时，确保使用了合适的索引，比如在 `is_active = true` 和 `starts_at \u003c= NOW() AND expires_at \u003e= NOW()` 的查询中使用索引。\n- **避免全表扫描**：确保在查询时避免全表扫描，使用索引进行过滤和排序。\n\n### 數據完整性分析\n\n#### 约束：\n- **主鍵**：`id` 為主鍵，确保了数据的唯一性。\n- **唯一鍵**：`code` 為唯一鍵，确保了每个优惠券的代码唯一。\n- **默认值**：`usage_count` 的默认值为 0，确保了数据的完整性。\n\n#### 數據質量：\n- **NULL值**：`description`、`minimum_amount`、`maximum_discount`、`usage_limit` 和 `created_at`、`updated_at` 可能包含 NULL 值，需要根据需求进行处理。\n- **逻辑一致性**：`usage_count` 应该在每次使用优惠券时进行递增，确保数据的逻辑一致性。\n\n### 潛在問題識別\n\n- **数据冗余**：`applicable_products` 和 `applicable_categories` 使用 `jsonb` 类型，可能造成数据冗余，影响查询性能。\n- **性能瓶颈**：随着数据量的增长，查询性能可能会受到影响，需要定期评估和优化。\n\n### 改進建議\n\n- **数据冗余处理**：考虑使用外键或嵌套表来减少数据冗余。\n- **优化查询**：定期优化查询，使用查询解释器来分析查询性能。\n- **数据质量控制**：定期检查数据，确保数据的完整性和一致性。\n- **性能监控**：使用性能监控工具来监控数据库性能，及时发现和解决性能瓶颈。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:38:26.245916+08:00"
+    },
+    "customer_addresses": {
+      "table_name": "customer_addresses",
+      "analysis": "### 表格設計評估\n\n1. **結構合理性**\n   - 表格名稱 `customer_addresses` 合理，清晰地描述了表格的用途。\n   - 欄位 `id` 是主鍵，強調了唯一性，符合設計原則。\n   - `customer_id` 是外鍵，指定了表與 `customers` 表的關聯。\n   - `address_type`、`is_default`、`street_address`、`city`、`state`、`postal_code`、`country` 是必需的字段，提供了必要的地址信息。\n   - `created_at` 和 `updated_at` 用于記錄地址的創建和更新時間，有助于日志和分析。\n\n2. **命名規範**\n   - 欄位名稱使用了 camelCase 註式，符合現代開發習慣。\n   - 索引名稱和主鍵名稱使用了蛇形命名（snake_case），符合慣用風格。\n   - 統計信息名稱使用了 camelCase 註式，符合現代開發習慣。\n\n### 性能優化建議\n\n1. **索引**\n   - `customer_addresses_customer_id_address_type_is_default_key` 索引用于唯一地索引 `customer_id`、`address_type` 和 `is_default`。這對於快速查找特定類型的地址（例如，shipping 或 billing）非常有用。\n   - `customer_addresses_pkey` 是主鍵索引，確保了快速的插入、更新和刪除操作。\n   - `idx_customer_addresses_customer_id` 索引用于快速查找特定 `customer_id` 的地址。這對於快速查找特定客戶的地址非常有用。\n\n2. **查詢優化**\n   - 使用 `EXPLAIN` 或 `EXPLAIN ANALYZE` 指令來分析查詢計劃，找出性能瓶颈。\n   - 確保在查詢中使用了适当的索引，避免不必要的全表掃描。\n   - 確保在查詢中使用了 WHERE 子句來限制搜索範圍，減少不必要的數據量。\n\n### 數據完整性分析\n\n1. **約束**\n   - `id` 是主鍵，保證了唯一性和完整性。\n   - `customer_id` 是外鍵，與 `customers` 表的 `id` 字段相匹配，確保了外键的完整性和一致性。\n   - `address_type`、`is_default`、`street_address`、`city`、`state`、`postal_code`、`country` 是必需的字段，确保了数据的完整性和一致性。\n   - `created_at` 和 `updated_at` 是可選字段，提供了数据的创建和更新时间，有助于日志和分析。\n\n2. **數據質量**\n   - 没有提供具体的數據質量分析，但可以使用 SQL 命令（如 `CHECK` 命令）來驗證數據完整性。\n   - 可以使用数据验证工具（如 `DBMS_DATAPUMP` 或 `DBMS_METADATA`）來生成數據質量报告。\n\n### 潛在問題識別\n\n1. **索引不足**\n   - 如果 `customer_addresses` 表的索引不足，可能會導致查詢性能低下，例如全表掃描。\n   - 需要定期重新評估和調整索引。\n\n2. **数据冗余**\n   - 如果 `customer_addresses` 表中存在冗余数据，例如 `country` 字段的默认值，可以考虑使用 `DEFAULT` 索引或存储函数来优化数据存储。\n\n3. **数据更新不及时**\n   - 如果 `created_at` 和 `updated_at` 字段没有正确更新，可能会导致数据更新历史不完整。\n\n### 改進建議\n\n1. **添加索引**\n   - 添加缺失的索引，例如 `customer_addresses_customer_id_address_type_is_default_key` 索引，以提高特定類型地址的查找性能。\n   - 添加 `customer_addresses_customer_id` 索引，以提高特定客戶地址的查找性能。\n\n2. **优化数据存储**\n   - 考慮使用存储函数来优化数据存储，例如使用 `DEFAULT` 索引或存储函数来生成默认值。\n\n3. **更新数据**\n   - 确保 `created_at` 和 `updated_at` 字段正确更新，以保持数据更新历史的完整性。\n\n通过以上分析和建议，可以提高 `customer_addresses` 表的性能和数据完整性，确保其在应用中的高效使用。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:35:35.835273+08:00"
+    },
+    "customers": {
+      "table_name": "customers",
+      "analysis": "### 表格設計評估\n\n#### 1. 構造合理性\n- **主鍵**: `[id]` 是一個有效的主鍵，確保資料的唯一性。\n- **唯一鍵**: `email` 和 `uuid` 為唯一鍵，確保每一個客戶的資料都是唯一的。\n- **列**: 結合了基本的客戶信息，如 `email`、`name`、`phone`、`date_of_birth`、`gender` 等，並且也包含了交易和 loyalty 系統的相關資訊。\n- **索引**: 使用了多個索引，如 `customers_email_key`、`customers_pkey`、`customers_uuid_key`、`idx_customers_active`、`idx_customers_email` 和 `idx_customers_uuid`，以提高查詢效率。\n\n#### 2. 命名規範\n- **表名**: `customers` 是一個合理的表名，描述了其用途。\n- **列名**: 像 `id`、`uuid`、`email`、`name`、`phone`、`date_of_birth` 等都是清晰且描述性的列名。\n\n### 性能優化建議\n\n#### 1. 索引\n- **已有的索引**: 現有的索引已經非常全面，包括 `email`、`uuid`、`is_active` 等，可以進一步優化。\n- **新增索引**: 可能需要在 `phone`、`date_of_birth` 和 `gender` 上增加索引，以提高特定篩選的效率。\n\n#### 2. 查詢優化\n- **使用 WHERE 子句**: 在需要篩選特定客戶的查詢中，使用 `WHERE` 子句來限制查詢範圍，例如 `WHERE email = 'example@example.com'`。\n- **使用 EXISTS 子句**: 在需要查詢特定客戶的訂單或交易時，使用 `EXISTS` 子句可以提高效率。\n\n### 數據完整性分析\n\n#### 1. 约束\n- **主鍵**: `[id]` 是一個有效的主鍵，確保資料的唯一性。\n- **唯一鍵**: `email` 和 `uuid` 為唯一鍵，確保每一個客戶的資料都是唯一的。\n- **約束**: 没有發現數據完整性方面的缺失。\n\n#### 2. 数据質量\n- **數據量**: 結合了基本的客戶信息和交易資訊，數據量合理。\n- **約束值**: `is_active` 的默认值 `true` 和 `customer_type` 的默认值 `'regular'` 是合理的。\n\n### 潛在問題識別\n\n#### 1. 懸空指針\n- 當 `phone`、`date_of_birth` 或 `gender` 為 NULL 時，可能會導致查詢效率下降。\n\n### 改進建議\n\n#### 1. 構建索引\n- 在 `phone`、`date_of_birth` 和 `gender` 上增加索引，例如：\n  ```sql\n  CREATE INDEX idx_customers_phone ON customers(phone);\n  CREATE INDEX idx_customers_date_of_birth ON customers(date_of_birth);\n  CREATE INDEX idx_customers_gender ON customers(gender);\n  ```\n\n#### 2. 查询优化\n- 在需要篩選特定客戶的查詢中，使用 `WHERE` 子句来限制查詢範圍，例如：\n  ```sql\n  SELECT * FROM customers WHERE email = 'example@example.com';\n  ```\n\n#### 3. 数据清理\n- 確保所有 `phone`、`date_of_birth` 和 `gender` 字段都有合理的值，避免悬空指針。\n\n#### 4. 定期维护\n- 定期進行資料庫的维护，如 vacuum 和 analyze，以提高查詢效率和數據完整性。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:35:55.93205+08:00"
+    },
+    "inventory_transactions": {
+      "table_name": "inventory_transactions",
+      "analysis": "### 表格設計評估\n\n#### 1. 結构合理性\n- **id**: 主鍵，合理且使用序列生成，確保唯一性。\n- **product_id**: 外鍵，用于关联产品表，合理且使用外键约束。\n- **variant_id**: 外鍵，用于关联产品变体表，合理且使用外键约束。\n- **transaction_type**: 字符串类型，用于记录交易类型，合理且使用NOT NULL约束。\n- **quantity**: 整型，用于记录交易数量，合理且使用NOT NULL约束。\n- **previous_quantity**: 整型，记录交易前的数量，合理且使用NOT NULL约束。\n- **new_quantity**: 整型，记录交易后的数量，合理且使用NOT NULL约束。\n- **reference_type**: 字符串类型，记录交易的参考类型，合理且使用NOT NULL约束。\n- **reference_id**: 整型，记录交易的参考ID，合理且使用NOT NULL约束。\n- **notes**: 多行文本类型，用于记录额外的备注信息，合理且使用NULL约束。\n- **created_by**: 字符串类型，记录创建交易的用户，合理且使用NOT NULL约束。\n- **created_at**: 时间戳类型，记录交易的创建时间，合理且使用DEFAULT CURRENT_TIMESTAMP约束。\n\n#### 2. 命名規範\n- 表名 `inventory_transactions` 合理，描述了该表格的主要功能。\n- 欄名 `id`, `product_id`, `variant_id`, `transaction_type`, `quantity`, `previous_quantity`, `new_quantity`, `reference_type`, `reference_id`, `notes`, `created_by`, `created_at` 等都使用了合理的描述性命名，符合数据库命名规范。\n\n### 性能優化建議\n\n#### 1. 索引\n- **索引: idx_inventory_transactions_product_id**: 用于加速根据 `product_id` 查询的性能，特别是在需要关联产品表时。\n- **索引: inventory_transactions_pkey (唯一)**: 确保 `id` 的唯一性，对于主键查询非常有用。\n\n#### 2. 查詢優化\n- **查询: 查找某个产品的所有交易记录**\n  ```sql\n  SELECT *\n  FROM inventory_transactions\n  WHERE product_id = ?;\n  ```\n  使用 `idx_inventory_transactions_product_id` 索引可以显著提高查询效率。\n\n- **查询: 查找某个用户的交易记录**\n  ```sql\n  SELECT *\n  FROM inventory_transactions\n  WHERE created_by = ?;\n  ```\n  使用 `created_by` 字段的索引可以提高查询效率。\n\n### 數據完整性分析\n\n#### 1. 约束\n- **主鍵: [id]**: 确保 `id` 的唯一性，防止重复数据。\n- **外鍵: product_id, variant_id**: 确保 `product_id` 和 `variant_id` 存在于相应的表中，防止关联错误。\n\n#### 2. 数据質量\n- **NULL值**: 数据中存在多个 `NULL` 值，如 `notes` 和 `created_by`，需要进行清理或验证。\n- **数据范围**: 数据范围合理，如 `quantity` 和 `new_quantity` 都是非负整数。\n\n### 潛在問題識別\n\n- **数据完整性**: 数据中存在多个 `NULL` 值，需要进行清理或验证。\n- **索引性能**: 部分索引（如 `created_by`）可能不被频繁使用，可以考虑优化。\n- **数据分布**: 数据可能分布不均，导致某些索引不被充分利用。\n\n### 改進建議\n\n- **数据清理**: 清理 `NULL` 值，确保数据的完整性和一致性。\n- **索引优化**: 根据查询需求优化索引，确保索引的使用效率。\n- **数据分布**: 分析数据分布，考虑使用分区表或数据分片技术，以提高查询性能。\n\n通过上述分析和建议，可以进一步优化表格设计和性能，确保数据的完整性和查询效率。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:36:16.808757+08:00"
+    },
+    "order_items": {
+      "table_name": "order_items",
+      "analysis": "### 表格設計評估\n\n#### 1.1 構造合理性\n- **主鍵**: 使用 `id` 作為主鍵，符合最佳實踐，確保數據的唯一性。\n- **外鍵數量**: 外鍵數量為 3，涉及 `order_id`, `product_id`, 和 `variant_id`，這表明表格與 `orders`, `products`, 和 `variants` 表有關聯，符合多表JOIN的需求。\n- **索引**: 使用了 `idx_order_items_order_id` 和 `idx_order_items_product_id`，分別對 `order_id` 和 `product_id` 进行索引，提高了JOIN操作的效率。\n- **唯一性约束**: 使用 `order_items_pkey` 確保 `id` 的唯一性。\n\n#### 1.2 命名規範\n- **欄位名**: 使用英文單詞，符合SQL語法和數據庫最佳實踐。\n- **描述**: 每個欄位都有清晰的描述，如 `id`, `order_id`, `product_id`, `name`, `quantity`, 等，便于理解和使用。\n\n#### 1.3 其他\n- **`id` 字段**: 使用序列（`nextval`）生成唯一ID，符合數據庫設計的最佳實踐。\n- **`created_at` 字段**: 使用 `CURRENT_TIMESTAMP` 初始化，符合日志記錄的需求。\n\n### 性能優化建議\n\n#### 2.1 索引\n- **`idx_order_items_variant_id`**: 對 `variant_id` 索引，因為 `variant_id` 也涉及到多表JOIN操作，提高JOIN效率。\n\n#### 2.2 查詢優化\n- **使用JOIN**: 在需要多表JOIN的地方，使用JOIN語句，而不是嵌套SELECT語句。\n- **避免全表掃描**: 確保在使用JOIN或WHERE子句時，使用索引。\n\n### 數據完整性分析\n\n#### 3.1 约束\n- **主鍵**: `id` 字段使用序列生成唯一ID，确保数据的唯一性。\n- **外鍵**: 确保 `order_id`, `product_id`, 和 `variant_id` 結合在 `orders`, `products`, 和 `variants` 表中，避免引用不存在的记录。\n\n#### 3.2 数据质量\n- **`order_id`**: 确保 `order_id` 結合在 `orders` 表中，避免引用不存在的订单。\n- **`product_id`**: 确保 `product_id` 結合在 `products` 表中，避免引用不存在的产品。\n- **`variant_id`**: 确保 `variant_id` 結合在 `variants` 表中，避免引用不存在的变体。\n\n### 潛在問題識別\n\n#### 4.1 数据冗余\n- **`name` 字段**: 對于每一项，都有 `name` 字段，如果 `name` 字段的值在多处相同，可以考虑使用 `name` 字段的唯一性约束，或者合并到其他表中。\n\n#### 4.2 数据更新不及时\n- **`created_at` 字段**: 使用 `CURRENT_TIMESTAMP` 初始化，但没有更新机制，如果需要更新数据，需要手动更新 `created_at` 字段。\n\n### 改進建議\n\n#### 5.1 数据冗余\n- **合并字段**: 将 `name` 字段合并到其他表中，或者使用 `name` 字段的唯一性约束。\n- **创建触发器**: 创建触发器，在更新数据时自动更新 `created_at` 字段。\n\n#### 5.2 数据更新不及时\n- **更新触发器**: 创建触发器，在更新数据时自动更新 `created_at` 字段。\n\n通过以上分析和建议，可以进一步优化 `order_items` 表的结构和性能。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:38:46.739459+08:00"
+    },
+    "orders": {
+      "table_name": "orders",
+      "analysis": "### 表格設計評估\n\n1. **結構合理性**:\n   - 表格名稱 `orders` 是合理的，表示這是一張用于存放訂單信息的表。\n   - 按照常規，表名應該使用小寫，如果有必要使用大寫，也應該是全大寫。\n   - 欄位命名清晰，如 `id`、`order_number`、`customer_id` 等，符合常見的字段命名規范。\n   - 字段 `created_at` 和 `updated_at` 用於記錄訂單的創建和更新時間，符合業務需求。\n   - 字段 `billing_address` 和 `shipping_address` 使用 `jsonb` 类型，方便存储和查询复杂的地址信息。\n\n2. **命名規範**:\n   - 表名和欄位名稱符合常規的命名規范，易于理解和维护。\n\n### 性能優化建議\n\n1. **索引**:\n   - 已存在的索引 `idx_orders_customer_id` 和 `idx_orders_ordered_at` 為查詢訂單提供了很好的性能支持。\n   - 可以考虑在 `status` 欄位上添加索引，以加快状态查询的性能。\n   - 如果 `order_number` 是唯一鍵，可以在 `orders_order_number_key` 索引上增加一个 `UNIQUE` 约束，以确保唯一性。\n\n2. **查詢優化**:\n   - 使用索引進行查詢，如 `SELECT * FROM orders WHERE customer_id = 1` 可以利用 `idx_orders_customer_id` 索引。\n   - 如果需要查询特定狀態的订单，可以使用 `SELECT * FROM orders WHERE status = 'completed'` 并利用 `idx_orders_status` 索引。\n\n### 數據完整性分析\n\n1. **約束**:\n   - 主鍵 `id` 是唯一的，确保每條記錄都有唯一的标识。\n   - `customer_id` 和 `order_number` 是唯一鍵，确保每条订单都有唯一的标识和编号。\n   - `subtotal`、`tax_amount`、`shipping_amount`、`discount_amount` 和 `total` 字段的默认值是0.00，确保数据的完整性。\n   - `status`、`payment_status`、`fulfillment_status` 字段的默认值是 'pending'，确保初始状态的正确性。\n\n2. **數據質量**:\n   - `created_at` 和 `updated_at` 字段默认值是当前时间，确保数据的记录和更新时间的准确性。\n   - `billing_address` 和 `shipping_address` 字段使用 `jsonb` 类型，可以存储复杂的地址信息，但需要确保数据的格式正确。\n\n### 潛在問題識別\n\n1. **性能問題**:\n   - 如果 `billing_address` 和 `shipping_address` 字段的 `jsonb` 数据量较大，可能会导致查询性能下降。\n   - 如果 `status` 字段的查询频率很高，可以考虑增加 `status` 字段的索引。\n\n2. **数据一致性问题**:\n   - 如果 `billing_address` 和 `shipping_address` 字段的数据不一致，可能会导致数据不完整。\n   - 如果 `status` 字段的默认值不正确，可能会导致初始状态的不正确性。\n\n3. **数据更新问题**:\n   - 如果 `created_at` 和 `updated_at` 字段的默认值不是当前时间，可能会导致数据的记录和更新时间不准确。\n\n### 改進建議\n\n1. **性能優化**:\n   - 如果 `billing_address` 和 `shipping_address` 字段的 `jsonb` 数据量较大，可以考虑使用 `jsonb` 子字段进行索引，例如 `billing_address-\u003e\u003e'country'`。\n   - 如果 `status` 字段的查询频率很高，可以考虑增加 `status` 字段的索引。\n\n2. **數據一致性問題**:\n   - 使用外部工具或脚本进行数据一致性检查，确保 `billing_address` 和 `shipping_address` 字段的数据一致。\n   - 使用 `CHECK` 约束确保 `status` 字段的默认值是正确的。\n\n3. **數據更新问题**:\n   - 在更新数据时，使用 `UPDATE` 语句而不是 `INSERT` 语句，以确保数据的更新时间是当前时间。\n\n通过这些分析和建议，可以进一步优化表的性能，确保数据的完整性和一致性。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:36:40.297274+08:00"
+    },
+    "payments": {
+      "table_name": "payments",
+      "analysis": "### 表格設計評估\n\n1. **結構合理性**:\n   - **字段名稱**:\n     - `id`: 好的，使用唯一整數作為主鍵，便于查詢和排序。\n     - `order_id`: 通常用于关联，表示该支付属于哪个订单，但未明确是否是外键。\n     - `amount`: 好的，使用 `numeric` 类型以支持小数点，并且有默认值为 0。\n     - `currency`: 好的，使用 `character varying` 类型，但未明确是否是外键。\n     - `payment_method`: 好的，使用 `character varying` 类型，但未明确是否是外键。\n     - `transaction_id`: 好的，使用 `character varying` 类型，但未明确是否是外键。\n     - `status`: 好的，使用 `character varying` 类型，并且有默认值为 'pending'。\n     - `gateway_response`: 好的，使用 `jsonb` 类型，便于存储复杂的响应数据。\n     - `processed_at`: 好的，使用 `timestamp with time zone` 类型。\n     - `created_at` 和 `updated_at`: 好的，使用 `timestamp with time zone` 类型，并且有默认值为当前时间。\n\n   - **外鍵和唯一鍵**:\n     - 外鍵数量为 1，未明确是哪一行的外键。\n     - 唯一鍵数量为 2，分别是 `order_id` 和 `transaction_id`，这表明 `order_id` 是外键，而 `transaction_id` 是唯一键。\n\n   - **索引**:\n     - `idx_payments_order_id`: 好的，用于快速查找订单相关的支付。\n     - `payments_pkey`: 好的，用于唯一标识每一行数据。\n     - `payments_transaction_id_key`: 好的，用于唯一标识每一行数据。\n\n2. **命名規範**:\n   - 表格名稱 `payments` 看起來是合理的，但可以考虑使用更具描述性的名称以提高可读性。\n\n### 性能優化建議\n\n1. **索引**:\n   - 現有的索引已经非常完善，但可以考虑在 `order_id` 上增加一个复合索引，以提高查询性能。\n\n2. **查詢優化**:\n   - 如果经常需要查询特定订单的支付记录，可以考虑在 `order_id` 上增加复合索引，例如：`CREATE INDEX idx_payments_order_id ON payments (order_id, payment_method);`。\n\n3. **緩存**:\n   - 如果查询频率非常高，可以考虑使用缓存服务（如 Redis 或 Memcached）来缓存查询结果，减少对数据库的压力。\n\n### 數據完整性分析\n\n1. **約束**:\n   - **主鍵**: `id` 是主鍵，确保每一行数据都有一个唯一的标识。\n   - **外鍵**: `order_id` 是外鍵，确保 `order_id` 在 `orders` 表中存在。\n   - **唯一鍵**: `order_id` 和 `transaction_id` 是唯一键，确保每一行数据在 `order_id` 或 `transaction_id` 上都有唯一性。\n\n2. **數據質量**:\n   - `amount`、`currency` 和 `payment_method` 都有默认值，确保数据的完整性。\n   - `processed_at` 和 `created_at` 和 `updated_at` 有默认值，确保数据的完整性。\n\n### 潛在問題識別\n\n1. **數據冗余**:\n   - `order_id` 是外键，但 `order_id` 未明确指向 `orders` 表，可能导致数据不一致。\n\n2. **索引使用**:\n   - 现有的索引已经很完善，但可以考虑在 `order_id` 上增加复合索引。\n\n### 改進建議\n\n1. **數據冗余**:\n   - 确保 `order_id` 指向 `orders` 表，避免数据不一致。\n\n2. **索引使用**:\n   - 在 `order_id` 上增加复合索引，例如：`CREATE INDEX idx_payments_order_id ON payments (order_id, payment_method);`。\n\n3. **性能优化**:\n   - 如果查询频率非常高，可以考虑使用缓存服务来缓存查询结果，减少对数据库的压力。\n\n4. **数据备份**:\n   - 定期进行数据备份，以防止数据丢失。\n\n5. **监控和维护**:\n   - 定期监控数据库性能，定期维护数据库，以确保数据库的稳定性和效率。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:37:04.39976+08:00"
+    },
+    "product_variants": {
+      "table_name": "product_variants",
+      "analysis": "### 表格設計評估\n\n1. **結構合理性**:\n   - 表格的結構設計合理，包括必要的字段和可選字段。例如，`id` 是主鍵，`product_id` 是外鍵，`sku` 和 `name` 是唯一鍵，這些都符合常見的數據庫設計慣例。\n   - 字段 `price`, `cost_price`, `compare_at_price`, `weight` 和 `dimensions` 都是必要的信息，有助于管理產品的價格、成本、比較價、重量和尺寸。\n   - 字段 `inventory_quantity` 和 `is_active` 是可選的，但提供了灵活性，便于管理產品的庫存和激活狀態。\n\n2. **命名規範**:\n   - 表格名稱 `product_variants` 遵循了 CamelCase 命名規範，符合慣例。\n   - 字段名稱也遵循了 CamelCase 命名規範，如 `id`, `product_id`, `sku`, `name`, 等。\n\n### 性能優化建議\n\n1. **索引**:\n   - 已存在索引 `idx_product_variants_product_id`，用于快速查找 `product_id`。這是非常有用的，因為 `product_id` 通常是查詢的關鍵字段。\n   - 建議增加索引 `product_variants_pkey` 和 `product_variants_sku_key`，以加快唯一鍵的查找速度。\n\n2. **查詢優化**:\n   - 使用 `EXPLAIN` 查詢語句來分析查詢的性能，找出性能瓶颈。\n   - 確保在查詢中使用索引，例如 `SELECT * FROM product_variants WHERE product_id = ? AND is_active = ?`，使用 `WHERE` 子句限制結果集。\n\n### 數據完整性分析\n\n1. **約束**:\n   - 主鍵 `id` 使用 `nextval('product_variants_id_seq'::regclass)` 生成，確保了唯一性。\n   - 外鍵 `product_id` 引用了 `product` 表，確保了數據的完整性和一致性。\n   - 唯一鍵 `sku` 确保了每種 SKU 在表格中是唯一的。\n\n2. **數據質量**:\n   - 字段 `price`, `cost_price`, `compare_at_price`, `weight` 和 `dimensions` 都是 `NULL` 的可能性，需要在數據插入或更新時進行檢查和補充。\n   - 字段 `inventory_quantity` 和 `is_active` 的默认值合理，但在插入或更新時需要進行檢查和補充。\n\n### 潛在問題識別\n\n1. **數據量為零**:\n   - 當數據量為零時，性能可能不佳，因為所有索引和查詢都需要進行遍历。\n   - 建議定期分析數據量，確保數據庫的性能不會受到負面影響。\n\n2. **字段未使用**:\n   - 字段 `option1`, `option2`, `option3` 可能未被使用，可以考慮移除或合并。\n\n### 改進建議\n\n1. **增加索引**:\n   - 在 `product_variants` 表上增加索引 `product_variants_pkey` 和 `product_variants_sku_key`，以提高唯一鍵的查找速度。\n\n2. **數據完整性**:\n   - 在數據插入或更新時，添加檢查和補充邏輯，确保所有字段都有值。\n   - 定期更新和清理 `NULL` 值。\n\n3. **性能分析**:\n   - 定期使用 `EXPLAIN` 查詢語句分析查詢性能，找出性能瓶颈并进行优化。\n\n4. **數據量管理**:\n   - 定期分析和清理數據量，确保數據庫的性能不會受到負面影響。\n\n通过这些改进，可以提高 `product_variants` 表的性能和数据完整性，确保其在实际应用中的稳定性和效率。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:34:02.702525+08:00"
+    },
+    "products": {
+      "table_name": "products",
+      "analysis": "表格設計評估：\n\n1. **結構合理性**：表格結構設計合理，包含了必要的字段以支持產品的管理。例如，`id` 作為主鍵，`sku` 作為唯一標識符，`name` 作為產品名稱，`price` 和 `cost_price` 用于定價管理，`inventory_quantity` 用于庫存管理，`is_active` 和 `is_featured` 用于產品狀態管理，`tags` 和 `images` 用于標籤和圖片管理。此外，`dimensions` 和 `seo_title`/`seo_description` 用于產品的詳細信息和搜索优化。\n\n2. **命名規範**：表格名稱 `products` 和欄位名稱 `id`、`sku`、`name` 等都遵循了清晰、可讀的命名規範，易于理解和使用。\n\n性能優化建議：\n\n1. **索引**：\n   - 已存在的索引 `idx_products_active` 和 `idx_products_category_id` 為常見的使用場景，可以保持。\n   - 可以考慮添加索引 `idx_products_sku`，以提高 SKU 查找的效率。\n   - 如果 `tags` 和 `images` 字段需要频繁查詢，可以考虑创建全文索引或创建 B-tree 索引。\n\n2. **查詢優化**：\n   - 使用 `EXPLAIN` 查看查詢計劃，找出慢查詢的原因。\n   - 使用 `JOIN` 操作符代替 `IN` 或 `EXISTS` 操作符，以提高性能。\n   - 使用 `LIMIT` 和 `OFFSET` 限制查詢結果集的大小，避免全表掃描。\n\n數據完整性分析：\n\n1. **約束**：\n   - 主鍵 `id` 和唯一鍵 `sku` 都是有效的，防止數據重複。\n   - `is_active` 和 `is_featured` 是布尔字段，默认值合理，但可以考虑添加更多的约束以确保数据的正确性。\n\n2. **數據質量**：\n   - `price` 和 `cost_price` 字段可以考虑添加正则表达式或约束来确保数据的格式正確。\n   - `dimensions` 字段可以考虑添加约束来确保数据的格式正確。\n   - `inventory_quantity` 字段的默认值为 0 是合理的，但可以考虑添加约束以确保其值在合理范围内。\n\n潛在問題識別：\n\n1. **數據量**：\n   - 現在的數據量只有 10 個記錄，如果數據量增加，索引性能可能會受到影响。\n\n2. **數據一致性**：\n   - 要确保 `sku` 的唯一性，可以在插入新記錄之前检查是否存在相同 `sku` 的记录。\n\n改進建議：\n\n1. **增加索引**：\n   - 根据性能分析的结果，增加索引 `idx_products_sku`。\n\n2. **优化查询**：\n   - 使用 `EXPLAIN` 查看查询计划，优化查询。\n\n3. **数据完整性**：\n   - 添加约束以确保 `price` 和 `cost_price` 的格式正確。\n   - 添加约束以确保 `dimensions` 的格式正確。\n   - 添加约束以确保 `inventory_quantity` 的值在合理范围内。\n\n4. **数据量管理**：\n   - 如果數據量增加，考虑使用分表或分區技術來管理數據。\n\n通过以上分析和改进建议，可以提高表格的性能和数据完整性，更好地支持產品管理的需求。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:34:20.745387+08:00"
+    },
+    "returns": {
+      "table_name": "returns",
+      "analysis": "### 表格設計評估\n\n#### 1. 結構合理性\n\n- **字段命名**: 欄位名稱如 `id`, `order_id`, `customer_id`, `reason`, `status`, `refund_amount`, `items`, `notes`, `requested_at`, `approved_at`, `received_at`, `refunded_at`, `created_at`, `updated_at` 都是合理的，且遵循了 CamelCase 命名規範。\n  \n- **字段數據類型**: \n  - `id` 使用 `integer`，符合唯一性要求，且使用 `nextval` 生成序列。\n  - `order_id` 和 `customer_id` 使用 `integer`，表示外鍵。\n  - `reason`, `status`, `notes` 使用 `character varying`，可變長度字符串。\n  - `refund_amount` 使用 `numeric`，表示可負值的數字。\n  - `items` 使用 `jsonb`，支持 JSON 格式的数据，便于存储复杂结构的数据。\n  - `requested_at`, `approved_at`, `received_at`, `refunded_at`, `created_at`, `updated_at` 使用 `timestamp with time zone`，表示時間戳，便于记录事件發生時間。\n  \n  - **約束**: \n    - 主鍵 `id` 使用 `NOT NULL`，確保每條記錄都有唯一的标识。\n    - 外鍵约束 `order_id` 和 `customer_id` 确保这些字段引用了 `orders` 和 `customers` 表中的 `id`。\n\n- **字段描述**: \n  - `id`：唯一标识每一笔退货。\n  - `order_id`：关联的订单 ID。\n  - `customer_id`：关联的顾客 ID。\n  - `reason`：退货的原因。\n  - `status`：退货的状态，如“requested”（已请求）、“approved”（已批准）、“received”（已接收）、“refunded”（已退款）。\n  - `refund_amount`：退款的金额。\n  - `items`：退货的商品信息。\n  - `notes`：备注信息。\n  - `requested_at`：退货请求的时间。\n  - `approved_at`：退货批准的时间。\n  - `received_at`：退货接收的时间。\n  - `refunded_at`：退货退款的时间。\n  - `created_at`：记录创建时间。\n  - `updated_at`：记录更新时间。\n\n- **索引**: \n  - `idx_returns_order_id`：按 `order_id` 索引，便于快速查找与特定订单相关的退货记录。\n  - `returns_pkey`：唯一索引，确保 `id` 字段的唯一性。\n\n#### 2. 命名規範\n\n- **表名**: `returns` 遵循了 PascalCase 命名規範，易于理解和使用。\n\n#### 3. 數據完整性\n\n- **主鍵**: `id` 為主鍵，确保每条记录都有唯一的标识。\n- **外鍵**: `order_id` 和 `customer_id` 使用外鍵约束，确保这些字段引用了 `orders` 和 `customers` 表中的 `id`。\n- **約束**: `id` 為 `NOT NULL`，`order_id` 和 `customer_id` 為 `NOT NULL`，确保数据的完整性。\n- **數據質量**: `refund_amount` 和 `refund_amount` 可能需要验证，确保数据的合理性。\n\n### 性能優化建議\n\n#### 1. 索引\n\n- **現有索引**：\n  - `idx_returns_order_id`：按 `order_id` 索引，便于快速查找与特定订单相关的退货记录。\n  - `returns_pkey`：唯一索引，确保 `id` 字段的唯一性。\n\n- **新增索引**：\n  - `idx_returns_status`：按 `status` 索引，便于快速查找特定状态的退货记录。\n  - `idx_returns_customer_id`：按 `customer_id` 索引，便于快速查找特定顾客的退货记录。\n\n#### 2. 查询優化\n\n- **常用查詢**：\n  - 查找特定订单的所有退货记录：`SELECT * FROM returns WHERE order_id = ?`\n  - 查找特定顾客的所有退货记录：`SELECT * FROM returns WHERE customer_id = ?`\n  - 查找特定状态的所有退货记录：`SELECT * FROM returns WHERE status = ?`\n\n- **索引利用**：\n  - 通過 `ORDER BY`、`WHERE`、`GROUP BY` 等子句使用索引，如 `ORDER BY order_id`、`WHERE status = 'approved'`、`GROUP BY customer_id`。\n\n### 數據完整性分析\n\n- **主鍵**: `id` 為主鍵，确保每条记录都有唯一的标识。\n- **外鍵**: `order_id` 和 `customer_id` 使用外鍵约束，确保这些字段引用了 `orders` 和 `customers` 表中的 `id`。\n- **約束**: `id` 為 `NOT NULL`，`order_id` 和 `customer_id` 為 `NOT NULL`，确保数据的完整性。\n- **數據質量**: `refund_amount` 和 `refund_amount` 可能需要验证，确保数据的合理性。\n\n### 潛在問題識別\n\n- **數據冗余**: `items` 字段使用 `jsonb`，可能需要进一步优化，以减少数据冗余，提高查询效率。\n- **更新频率**: `created_at` 和 `updated_at` 字段记录创建和更新时间，可能需要优化，以减少不必要的更新频率。\n\n### 改進建議\n\n1. **數據冗余优化**：\n   - 可以考虑将 `items` 字段的数据提取到单独的 `items` 表中，使用外键关联，以减少 `returns` 表的数据冗余。\n\n2. **更新频率优化**：\n   - 可以考虑使用触发器或数据库日志来记录更新频率，减少不必要的更新。\n\n3. **性能优化**：\n   - 通过添加更多的索引和优化查询语句，提高数据库的性能。\n\n4. **数据验证**：\n   - 对 `refund_amount` 和 `refund_amount` 进行数据验证，确保数据的合理性。\n\n5. **数据备份**：\n   - 定期进行数据备份，以防止数据丢失。\n\n6. **性能监控**：\n   - 定期监控数据库性能，及时发现问题并进行优化。\n\n通过以上分析和建议，可以确保 `returns` 表的设计合理性、性能优化和数据完整性，提高数据库的稳定性和效率。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:34:55.227423+08:00"
+    },
+    "reviews": {
+      "table_name": "reviews",
+      "analysis": "### 表格設計評估\n\n#### 1. 構造合理性\n- **主鍵**: `id` 是一個整數且是 `NOT NULL`，使用 `nextval` 函數生成序列，符合 PostgreSQL 的最佳實踐，確保唯一性和自增性。\n- **外鍵**: 有三個外鍵 (`product_id`, `customer_id`, `order_id`)，這表示 `reviews` 表與 `products`, `customers`, 和 `orders` 表有關聯，確保數據的一致性和完整性。\n- **索引**: 使用 `idx_reviews_product_id` 索引，提高了 `product_id` 的查詢效率，尤其是當需要查找特定產品的所有評論時。\n\n#### 2. 命名規範\n- 表名 `reviews` 適當，表名清晰地描述了表的用途。\n- 欄位名 `id`, `product_id`, `customer_id`, `order_id`, `rating`, `title`, `content`, `images`, `is_verified`, `helpful_votes`, `status`, `created_at`, `updated_at` 都是合理的，符合 PostgreSQL 的命名規范，且命名清晰。\n\n#### 3. 結束\n- **主鍵**: 確保唯一性，防止重複。\n- **外鍵**: 確保數據的一致性和完整性，防止異常數據的引入。\n- **索引**: 提高查詢效率，尤其是在需要大量數據匹配時。\n\n### 性能優化建議\n\n#### 1. 索引\n- 現有的 `idx_reviews_product_id` 索引已經存在，但可以考慮在 `customer_id` 和 `order_id` 上添加索引，以提高其他查詢的效率。\n- 在 `created_at` 或 `updated_at` 上添加索引，以支持按日期排序的查詢。\n\n#### 2. 查詢優化\n- 在需要查找特定產品的所有評論時，可以使用 `idx_reviews_product_id` 索引。\n- 在需要按日期排序的查詢時，可以使用 `created_at` 或 `updated_at` 索引。\n- 在需要查找特定用戶或訂單的評論時，可以使用 `customer_id` 和 `order_id` 索引。\n\n### 數據完整性分析\n\n#### 1. 约束\n- **主鍵**: 确保唯一性，防止重複。\n- **外鍵**: 确保數據的一致性和完整性，防止異常數據的引入。\n- **NOT NULL**: 確保數據不為 NULL，防止異常數據的引入。\n\n#### 2. 数据质量\n- `rating` 是一個整數，取值範圍為 1 到 5，符合評價標準。\n- `title` 和 `content` 是可選字段，可以為 NULL。\n- `images` 是一個陣列，可以為 NULL。\n- `is_verified` 是一個布尔值，可以為 true 或 false。\n- `helpful_votes` 是一個整數，取值範圍為 0 或以上，可以為 NULL。\n- `status` 是一個字符型，可以取值 'pending', 'approved', 'rejected' 等，可以為 NULL。\n\n### 潛在問題識別\n\n- `id` 是自增的序列，但在 `row_count` 和 `table_size` 中，沒有直接反映出序列的最大值，可能需要定期檢查序列的使用情况。\n- `images` 是一個陣列，但沒有定义是否是唯一的或是否可以包含 NULL 值，需要进一步分析。\n\n### 改進建議\n\n#### 1. 檢查序列使用情况\n- 定期檢查 `reviews_id_seq` 序列的使用情况，確保序列的最大值與 `row_count` 和 `table_size` 相匹配。\n\n#### 2. 定义 `images` 字段的约束\n- 定义 `images` 字段是否是唯一的或是否可以包含 NULL 值，以确保数据的一致性和完整性。\n\n#### 3. 定义 `status` 字段的约束\n- 定义 `status` 字段是否可以取值 'pending', 'approved', 'rejected' 等，以确保数据的一致性和完整性。\n\n#### 4. 定义 `helpful_votes` 字段的约束\n- 定义 `helpful_votes` 字段是否可以为 NULL，以确保数据的一致性和完整性。\n\n通过以上分析和建议，可以提高表格的性能和数据的完整性和一致性。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:37:28.032641+08:00"
+    },
+    "shipments": {
+      "table_name": "shipments",
+      "analysis": "1. 表格設計評估：\n   - 結構合理性：表格的結構設計合理，包括基本的字段（如id、order_id、tracking_number等）和一些可選字段（如status、shipped_at等），以及一些特殊字段（如weight、dimensions）。這些字段設計符合常见的物流信息需求。\n   - 命名規範：大部分字段名使用了清晰、描述性的命名，如tracking_number、carrier等。然而，某些字段名（如weight、dimensions）可能需要更清晰的描述，以避免歧義。\n   - 索引和外鍵：表格中已經包含了一些索引（如idx_shipments_order_id、shipments_pkey和shipments_tracking_number_key），以及一個外鍵约束（order_id）。這些設計有助于提高查询性能和数据完整性。\n\n2. 性能優化建議：\n   - 索引：表中的一些索引（如idx_shipments_order_id和shipments_tracking_number_key）已經存在，但可以考慮添加更多的索引以提高查询性能。例如，如果经常需要根据order_id查询 shipments表，可以在order_id上添加一个复合索引（如(order_id, tracking_number)），以提高查询效率。\n   - 查询優化：在查询时，可以使用JOIN操作而不是子查询，以提高查询性能。例如，如果需要查询某个order_id的 shipments信息，可以使用JOIN操作而不是子查询（如SELECT * FROM shipments JOIN orders ON shipments.order_id = orders.id WHERE orders.id = 'some_order_id'）。\n\n3. 數據完整性分析：\n   - 约束：表格中已经包含了一些约束，如主鍵约束（id）、外鍵约束（order_id）和唯一鍵约束（tracking_number）。这些约束有助于保证数据的完整性和一致性。\n   - 数据質量：表中的一些字段（如shipped_at、delivered_at和estimated_delivery）可能需要更严格的约束，以确保数据的准确性。例如，如果这些字段是日期时间字段，可以使用CHECK约束（如CHECK(shipped_at IS NOT NULL AND shipped_at \u003e= CURRENT_TIMESTAMP)）。\n\n4. 潛在問題識別：\n   - 空值問題：表中的一些字段（如carrier、dimensions、notes）可能包含空值，这些空值可能会影响数据分析和查询性能。例如，如果经常需要查询carrier为NULL的 shipments信息，可以考虑创建一个包含carrier字段的视图或索引。\n   - 数据冗余：表中的一些字段（如weight、dimensions）可能需要更严格的约束，以确保数据的准确性。例如，如果这些字段是数值字段，可以使用CHECK约束（如CHECK(weight \u003e 0)）。\n\n5. 改進建議：\n   - 空值問題：可以考虑创建一个包含carrier字段的视图或索引，以提高查询性能。例如，如果经常需要查询carrier为NULL的 shipments信息，可以创建一个视图（如CREATE VIEW shipments_without_carrier AS SELECT * FROM shipments WHERE carrier IS NULL）。\n   - 数据冗余：可以考虑创建一个包含weight、dimensions字段的视图或索引，以提高查询性能。例如，如果经常需要查询weight、dimensions字段的数据，可以创建一个视图（如CREATE VIEW shipments_with_weight_dimensions AS SELECT * FROM shipments WHERE weight IS NOT NULL AND dimensions IS NOT NULL）。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:35:12.434998+08:00"
+    },
+    "shopping_carts": {
+      "table_name": "shopping_carts",
+      "analysis": "### 表格設計評估\n\n**結構合理性:**\n- **主鍵:** `id` 是一個合理的主鍵，確保每一筆記錄都有唯一的身份。\n- **外鍵:** 沒有列出的外鍵表明 `shopping_carts` 表可能不直接與其他表有直接的關聯。然而，`customer_id` 和 `session_id` 可能指向其他表（如 `customers` 和 `sessions`），這需要在設計時考慮。\n- **唯一鍵:** `session_id` 是唯一的，這確保同一個 session 只能有一個 shopping cart。\n- **約束:** 為 `id` 設定了自增序列，確保了 `id` 的唯一性和自動增長。\n- **jsonb 字段:** `items` 是一個 jsonb 字段，允許存儲複雜的數據結構，如商品列表，但需要考慮 jsonb 的性能和可讀性。\n\n**命名規範:**\n- **表名:** `shopping_carts` 結合了表的功能，如購物車。\n- **欄位名:** `id`、`session_id`、`customer_id`、`items`、`subtotal`、`total`、`expires_at`、`created_at`、`updated_at` 都是合理的命名，描述了欄位的功能。\n\n**其他:**\n- 没有列出的約束可能需要根據業務需求添加。\n- 需要考慮索引和查詢優化。\n\n### 性能優化建議\n\n1. **索引:**\n   - **唯一索引:** 已經存在 `shopping_carts_pkey` 和 `shopping_carts_session_id_key` 索引。\n   - **其他索引:** 根據查詢模式，可能需要增加其他索引，如 `customer_id` 索引，以提高查找效率。\n\n2. **查詢優化:**\n   - 使用 `LIMIT` 和 `OFFSET` 進行分頁查詢。\n   - 使用索引進行篩選，如 `WHERE customer_id = 123`。\n\n### 數據完整性分析\n\n1. **約束:**\n   - `id` 是主鍵，唯一且自增。\n   - `session_id` 是唯一索引，防止同一 session 多個 cart。\n   - `customer_id` 和 `items` 可能指向其他表，需要確認外鍵约束。\n\n2. **數據質量:**\n   - `subtotal` 和 `total` 需要定期檢查，確保計算正確。\n   - `expires_at` 需要定期更新，以避免過期 cart。\n\n### 潛在問題識別\n\n1. **性能問題:**\n   - 如果 `items` 字段非常大，可能導致查詢性能下降。\n   - 如果表數據量非常大，可能需要考慮分片或數據分區。\n\n2. **數據一致性问题:**\n   - 如果 `customer_id` 和 `session_id` 没有正確引用其他表，可能導致數據一致性問題。\n\n3. **數據完整性問題:**\n   - 如果 `items` 字段包含不正確的商品信息，可能導致數據完整性問題。\n\n### 改進建議\n\n1. **優化索引:**\n   - 根据查询模式，增加必要的索引，如 `customer_id` 索引。\n\n2. **性能优化:**\n   - 使用 `LIMIT` 和 `OFFSET` 进行分頁查询。\n   - 使用索引进行篩選，如 `WHERE customer_id = 123`。\n\n3. **数据完整性:**\n   - 确认 `customer_id` 和 `session_id` 指向其他表，添加外键约束。\n   - 定期检查 `subtotal` 和 `total`，确保计算正确。\n   - 定期更新 `expires_at`，以避免过期 cart。\n\n4. **数据管理:**\n   - 定期清理过期的 cart，以减少数据量。\n   - 使用数据分片或分區，以提高性能和数据管理。\n\n通过以上分析和建议，可以更好地设计和管理 `shopping_carts` 表，提高数据的完整性和查询性能。",
+      "recommendations": [
+        "建議添加適當的索引來提升查詢性能"
+      ],
+      "issues": [
+        "需要進一步分析以識別潛在問題"
+      ],
+      "insights": [
+        "表格結構基本合理"
+      ],
+      "timestamp": "2025-11-05T13:37:49.661984+08:00"
+    }
+  },
+  "database": "ecommerce_db",
+  "database_type": "postgres",
+  "description": "AI-powered database analysis",
+  "llm_config": {
+    "host": "localhost",
+    "model": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF:Q4_K_M",
+    "port": 8080,
+    "provider": "local"
+  },
+  "phase": "phase2",
+  "summary": {
+    "average_insights_per_table": 1,
+    "average_issues_per_table": 1,
+    "average_recommendations_per_table": 1,
+    "total_insights": 14,
+    "total_issues_found": 14,
+    "total_recommendations": 14,
+    "total_tables_analyzed": 14
+  },
+  "timestamp": "2025-11-05T13:38:46.739483+08:00"
+}
