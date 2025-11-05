@@ -19,10 +19,9 @@ import (
 type Phase2Runner struct {
 	config       *config.Config
 	db           *sql.DB
-	reader       *Phase1ResultReader
+	knowledgeMgr *vectorstore.KnowledgeManager
 	analyzer     *TableAnalysisOrchestrator
 	mcpServer    *mcp.MCPServer
-	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewPhase2Runner 創建 Phase 2 執行器
@@ -33,7 +32,7 @@ func NewPhase2Runner(cfg *config.Config, db *sql.DB) (*Phase2Runner, error) {
 		return nil, err
 	}
 
-	// 創建 phase1 結果讀取器
+	// 創建 phase1 結果讀取器（用於後備）
 	reader := NewPhase1ResultReader("knowledge/phase1_analysis.json")
 
 	// 創建 MCP 服務器
@@ -45,10 +44,9 @@ func NewPhase2Runner(cfg *config.Config, db *sql.DB) (*Phase2Runner, error) {
 	return &Phase2Runner{
 		config:       cfg,
 		db:           db,
-		reader:       reader,
+		knowledgeMgr: knowledgeMgr,
 		analyzer:     analyzer,
 		mcpServer:    mcpServer,
-		knowledgeMgr: knowledgeMgr,
 	}, nil
 }
 

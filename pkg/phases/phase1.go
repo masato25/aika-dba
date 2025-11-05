@@ -13,9 +13,9 @@ import (
 
 // Phase1Runner Phase 1 執行器
 type Phase1Runner struct {
-	analyzer       *analyzer.DatabaseAnalyzer
-	config         *config.Config
-	knowledgeMgr   *vectorstore.KnowledgeManager
+	analyzer     *analyzer.DatabaseAnalyzer
+	config       *config.Config
+	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewPhase1Runner 創建 Phase 1 執行器

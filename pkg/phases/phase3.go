@@ -9,23 +9,71 @@ import (
 	"time"
 
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
+
+// PrePhase3ResultReader Pre-Phase 3 結果讀取器
+type PrePhase3ResultReader struct {
+	filename string
+}
+
+// NewPrePhase3ResultReader 創建 Pre-Phase 3 結果讀取器
+func NewPrePhase3ResultReader(filename string) *PrePhase3ResultReader {
+	return &PrePhase3ResultReader{filename: filename}
+}
+
+// GetPrePhase3Data 獲取 Pre-Phase 3 數據
+func (r *PrePhase3ResultReader) GetPrePhase3Data() (*PrePhase3Data, error) {
+	data, err := os.ReadFile(r.filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read pre-phase3 file: %v", err)
+	}
+
+	var result PrePhase3Data
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse pre-phase3 data: %v", err)
+	}
+
+	return &result, nil
+}
+
+// CustomNotes 自定義筆記
+type CustomNotes struct {
+	BusinessDomain         string        `json:"business_domain"`
+	KeyEntities            []string      `json:"key_entities"`
+	ImportantRelationships []string      `json:"important_relationships"`
+	AnalysisFocusAreas     []string      `json:"analysis_focus_areas"`
+	CustomDimensions       []interface{} `json:"custom_dimensions"`
+	AdditionalNotes        string        `json:"additional_notes"`
+}
+
+// PrePhase3Data Pre-Phase 3 數據結構
+type PrePhase3Data struct {
+	BusinessSummary   map[string]interface{} `json:"business_summary"`
+	Phase3Suggestions map[string]interface{} `json:"phase3_suggestions"`
+	CustomNotes       *CustomNotes           `json:"custom_notes"`
+}
 
 // Phase3Runner Phase 3 執行器 - 自動生成維度規則
 type Phase3Runner struct {
-	config          *config.Config
-	phase2Reader    *Phase2ResultReader
-	prePhase3Reader *PrePhase3ResultReader
-	llmClient       *LLMClient
+	config       *config.Config
+	knowledgeMgr *vectorstore.KnowledgeManager
+	llmClient    *LLMClient
 }
 
 // NewPhase3Runner 創建 Phase 3 執行器
 func NewPhase3Runner(cfg *config.Config) *Phase3Runner {
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Printf("Warning: Failed to create knowledge manager: %v", err)
+		knowledgeMgr = nil
+	}
+
 	return &Phase3Runner{
-		config:          cfg,
-		phase2Reader:    NewPhase2ResultReader("knowledge/phase2_analysis.json"),
-		prePhase3Reader: NewPrePhase3ResultReader("knowledge/pre_phase3_summary.json"),
-		llmClient:       NewLLMClient(cfg),
+		config:       cfg,
+		knowledgeMgr: knowledgeMgr,
+		llmClient:    NewLLMClient(cfg),
 	}
 }
 
@@ -33,16 +81,17 @@ func NewPhase3Runner(cfg *config.Config) *Phase3Runner {
 func (p *Phase3Runner) Run() error {
 	log.Println("=== Starting Phase 3: Auto-Generate Dimension Rules ===")
 
-	// 載入 Phase 2 分析結果
-	phase2Results, err := p.phase2Reader.GetAnalysisResults()
+	// 從向量存儲檢索 Phase 2 分析結果
+	phase2Results, err := p.retrievePhase2Knowledge()
 	if err != nil {
-		return fmt.Errorf("failed to load Phase 2 results: %v", err)
+		return fmt.Errorf("failed to retrieve Phase 2 knowledge: %v", err)
 	}
 
-	// 載入 pre-Phase 3 總結
-	prePhase3Data, err := p.prePhase3Reader.GetPrePhase3Data()
+	// 從向量存儲檢索 pre-Phase 3 總結
+	prePhase3Data, err := p.retrievePrePhase3Knowledge()
 	if err != nil {
-		return fmt.Errorf("failed to load pre-Phase 3 summary: %v", err)
+		log.Printf("Warning: Failed to retrieve pre-Phase 3 knowledge: %v, using defaults", err)
+		prePhase3Data = p.createDefaultPrePhase3Data()
 	}
 
 	// 生成 Lua 維度規則
@@ -54,6 +103,11 @@ func (p *Phase3Runner) Run() error {
 	// 保存 Lua 規則文件
 	if err := p.saveLuaRules(luaRules); err != nil {
 		return fmt.Errorf("failed to save Lua rules: %v", err)
+	}
+
+	// 將 Phase 3 結果存儲到向量數據庫
+	if err := p.storePhase3Results(phase2Results, prePhase3Data, luaRules); err != nil {
+		log.Printf("Warning: Failed to store Phase 3 results in vector store: %v", err)
 	}
 
 	log.Println("Phase 3 completed successfully - dimension_rules.lua generated")
@@ -624,44 +678,267 @@ func (p *Phase3Runner) saveLuaRules(rules string) error {
 	return nil
 }
 
-// PrePhase3ResultReader Pre-Phase 3 結果讀取器
-type PrePhase3ResultReader struct {
-	filename string
-}
+// retrievePhase2Knowledge 從向量存儲檢索 Phase 2 知識
+func (p *Phase3Runner) retrievePhase2Knowledge() (map[string]*LLMAnalysisResult, error) {
+	if p.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
 
-// PrePhase3Data Pre-Phase 3 數據結構
-type PrePhase3Data struct {
-	BusinessSummary   map[string]interface{} `json:"business_summary"`
-	Phase3Suggestions map[string]interface{} `json:"phase3_suggestions"`
-	CustomNotes       *CustomNotes           `json:"custom_notes"`
-}
-
-// CustomNotes 自定義筆記
-type CustomNotes struct {
-	BusinessDomain         string        `json:"business_domain"`
-	KeyEntities            []string      `json:"key_entities"`
-	ImportantRelationships []string      `json:"important_relationships"`
-	AnalysisFocusAreas     []string      `json:"analysis_focus_areas"`
-	CustomDimensions       []interface{} `json:"custom_dimensions"`
-	AdditionalNotes        string        `json:"additional_notes"`
-}
-
-// NewPrePhase3ResultReader 創建 Pre-Phase 3 結果讀取器
-func NewPrePhase3ResultReader(filename string) *PrePhase3ResultReader {
-	return &PrePhase3ResultReader{filename: filename}
-}
-
-// GetPrePhase3Data 獲取 Pre-Phase 3 數據
-func (r *PrePhase3ResultReader) GetPrePhase3Data() (*PrePhase3Data, error) {
-	data, err := os.ReadFile(r.filename)
+	// 檢索 Phase 2 的分析結果
+	query := "business logic analysis AI insights recommendations"
+	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, 20)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read pre-phase3 file: %v", err)
+		return nil, fmt.Errorf("failed to retrieve phase2 knowledge: %v", err)
 	}
 
-	var result PrePhase3Data
-	if err := json.Unmarshal(data, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse pre-phase3 data: %v", err)
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no phase2 knowledge found in vector store")
 	}
 
-	return &result, nil
+	// 從檢索到的知識中重建分析結果
+	phase2Results := make(map[string]*LLMAnalysisResult)
+
+	for _, result := range results {
+		content := result.Content
+
+		// 嘗試解析為 JSON
+		var analysisData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &analysisData); err != nil {
+			log.Printf("Failed to parse phase2 knowledge as JSON: %v", err)
+			continue
+		}
+
+		// 提取分析結果
+		if analysisResults, ok := analysisData["analysis_results"].(map[string]interface{}); ok {
+			for tableName, resultData := range analysisResults {
+				if resultMap, ok := resultData.(map[string]interface{}); ok {
+					llmResult := &LLMAnalysisResult{
+						TableName: tableName,
+					}
+
+					if analysis, ok := resultMap["analysis"].(string); ok {
+						llmResult.Analysis = analysis
+					}
+
+					if recommendations, ok := resultMap["recommendations"].([]interface{}); ok {
+						llmResult.Recommendations = make([]string, len(recommendations))
+						for i, rec := range recommendations {
+							if recStr, ok := rec.(string); ok {
+								llmResult.Recommendations[i] = recStr
+							}
+						}
+					}
+
+					if issues, ok := resultMap["issues"].([]interface{}); ok {
+						llmResult.Issues = make([]string, len(issues))
+						for i, issue := range issues {
+							if issueStr, ok := issue.(string); ok {
+								llmResult.Issues[i] = issueStr
+							}
+						}
+					}
+
+					if insights, ok := resultMap["insights"].([]interface{}); ok {
+						llmResult.Insights = make([]string, len(insights))
+						for i, insight := range insights {
+							if insightStr, ok := insight.(string); ok {
+								llmResult.Insights[i] = insightStr
+							}
+						}
+					}
+
+					if timestamp, ok := resultMap["timestamp"].(string); ok {
+						if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+							llmResult.Timestamp = t
+						} else {
+							llmResult.Timestamp = time.Now()
+						}
+					} else {
+						llmResult.Timestamp = time.Now()
+					}
+
+					phase2Results[tableName] = llmResult
+				}
+			}
+		}
+	}
+
+	log.Printf("Retrieved %d table analysis results from vector store", len(phase2Results))
+	return phase2Results, nil
+}
+
+// retrievePrePhase3Knowledge 從向量存儲檢索 pre-Phase 3 知識
+func (p *Phase3Runner) retrievePrePhase3Knowledge() (*PrePhase3Data, error) {
+	if p.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	// 檢索 pre-phase3 的總結
+	query := "business summary phase3 suggestions custom dimensions"
+	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("pre_phase3", query, 10)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve pre-phase3 knowledge: %v", err)
+	}
+
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no pre-phase3 knowledge found in vector store")
+	}
+
+	// 從檢索到的知識中重建 pre-phase3 數據
+	var prePhase3Data *PrePhase3Data
+
+	for _, result := range results {
+		content := result.Content
+
+		// 嘗試解析為 JSON
+		var data map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &data); err != nil {
+			log.Printf("Failed to parse pre-phase3 knowledge as JSON: %v", err)
+			continue
+		}
+
+		prePhase3Data = &PrePhase3Data{}
+
+		if businessSummary, ok := data["business_summary"].(map[string]interface{}); ok {
+			prePhase3Data.BusinessSummary = businessSummary
+		}
+
+		if phase3Suggestions, ok := data["phase3_suggestions"].(map[string]interface{}); ok {
+			prePhase3Data.Phase3Suggestions = phase3Suggestions
+		}
+
+		if customNotes, ok := data["custom_notes"].(map[string]interface{}); ok {
+			prePhase3Data.CustomNotes = &CustomNotes{}
+
+			if businessDomain, ok := customNotes["business_domain"].(string); ok {
+				prePhase3Data.CustomNotes.BusinessDomain = businessDomain
+			}
+
+			if keyEntities, ok := customNotes["key_entities"].([]interface{}); ok {
+				prePhase3Data.CustomNotes.KeyEntities = make([]string, len(keyEntities))
+				for i, entity := range keyEntities {
+					if entityStr, ok := entity.(string); ok {
+						prePhase3Data.CustomNotes.KeyEntities[i] = entityStr
+					}
+				}
+			}
+
+			if importantRelationships, ok := customNotes["important_relationships"].([]interface{}); ok {
+				prePhase3Data.CustomNotes.ImportantRelationships = make([]string, len(importantRelationships))
+				for i, rel := range importantRelationships {
+					if relStr, ok := rel.(string); ok {
+						prePhase3Data.CustomNotes.ImportantRelationships[i] = relStr
+					}
+				}
+			}
+
+			if analysisFocusAreas, ok := customNotes["analysis_focus_areas"].([]interface{}); ok {
+				prePhase3Data.CustomNotes.AnalysisFocusAreas = make([]string, len(analysisFocusAreas))
+				for i, area := range analysisFocusAreas {
+					if areaStr, ok := area.(string); ok {
+						prePhase3Data.CustomNotes.AnalysisFocusAreas[i] = areaStr
+					}
+				}
+			}
+
+			if customDimensions, ok := customNotes["custom_dimensions"].([]interface{}); ok {
+				prePhase3Data.CustomNotes.CustomDimensions = customDimensions
+			}
+
+			if additionalNotes, ok := customNotes["additional_notes"].(string); ok {
+				prePhase3Data.CustomNotes.AdditionalNotes = additionalNotes
+			}
+		}
+
+		break // 只使用第一個匹配的結果
+	}
+
+	if prePhase3Data == nil {
+		return nil, fmt.Errorf("failed to reconstruct pre-phase3 data from vector store")
+	}
+
+	log.Printf("Retrieved pre-phase3 data from vector store")
+	return prePhase3Data, nil
+}
+
+// createDefaultPrePhase3Data 創建默認的 pre-Phase 3 數據
+func (p *Phase3Runner) createDefaultPrePhase3Data() *PrePhase3Data {
+	return &PrePhase3Data{
+		BusinessSummary: map[string]interface{}{
+			"overall_business_domain": "通用商業系統 (General Business System)",
+			"core_business_processes": []string{
+				"數據管理 (Data Management)",
+				"業務分析 (Business Analysis)",
+			},
+			"key_business_entities": []string{
+				"記錄 (Records)",
+				"交易 (Transactions)",
+			},
+			"business_relationships": []string{
+				"數據關聯 (Data Relationships)",
+			},
+			"table_categories": map[string][]string{
+				"data_tables": {"various"},
+			},
+		},
+		Phase3Suggestions: map[string]interface{}{
+			"recommended_dimensions": []map[string]interface{}{
+				{
+					"name":            "dim_date",
+					"purpose":         "時間維度 - 用於時間序列分析",
+					"based_on_tables": []string{"any_timestamp_fields"},
+				},
+			},
+			"recommended_fact_tables": []map[string]interface{}{
+				{
+					"name":         "fact_data",
+					"purpose":      "通用事實表",
+					"grain":        "每筆記錄 (Per Record)",
+					"key_measures": []string{"count", "amount"},
+				},
+			},
+			"analysis_focus_areas": []string{
+				"數據分析 (Data Analysis)",
+				"趨勢分析 (Trend Analysis)",
+			},
+		},
+		CustomNotes: &CustomNotes{
+			BusinessDomain:         "通用商業系統",
+			KeyEntities:            []string{"記錄", "交易"},
+			ImportantRelationships: []string{"數據關聯"},
+			AnalysisFocusAreas:     []string{"數據分析", "趨勢分析"},
+			CustomDimensions:       []interface{}{},
+			AdditionalNotes:        "使用默認配置",
+		},
+	}
+}
+
+// storePhase3Results 將 Phase 3 結果存儲到向量數據庫
+func (p *Phase3Runner) storePhase3Results(phase2Results map[string]*LLMAnalysisResult, prePhase3Data *PrePhase3Data, luaRules string) error {
+	if p.knowledgeMgr == nil {
+		return fmt.Errorf("knowledge manager not available")
+	}
+
+	// 創建 Phase 3 的知識數據
+	phase3Knowledge := map[string]interface{}{
+		"phase":               "phase3",
+		"description":         "Dimension modeling rules and ETL planning generated from business analysis",
+		"database":            p.config.Database.DBName,
+		"database_type":       p.config.Database.Type,
+		"timestamp":           time.Now(),
+		"input_phase2_tables": len(phase2Results),
+		"lua_rules_generated": len(luaRules) > 0,
+		"rules_file":          "knowledge/dimension_rules.lua",
+		"business_domain":     prePhase3Data.CustomNotes.BusinessDomain,
+		"key_entities":        prePhase3Data.CustomNotes.KeyEntities,
+		"analysis_focus":      prePhase3Data.CustomNotes.AnalysisFocusAreas,
+		"generated_rules_summary": map[string]interface{}{
+			"total_rules_length":         len(luaRules),
+			"has_custom_dimensions":      len(prePhase3Data.CustomNotes.CustomDimensions) > 0,
+			"business_domain_identified": prePhase3Data.CustomNotes.BusinessDomain != "",
+		},
+	}
+
+	// 存儲到向量數據庫
+	return p.knowledgeMgr.StorePhaseKnowledge("phase3", phase3Knowledge)
 }

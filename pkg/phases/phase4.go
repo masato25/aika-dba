@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -36,18 +38,23 @@ type FactTable struct {
 type Phase4Runner struct {
 	config       *config.Config
 	db           *sql.DB
-	reader       *Phase1ResultReader
-	phase2Reader *Phase2ResultReader
+	knowledgeMgr *vectorstore.KnowledgeManager
 	luaState     *lua.LState
 }
 
 // NewPhase4Runner 創建 Phase 4 執行器
 func NewPhase4Runner(cfg *config.Config, db *sql.DB) *Phase4Runner {
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Printf("Warning: Failed to create knowledge manager: %v", err)
+		knowledgeMgr = nil
+	}
+
 	return &Phase4Runner{
 		config:       cfg,
 		db:           db,
-		reader:       NewPhase1ResultReader("knowledge/phase1_analysis.json"),
-		phase2Reader: NewPhase2ResultReader("knowledge/phase2_analysis.json"),
+		knowledgeMgr: knowledgeMgr,
 	}
 }
 
@@ -55,17 +62,23 @@ func NewPhase4Runner(cfg *config.Config, db *sql.DB) *Phase4Runner {
 func (p *Phase4Runner) Run() error {
 	log.Println("=== Starting Phase 4: Lua Rule Engine Dimension Modeling ===")
 
-	// 初始化 Lua VM
-	if err := p.initLuaVM(); err != nil {
+	// 從向量存儲檢索 Phase 3 維度規則
+	phase3Rules, err := p.retrievePhase3Rules()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve Phase 3 rules: %v", err)
+	}
+
+	// 從向量存儲檢索 Phase 2 分析結果
+	phase2Results, err := p.retrievePhase2Knowledge()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve Phase 2 knowledge: %v", err)
+	}
+
+	// 初始化 Lua VM 並載入規則
+	if err := p.initLuaVM(phase3Rules); err != nil {
 		return fmt.Errorf("failed to initialize Lua VM: %v", err)
 	}
 	defer p.luaState.Close()
-
-	// 載入 Phase 2 分析結果
-	phase2Results, err := p.phase2Reader.GetAnalysisResults()
-	if err != nil {
-		return fmt.Errorf("failed to load Phase 2 results: %v", err)
-	}
 
 	// 使用 Lua 規則引擎生成維度
 	dimensions, factTables, err := p.executeLuaRules(phase2Results)
@@ -76,7 +89,7 @@ func (p *Phase4Runner) Run() error {
 	// 生成維度建模報告
 	report := map[string]interface{}{
 		"phase":         "phase4",
-		"description":   "Database dimension modeling using Lua rule engine",
+		"description":   "Database dimension modeling using Lua rule engine with vector-enhanced knowledge",
 		"database":      p.config.Database.DBName,
 		"database_type": p.config.Database.Type,
 		"timestamp":     time.Now(),
@@ -85,14 +98,233 @@ func (p *Phase4Runner) Run() error {
 		"summary":       p.generateSummary(dimensions, factTables),
 	}
 
-	// 保存報告
-	return p.writeOutput(report, "knowledge/phase4_dimensions.json")
+	// 保存報告並存儲到向量數據庫
+	if err := p.writeOutput(report, "knowledge/phase4_dimensions.json"); err != nil {
+		return err
+	}
+
+	// 將 Phase 4 結果存儲到向量數據庫
+	if err := p.storePhase4Results(dimensions, factTables); err != nil {
+		log.Printf("Warning: Failed to store Phase 4 results in vector store: %v", err)
+	}
+
+	log.Println("Phase 4 completed successfully - dimension modeling analysis generated")
+	return nil
 }
 
-// initLuaVM 初始化 Lua 虛擬機
-func (p *Phase4Runner) initLuaVM() error {
+// retrievePhase3Rules 從向量存儲檢索 Phase 3 維度規則
+func (p *Phase4Runner) retrievePhase3Rules() (string, error) {
+	if p.knowledgeMgr == nil {
+		return "", fmt.Errorf("knowledge manager not available")
+	}
+
+	// 檢索 Phase 3 的維度規則
+	query := "dimension rules lua script phase3"
+	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase3", query, 5)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve phase3 rules: %v", err)
+	}
+
+	if len(results) == 0 {
+		log.Printf("No Phase 3 rules found in vector store, will use default file")
+		return "", nil // 返回空字符串，將使用默認文件
+	}
+
+	// 從檢索到的知識中提取 Lua 規則
+	for _, result := range results {
+		content := result.Content
+
+		// 檢查是否包含 Lua 腳本
+		if strings.Contains(content, "function detect_dimensions") {
+			return content, nil
+		}
+	}
+
+	log.Printf("No valid Lua rules found in vector store, will use default file")
+	return "", nil
+}
+
+// retrievePhase2Knowledge 從向量存儲檢索 Phase 2 知識
+func (p *Phase4Runner) retrievePhase2Knowledge() (map[string]*LLMAnalysisResult, error) {
+	if p.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	// 檢索 Phase 2 的分析結果
+	query := "business logic analysis AI insights recommendations"
+	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, 20)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve phase2 knowledge: %v", err)
+	}
+
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no phase2 knowledge found in vector store")
+	}
+
+	// 從檢索到的知識中重建分析結果
+	phase2Results := make(map[string]*LLMAnalysisResult)
+
+	for _, result := range results {
+		content := result.Content
+
+		// 嘗試解析為 JSON
+		var analysisData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &analysisData); err != nil {
+			log.Printf("Failed to parse phase2 knowledge as JSON: %v", err)
+			continue
+		}
+
+		// 提取分析結果
+		if analysisResults, ok := analysisData["analysis_results"].(map[string]interface{}); ok {
+			for tableName, resultData := range analysisResults {
+				if resultMap, ok := resultData.(map[string]interface{}); ok {
+					llmResult := &LLMAnalysisResult{
+						TableName: tableName,
+					}
+
+					if analysis, ok := resultMap["analysis"].(string); ok {
+						llmResult.Analysis = analysis
+					}
+
+					if recommendations, ok := resultMap["recommendations"].([]interface{}); ok {
+						llmResult.Recommendations = make([]string, len(recommendations))
+						for i, rec := range recommendations {
+							if recStr, ok := rec.(string); ok {
+								llmResult.Recommendations[i] = recStr
+							}
+						}
+					}
+
+					if issues, ok := resultMap["issues"].([]interface{}); ok {
+						llmResult.Issues = make([]string, len(issues))
+						for i, issue := range issues {
+							if issueStr, ok := issue.(string); ok {
+								llmResult.Issues[i] = issueStr
+							}
+						}
+					}
+
+					if insights, ok := resultMap["insights"].([]interface{}); ok {
+						llmResult.Insights = make([]string, len(insights))
+						for i, insight := range insights {
+							if insightStr, ok := insight.(string); ok {
+								llmResult.Insights[i] = insightStr
+							}
+						}
+					}
+
+					if timestamp, ok := resultMap["timestamp"].(string); ok {
+						if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
+							llmResult.Timestamp = t
+						} else {
+							llmResult.Timestamp = time.Now()
+						}
+					} else {
+						llmResult.Timestamp = time.Now()
+					}
+
+					phase2Results[tableName] = llmResult
+				}
+			}
+		}
+	}
+
+	log.Printf("Retrieved %d table analysis results from vector store", len(phase2Results))
+	return phase2Results, nil
+}
+
+// initLuaVM 初始化 Lua 虛擬機並載入規則
+func (p *Phase4Runner) initLuaVM(rulesContent string) error {
 	p.luaState = lua.NewState()
-	return p.luaState.DoFile("knowledge/dimension_rules.lua")
+
+	// 如果提供了規則內容，直接執行，否則載入文件
+	if rulesContent != "" {
+		if err := p.luaState.DoString(rulesContent); err != nil {
+			return fmt.Errorf("failed to execute Lua rules string: %v", err)
+		}
+	} else {
+		if err := p.luaState.DoFile("knowledge/dimension_rules.lua"); err != nil {
+			return fmt.Errorf("failed to load Lua rules file: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// retrieveTableAnalysis 從向量存儲檢索表格分析信息
+func (p *Phase4Runner) retrieveTableAnalysis(tableName string) (*TableAnalysisResult, error) {
+	if p.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	// 檢索 Phase 1 的表格分析
+	query := fmt.Sprintf("table analysis schema %s phase1", tableName)
+	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 10)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve table analysis: %v", err)
+	}
+
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no table analysis found for %s", tableName)
+	}
+
+	// 從檢索到的知識中重建表格分析
+	for _, result := range results {
+		content := result.Content
+
+		// 嘗試解析為 JSON
+		var analysisData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &analysisData); err != nil {
+			log.Printf("Failed to parse table analysis as JSON: %v", err)
+			continue
+		}
+
+		// 檢查是否包含表格分析
+		if tables, ok := analysisData["tables"].(map[string]interface{}); ok {
+			if tableData, ok := tables[tableName].(map[string]interface{}); ok {
+				tableAnalysis := &TableAnalysisResult{}
+
+				if schema, ok := tableData["schema"].([]interface{}); ok {
+					tableAnalysis.Schema = make([]map[string]interface{}, len(schema))
+					for i, col := range schema {
+						if colMap, ok := col.(map[string]interface{}); ok {
+							tableAnalysis.Schema[i] = colMap
+						}
+					}
+				}
+
+				if constraints, ok := tableData["constraints"].(map[string]interface{}); ok {
+					tableAnalysis.Constraints = constraints
+				}
+
+				if indexes, ok := tableData["indexes"].([]interface{}); ok {
+					tableAnalysis.Indexes = make([]map[string]interface{}, len(indexes))
+					for i, idx := range indexes {
+						if idxMap, ok := idx.(map[string]interface{}); ok {
+							tableAnalysis.Indexes[i] = idxMap
+						}
+					}
+				}
+
+				if samples, ok := tableData["samples"].([]interface{}); ok {
+					tableAnalysis.Samples = make([]map[string]interface{}, len(samples))
+					for i, sample := range samples {
+						if sampleMap, ok := sample.(map[string]interface{}); ok {
+							tableAnalysis.Samples[i] = sampleMap
+						}
+					}
+				}
+
+				if stats, ok := tableData["stats"].(map[string]interface{}); ok {
+					tableAnalysis.Stats = stats
+				}
+
+				return tableAnalysis, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("table analysis not found for %s", tableName)
 }
 
 // executeLuaRules 執行 Lua 規則來生成維度和事實表
@@ -171,8 +403,8 @@ func (p *Phase4Runner) executeLuaRules(phase2Results map[string]*LLMAnalysisResu
 func (p *Phase4Runner) createTableMeta(tableName string, result *LLMAnalysisResult) *lua.LTable {
 	meta := p.luaState.NewTable()
 
-	// 從 Phase 1 結果獲取欄位信息
-	tableAnalysis, err := p.reader.GetTableAnalysis(tableName)
+	// 從向量存儲檢索 Phase 1 的表格分析信息
+	tableAnalysis, err := p.retrieveTableAnalysis(tableName)
 	if err != nil {
 		log.Printf("Warning: Failed to get table analysis for %s: %v", tableName, err)
 		// 返回空的元數據
@@ -328,6 +560,54 @@ func (p *Phase4Runner) writeOutput(data interface{}, filename string) error {
 
 	log.Printf("Phase 4 dimension analysis results saved to %s", filename)
 	return nil
+}
+
+// storePhase4Results 將 Phase 4 結果存儲到向量數據庫
+func (p *Phase4Runner) storePhase4Results(dimensions []Dimension, factTables []FactTable) error {
+	if p.knowledgeMgr == nil {
+		return fmt.Errorf("knowledge manager not available")
+	}
+
+	// 創建 Phase 4 的知識數據
+	phase4Knowledge := map[string]interface{}{
+		"phase":                 "phase4",
+		"description":           "Dimension modeling and fact table analysis using Lua rule engine",
+		"database":              p.config.Database.DBName,
+		"database_type":         p.config.Database.Type,
+		"timestamp":             time.Now(),
+		"dimensions_count":      len(dimensions),
+		"fact_tables_count":     len(factTables),
+		"lua_rules_file":        "knowledge/dimension_rules.lua",
+		"dimensions_generated":  make([]map[string]interface{}, len(dimensions)),
+		"fact_tables_generated": make([]map[string]interface{}, len(factTables)),
+	}
+
+	// 添加維度信息
+	for i, dim := range dimensions {
+		phase4Knowledge["dimensions_generated"].([]map[string]interface{})[i] = map[string]interface{}{
+			"name":         dim.Name,
+			"type":         dim.Type,
+			"description":  dim.Description,
+			"source_table": dim.SourceTable,
+			"key_fields":   dim.KeyFields,
+			"attributes":   dim.Attributes,
+			"business_use": dim.BusinessUse,
+		}
+	}
+
+	// 添加事實表信息
+	for i, fact := range factTables {
+		phase4Knowledge["fact_tables_generated"].([]map[string]interface{})[i] = map[string]interface{}{
+			"name":         fact.Name,
+			"description":  fact.Description,
+			"source_table": fact.SourceTable,
+			"measures":     fact.Measures,
+			"dimensions":   fact.Dimensions,
+		}
+	}
+
+	// 存儲到向量數據庫
+	return p.knowledgeMgr.StorePhaseKnowledge("phase4", phase4Knowledge)
 }
 
 // Phase2ResultReader Phase 2 結果讀取器

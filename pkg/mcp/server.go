@@ -268,7 +268,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			"name":        "get_knowledge_stats",
 			"description": "獲取知識庫統計信息，包括各 phase 的知識塊數量",
 			"inputSchema": map[string]interface{}{
-				"type": "object",
+				"type":       "object",
 				"properties": map[string]interface{}{},
 			},
 		},
@@ -696,8 +696,8 @@ func (s *MCPServer) getKnowledgeStats(args map[string]interface{}) (interface{},
 	}
 
 	return map[string]interface{}{
-		"knowledge_stats": stats,
+		"knowledge_stats":      stats,
 		"vector_store_enabled": s.config.VectorStore.Enabled,
-		"database_path":       s.config.VectorStore.DatabasePath,
+		"database_path":        s.config.VectorStore.DatabasePath,
 	}, nil
 }

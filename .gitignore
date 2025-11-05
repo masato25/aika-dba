@@ -1,2 +1,12 @@
 main
 aika-dba
+
+# Database files
+*.db
+data/
+
+# Generated knowledge files
+knowledge/
+
+# Test binaries
+*_test

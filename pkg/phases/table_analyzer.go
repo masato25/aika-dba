@@ -162,7 +162,7 @@ func (o *TableAnalysisOrchestrator) extractTableNamesFromText(content string, ta
 		if strings.Contains(lowerLine, "table") || strings.Contains(line, "表格") {
 			// 跳過包含約束信息的行
 			if strings.Contains(lowerLine, "constraint") || strings.Contains(lowerLine, "foreign") ||
-			   strings.Contains(lowerLine, "primary") || strings.Contains(lowerLine, "unique") {
+				strings.Contains(lowerLine, "primary") || strings.Contains(lowerLine, "unique") {
 				continue
 			}
 
@@ -186,7 +186,7 @@ func (o *TableAnalysisOrchestrator) isValidTableName(name string) bool {
 	// 表格名稱應該只包含字母、數字和下劃線
 	for _, char := range name {
 		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
-			 (char >= '0' && char <= '9') || char == '_') {
+			(char >= '0' && char <= '9') || char == '_') {
 			return false
 		}
 	}
@@ -304,12 +304,12 @@ func (o *TableAnalysisOrchestrator) analyzeTableWithFileReader(ctx context.Conte
 // buildTableSummaryFromKnowledge 從知識結果構建表格摘要
 func (o *TableAnalysisOrchestrator) buildTableSummaryFromKnowledge(tableName string, results []vectorstore.KnowledgeResult) map[string]interface{} {
 	summary := map[string]interface{}{
-		"table_name":    tableName,
-		"column_count":  0,
-		"sample_count":  0,
-		"columns":       []map[string]interface{}{},
-		"constraints":   map[string]interface{}{},
-		"samples":       []map[string]interface{}{},
+		"table_name":   tableName,
+		"column_count": 0,
+		"sample_count": 0,
+		"columns":      []map[string]interface{}{},
+		"constraints":  map[string]interface{}{},
+		"samples":      []map[string]interface{}{},
 	}
 
 	// 合併所有相關知識內容
