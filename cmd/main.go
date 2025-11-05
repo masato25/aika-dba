@@ -118,9 +118,18 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 	}
 }
 
+// runPhase3 執行 Phase 3: 維度建模分析
+func runPhase3(db *sql.DB, cfg *config.Config) {
+	runner := phases.NewPhase3Runner(cfg, db)
+
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 3 failed: %v", err)
+	}
+}
+
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase2")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
 	flag.Parse()
 
@@ -159,7 +168,9 @@ func main() {
 		runPhase1(db, cfg)
 	case "phase2":
 		runPhase2(db, cfg)
+	case "phase3":
+		runPhase3(db, cfg)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3", *command)
 	}
 }
