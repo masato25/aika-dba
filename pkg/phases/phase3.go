@@ -15,7 +15,7 @@ import (
 // Dimension 維度定義
 type Dimension struct {
 	Name        string   `json:"name"`
-	Type        string   `json:"type"`        // people, time, product, event, location
+	Type        string   `json:"type"` // people, time, product, event, location
 	Description string   `json:"description"`
 	SourceTable string   `json:"source_table"`
 	KeyFields   []string `json:"key_fields"`
@@ -25,9 +25,9 @@ type Dimension struct {
 
 // Phase3Runner Phase 3 執行器 - 維度建模分析
 type Phase3Runner struct {
-	config    *config.Config
-	db        *sql.DB
-	reader    *Phase1ResultReader
+	config       *config.Config
+	db           *sql.DB
+	reader       *Phase1ResultReader
 	phase2Reader *Phase2ResultReader
 }
 
@@ -218,26 +218,26 @@ func (p *Phase3Runner) generateSummary(dimensions []Dimension) map[string]interf
 	}
 
 	return map[string]interface{}{
-		"total_dimensions": totalDimensions,
+		"total_dimensions":   totalDimensions,
 		"dimensions_by_type": typeCount,
 		"recommended_fact_tables": []map[string]interface{}{
 			{
-				"name": "fact_sales",
+				"name":        "fact_sales",
 				"description": "銷售事實表 - 記錄每筆銷售交易的詳細信息",
-				"measures": []string{"order_amount", "quantity", "discount_amount", "tax_amount", "shipping_cost"},
-				"dimensions": []string{"dim_date", "dim_customer", "dim_product", "dim_location", "dim_promotion"},
+				"measures":    []string{"order_amount", "quantity", "discount_amount", "tax_amount", "shipping_cost"},
+				"dimensions":  []string{"dim_date", "dim_customer", "dim_product", "dim_location", "dim_promotion"},
 			},
 			{
-				"name": "fact_inventory",
+				"name":        "fact_inventory",
 				"description": "庫存事實表 - 記錄庫存變動和商品流轉信息",
-				"measures": []string{"quantity_change", "unit_cost", "total_value"},
-				"dimensions": []string{"dim_date", "dim_product", "dim_location"},
+				"measures":    []string{"quantity_change", "unit_cost", "total_value"},
+				"dimensions":  []string{"dim_date", "dim_product", "dim_location"},
 			},
 			{
-				"name": "fact_customer_behavior",
+				"name":        "fact_customer_behavior",
 				"description": "顧客行為事實表 - 記錄顧客的各種行為事件",
-				"measures": []string{"event_count", "session_duration", "page_views"},
-				"dimensions": []string{"dim_date", "dim_customer", "dim_product", "dim_location"},
+				"measures":    []string{"event_count", "session_duration", "page_views"},
+				"dimensions":  []string{"dim_date", "dim_customer", "dim_product", "dim_location"},
 			},
 		},
 	}
