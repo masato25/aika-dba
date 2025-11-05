@@ -1,0 +1,89 @@
+{
+  "database_info": {
+    "type": "postgres",
+    "version": "PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on aarc...",
+    "name": "postgres"
+  },
+  "tables": [
+    {
+      "name": "customers",
+      "type": "BASE TABLE",
+      "estimated_rows": 0,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false,
+          "default_value": "nextval('customers_id_seq'::regclass)",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "1",
+            "2"
+          ],
+          "description": null
+        },
+        {
+          "name": "name",
+          "type": "character varying(100)",
+          "nullable": true,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "Alice",
+            "Bob"
+          ],
+          "description": null
+        },
+        {
+          "name": "email",
+          "type": "character varying(255)",
+          "nullable": true,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "alice@example.com",
+            "bob@example.com"
+          ],
+          "description": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default_value": "CURRENT_TIMESTAMP",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "2025-11-05T03:14:39.820674Z",
+            "2025-11-05T03:14:39.820674Z"
+          ],
+          "description": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "customers_pkey",
+          "columns": [
+            "id"
+          ],
+          "type": "indices",
+          "unique": true
+        }
+      ]
+    }
+  ],
+  "relationships": null,
+  "metadata": {
+    "collected_at": "2025-11-05T11:14:42.206765+08:00",
+    "collection_duration_ms": 19,
+    "total_tables": 1,
+    "total_columns": 4
+  }
+}

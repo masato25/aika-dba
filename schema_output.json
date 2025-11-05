@@ -1,0 +1,194 @@
+{
+  "database_info": {
+    "type": "postgres",
+    "version": "PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on aarc...",
+    "name": "postgres"
+  },
+  "tables": [
+    {
+      "name": "customers",
+      "type": "BASE TABLE",
+      "estimated_rows": 0,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false,
+          "default_value": "nextval('customers_id_seq'::regclass)",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "6",
+            "5",
+            "4",
+            "3",
+            "2"
+          ],
+          "description": null
+        },
+        {
+          "name": "name",
+          "type": "character varying(100)",
+          "nullable": false,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "周八",
+            "孫七",
+            "趙六",
+            "王五",
+            "李四"
+          ],
+          "description": null
+        },
+        {
+          "name": "email",
+          "type": "character varying(255)",
+          "nullable": true,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "zhou@example.com",
+            "sun@example.com",
+            "zhao@example.com",
+            "wang@example.com",
+            "li@example.com"
+          ],
+          "description": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default_value": "CURRENT_TIMESTAMP",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "2025-11-05T15:00:00Z",
+            "2025-11-05T10:00:00Z",
+            "2025-11-03T10:00:00Z",
+            "2025-11-01T10:00:00Z",
+            "2025-06-01T10:00:00Z"
+          ],
+          "description": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "customers_email_key",
+          "columns": [
+            "email"
+          ],
+          "type": "indices",
+          "unique": true
+        },
+        {
+          "name": "customers_pkey",
+          "columns": [
+            "id"
+          ],
+          "type": "indices",
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "type": "BASE TABLE",
+      "estimated_rows": 0,
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false,
+          "default_value": "nextval('products_id_seq'::regclass)",
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "8",
+            "7",
+            "6",
+            "5",
+            "4"
+          ],
+          "description": null
+        },
+        {
+          "name": "name",
+          "type": "character varying(200)",
+          "nullable": false,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "鍵盤套",
+            "充電器",
+            "手機",
+            "耳機",
+            "顯示器"
+          ],
+          "description": null
+        },
+        {
+          "name": "price",
+          "type": "numeric",
+          "nullable": false,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "199.00",
+            "399.00",
+            "15999.00",
+            "1999.00",
+            "8999.00"
+          ],
+          "description": null
+        },
+        {
+          "name": "category",
+          "type": "character varying(50)",
+          "nullable": true,
+          "default_value": null,
+          "is_primary_key": false,
+          "is_foreign_key": false,
+          "references": null,
+          "sample_values": [
+            "配件",
+            "配件",
+            "電子產品",
+            "配件",
+            "電子產品"
+          ],
+          "description": null
+        }
+      ],
+      "indexes": [
+        {
+          "name": "products_pkey",
+          "columns": [
+            "id"
+          ],
+          "type": "indices",
+          "unique": true
+        }
+      ]
+    }
+  ],
+  "relationships": null,
+  "metadata": {
+    "collected_at": "2025-11-05T11:12:52.436344+08:00",
+    "collection_duration_ms": 113,
+    "total_tables": 2,
+    "total_columns": 8
+  }
+}
