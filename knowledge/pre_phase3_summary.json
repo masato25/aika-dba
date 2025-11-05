@@ -1,24 +1,19 @@
 {
   "business_summary": {
     "business_relationships": [],
-    "core_business_processes": [
-      "顧客管理 (Customer Management)"
-    ],
-    "key_business_entities": [
-      "顧客 (Customer)"
-    ],
+    "core_business_processes": [],
+    "key_business_entities": [],
     "overall_business_domain": "通用商業系統 (General Business System)",
     "table_categories": {
       "content_reviews": [],
-      "customer_management": [
-        "table_size"
-      ],
+      "customer_management": [],
       "inventory_management": [],
       "marketing_promotion": [],
       "order_management": [],
       "other": [
-        "tables",
-        "tables_count"
+        "table_size",
+        "tables_count",
+        "tables"
       ],
       "product_management": [],
       "shipping_logistics": []
@@ -137,5 +132,5 @@
       }
     ]
   },
-  "timestamp": "2025-11-05T17:58:09.750181+08:00"
+  "timestamp": "2025-11-05T18:10:48.412852+08:00"
 }
