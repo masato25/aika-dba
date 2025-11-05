@@ -4,11 +4,11 @@
 # 資料庫設定
 database:
   type: "postgres"          # 資料庫類型: postgres, mysql
-  host: "localhost"         # 資料庫主機
+  host: "localhost"         # 資料庫主機 (Docker 容器映射到 localhost)
   port: 5432               # 資料庫端口
-  user: "postgres"         # 資料庫用戶名
-  password: "password"     # 資料庫密碼
-  dbname: "postgres"       # 資料庫名稱
+  user: "ecommerce_user"   # 資料庫用戶名
+  password: "ecommerce_pass" # 資料庫密碼
+  dbname: "ecommerce_db"   # 資料庫名稱
 
 # 應用程式設定
 app:
