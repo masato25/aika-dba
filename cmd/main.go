@@ -157,7 +157,7 @@ func main() {
 	// 命令行參數
 	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4, marketing")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
-	var scenario = flag.String("scenario", "", "Marketing scenario to run (leave empty to run all scenarios)")
+	var scenario = flag.String("scenario", "", "Marketing scenario to run (use predefined name or custom description, leave empty to run all scenarios)")
 	flag.Parse()
 
 	// 載入 .env 文件

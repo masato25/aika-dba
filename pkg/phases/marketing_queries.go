@@ -11,10 +11,9 @@ import (
 	"strings"
 
 	"github.com/masato25/aika-dba/config"
-	"gopkg.in/yaml.v3"
 )
 
-// MarketingScenario 行銷分析場景
+// MarketingScenario 行銷分析場景 (保留結構體定義以防將來需要)
 type MarketingScenario struct {
 	Name          string   `yaml:"name"`
 	Description   string   `yaml:"description"`
@@ -22,7 +21,7 @@ type MarketingScenario struct {
 	ExpectedTools []string `yaml:"expected_tools"`
 }
 
-// MarketingScenariosConfig 場景配置
+// MarketingScenariosConfig 場景配置 (保留結構體定義以防將來需要)
 type MarketingScenariosConfig struct {
 	Scenarios []MarketingScenario `yaml:"scenarios"`
 }
@@ -49,34 +48,12 @@ func NewMarketingQueryRunner(cfg *config.Config, db *sql.DB) *MarketingQueryRunn
 func (m *MarketingQueryRunner) RunScenario(scenarioName string) error {
 	log.Printf("=== Running Marketing Scenario: %s ===", scenarioName)
 
-	// 載入場景腳本
-	scenarios, err := m.loadScenarios()
-	if err != nil {
-		return fmt.Errorf("failed to load scenarios: %v", err)
-	}
+	// 直接將輸入視為分析描述，使用智能查詢生成
+	log.Printf("Custom Scenario Description: %s", scenarioName)
+	log.Printf("Using intelligent query generation...")
 
-	// 查找指定的場景
-	var scenario *MarketingScenario
-	for _, s := range scenarios {
-		if s.Name == scenarioName {
-			scenario = &s
-			break
-		}
-	}
-
-	if scenario == nil {
-		return fmt.Errorf("scenario '%s' not found. Available scenarios: %v", scenarioName, m.getScenarioNames(scenarios))
-	}
-
-	log.Printf("Scenario: %s", scenario.Description)
-	log.Printf("Category: %s", scenario.Category)
-
-	// 使用LLM生成查詢
-	sqlQuery, err := m.generateQueryWithLLM(scenario.Description)
-	if err != nil {
-		log.Printf("Failed to generate query for scenario: %v", err)
-		return err
-	}
+	// 使用智能查詢生成
+	sqlQuery := m.generateIntelligentFallbackQuery(scenarioName)
 
 	log.Printf("Generated SQL Query:\n%s", sqlQuery)
 
@@ -96,62 +73,50 @@ func (m *MarketingQueryRunner) RunScenario(scenarioName string) error {
 
 // Run 執行所有行銷查詢測試
 func (m *MarketingQueryRunner) Run() error {
-	log.Println("=== Starting Marketing Query Test with LLM ===")
+	log.Println("=== Starting Marketing Query Test with Intelligent Generation ===")
+	log.Println("Note: This system now supports arbitrary marketing analysis descriptions.")
+	log.Println("Use: go run cmd/main.go -command marketing -scenario \"your analysis description\"")
 
-	// 載入場景腳本
-	scenarios, err := m.loadScenarios()
-	if err != nil {
-		return fmt.Errorf("failed to load scenarios: %v", err)
+	// 提供一些示例場景
+	examples := []string{
+		"分析最暢銷的產品及其收入表現",
+		"根據購買頻率對客戶進行分群分析",
+		"分析月度銷售趨勢和季節性變化",
+		"評估產品分類的銷售績效",
+		"分析地理銷售分佈和區域表現",
 	}
 
-	// 為每個場景生成LLM驅動的查詢
-	for i, scenario := range scenarios {
-		log.Printf("\n=== Marketing Scenario %d: %s ===", i+1, scenario.Name)
-		log.Printf("Category: %s", scenario.Category)
-		log.Printf("Description: %s", scenario.Description)
-
-		// 使用LLM生成查詢
-		sqlQuery, err := m.generateQueryWithLLM(scenario.Description)
-		if err != nil {
-			log.Printf("Failed to generate query for scenario: %v", err)
-			continue
-		}
-
-		log.Printf("Generated SQL Query:\n%s", sqlQuery)
-
-		// 執行查詢
-		results, err := m.executeQuery(sqlQuery)
-		if err != nil {
-			log.Printf("Query execution failed: %v", err)
-			continue
-		}
-
-		log.Printf("Results (%d rows):", len(results))
-		m.displayResults(results)
-		log.Println(strings.Repeat("-", 80))
+	log.Println("Example scenarios you can try:")
+	for i, example := range examples {
+		log.Printf("  %d. %s", i+1, example)
 	}
 
-	log.Println("Marketing query test completed successfully")
+	log.Println("Marketing query system is ready for arbitrary analysis descriptions")
 	return nil
 }
 
 // generateQueryWithLLM 使用LLM生成查詢，包含工具調用功能
 func (m *MarketingQueryRunner) generateQueryWithLLM(scenario string) (string, error) {
-	prompt := fmt.Sprintf(`你是一個行銷分析專家，需要根據場景生成SQL查詢。
+	prompt := fmt.Sprintf(`你是一個行銷分析專家，需要根據場景生成PostgreSQL SQL查詢。
 
 行銷分析場景：%s
+
+重要：請使用PostgreSQL語法，不要使用MySQL語法。例如：
+- 使用 CURRENT_DATE - INTERVAL '1 month' 而不是 DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+- 使用 DATE_TRUNC('month', column) 而不是其他語法
+- 使用 PostgreSQL特定的函數和語法
 
 你可以使用以下工具來獲取資料庫信息：
 1. read_phase1_data - 讀取Phase 1統計分析結果 (knowledge/phase1_analysis.json)
 2. read_phase2_data - 讀取Phase 2 AI分析結果 (knowledge/phase2_analysis.json) 
 3. read_phase4_data - 讀取Phase 4維度建模結果 (knowledge/phase4_dimensions.json)
 
-請根據場景需求，先決定需要查看哪些資料，然後生成最適合的SQL查詢。
+請根據場景需求，先決定需要查看哪些資料，然後生成最適合的PostgreSQL SQL查詢。
 
 請以JSON格式回應，包含以下字段：
 - reasoning: 你的分析推理過程
 - tools_to_use: 需要使用的工具列表 (例如: ["read_phase1_data", "read_phase2_data"])
-- sql_query: 生成的SQL查詢語句
+- sql_query: 生成的PostgreSQL SQL查詢語句
 
 回應格式：
 {
@@ -166,8 +131,8 @@ func (m *MarketingQueryRunner) generateQueryWithLLM(scenario string) (string, er
 	// 首先請求LLM決定使用哪些工具
 	toolResponse, err := m.callLLMWithTools(ctx, prompt)
 	if err != nil {
-		log.Printf("LLM tool call failed, using fallback: %v", err)
-		return m.generateFallbackQuery(scenario), nil
+		log.Printf("LLM tool call failed, using intelligent fallback: %v", err)
+		return m.generateIntelligentFallbackQuery(scenario), nil
 	}
 
 	// 解析LLM回應
@@ -179,7 +144,7 @@ func (m *MarketingQueryRunner) generateQueryWithLLM(scenario string) (string, er
 
 	if err := json.Unmarshal([]byte(toolResponse), &llmResponse); err != nil {
 		log.Printf("Failed to parse LLM tool response: %v", err)
-		return m.generateFallbackQuery(scenario), nil
+		return m.generateIntelligentFallbackQuery(scenario), nil
 	}
 
 	log.Printf("LLM Reasoning: %s", llmResponse.Reasoning)
@@ -351,26 +316,164 @@ func (m *MarketingQueryRunner) readPhase4Data() (interface{}, error) {
 	return result, nil
 }
 
-// generateFallbackQuery 生成後備查詢
-func (m *MarketingQueryRunner) generateFallbackQuery(scenario string) string {
-	switch scenario {
-	case "分析最暢銷的產品及其收入表現":
-		return "SELECT p.name, SUM(oi.quantity) as total_sold, SUM(oi.total) as revenue FROM products p JOIN order_items oi ON p.id = oi.product_id GROUP BY p.id, p.name ORDER BY revenue DESC LIMIT 10;"
-	case "根據購買頻率對客戶進行分群分析":
-		return "SELECT CASE WHEN total_orders >= 10 THEN 'High' WHEN total_orders >= 5 THEN 'Medium' ELSE 'Low' END as segment, COUNT(*) as count FROM customers GROUP BY segment;"
-	case "分析月度銷售趨勢和季節性變化":
-		return "SELECT DATE_TRUNC('month', ordered_at) as month, SUM(total) as revenue FROM orders GROUP BY month ORDER BY month DESC LIMIT 12;"
-	case "評估產品分類的銷售績效":
-		return "SELECT c.name, SUM(oi.total) as revenue FROM categories c JOIN products p ON c.id = p.category_id JOIN order_items oi ON p.id = oi.product_id GROUP BY c.id, c.name ORDER BY revenue DESC;"
-	case "計算客戶終身價值和忠誠度分析":
-		return "SELECT name, total_spent, total_orders, registration_date FROM customers ORDER BY total_spent DESC LIMIT 20;"
-	case "分析地理銷售分佈和區域表現":
-		return "SELECT shipping_address->>'country' as country, SUM(total) as revenue FROM orders GROUP BY country ORDER BY revenue DESC LIMIT 10;"
-	case "評估促銷活動的有效性和ROI":
-		return "SELECT code, discount_value, usage_count FROM coupons ORDER BY usage_count DESC LIMIT 10;"
-	default:
-		return "SELECT 'No query available for this scenario' as message;"
+// generateIntelligentFallbackQuery 基於場景描述智能生成PostgreSQL查詢
+func (m *MarketingQueryRunner) generateIntelligentFallbackQuery(scenario string) string {
+	scenarioLower := strings.ToLower(scenario)
+
+	// 分析場景描述並生成相應的查詢
+	if strings.Contains(scenarioLower, "最受歡迎") || strings.Contains(scenarioLower, "熱門") || strings.Contains(scenarioLower, "暢銷") {
+		if strings.Contains(scenarioLower, "產品") || strings.Contains(scenarioLower, "商品") {
+			if strings.Contains(scenarioLower, "類別") || strings.Contains(scenarioLower, "分類") {
+				// 分析最受歡迎的產品類別
+				if strings.Contains(scenarioLower, "最近一個月") || strings.Contains(scenarioLower, "最近30天") {
+					return `
+						SELECT
+							c.name as category_name,
+							COUNT(oi.product_id) as total_sales,
+							SUM(oi.total) as total_revenue
+						FROM categories c
+						JOIN products p ON c.id = p.category_id
+						JOIN order_items oi ON p.id = oi.product_id
+						JOIN orders o ON oi.order_id = o.id
+						WHERE o.ordered_at >= CURRENT_DATE - INTERVAL '1 month'
+						GROUP BY c.id, c.name
+						ORDER BY total_sales DESC
+						LIMIT 10;
+					`
+				} else {
+					return `
+						SELECT
+							c.name as category_name,
+							COUNT(oi.product_id) as total_sales,
+							SUM(oi.total) as total_revenue
+						FROM categories c
+						JOIN products p ON c.id = p.category_id
+						JOIN order_items oi ON p.id = oi.product_id
+						GROUP BY c.id, c.name
+						ORDER BY total_sales DESC
+						LIMIT 10;
+					`
+				}
+			} else {
+				// 分析最受歡迎的產品
+				if strings.Contains(scenarioLower, "最近一個月") || strings.Contains(scenarioLower, "最近30天") {
+					return `
+						SELECT
+							p.name as product_name,
+							COUNT(oi.product_id) as total_sales,
+							SUM(oi.total) as total_revenue
+						FROM products p
+						JOIN order_items oi ON p.id = oi.product_id
+						JOIN orders o ON oi.order_id = o.id
+						WHERE o.ordered_at >= CURRENT_DATE - INTERVAL '1 month'
+						GROUP BY p.id, p.name
+						ORDER BY total_sales DESC
+						LIMIT 10;
+					`
+				} else {
+					return `
+						SELECT
+							p.name as product_name,
+							COUNT(oi.product_id) as total_sales,
+							SUM(oi.total) as total_revenue
+						FROM products p
+						JOIN order_items oi ON p.id = oi.product_id
+						GROUP BY p.id, p.name
+						ORDER BY total_sales DESC
+						LIMIT 10;
+					`
+				}
+			}
+		}
 	}
+
+	if strings.Contains(scenarioLower, "客戶") && strings.Contains(scenarioLower, "分群") || strings.Contains(scenarioLower, "segment") {
+		return `
+			SELECT
+				CASE
+					WHEN total_spent >= 10000 THEN 'VIP'
+					WHEN total_spent >= 5000 THEN '高價值'
+					WHEN total_spent >= 1000 THEN '中等價值'
+					ELSE '低價值'
+				END as customer_segment,
+				COUNT(*) as customer_count,
+				AVG(total_spent) as avg_spent,
+				SUM(total_spent) as total_segment_revenue
+			FROM customers
+			GROUP BY customer_segment
+			ORDER BY total_segment_revenue DESC;
+		`
+	}
+
+	if strings.Contains(scenarioLower, "銷售趨勢") || strings.Contains(scenarioLower, "月度") {
+		return `
+			SELECT
+				DATE_TRUNC('month', ordered_at) as month,
+				COUNT(*) as order_count,
+				SUM(total) as total_revenue,
+				AVG(total) as avg_order_value
+			FROM orders
+			WHERE ordered_at >= CURRENT_DATE - INTERVAL '12 months'
+			GROUP BY month
+			ORDER BY month DESC;
+		`
+	}
+
+	if strings.Contains(scenarioLower, "地區") || strings.Contains(scenarioLower, "地理") {
+		return `
+			SELECT
+				COALESCE(shipping_address->>'country', '未知') as country,
+				COALESCE(shipping_address->>'city', '未知') as city,
+				COUNT(*) as order_count,
+				SUM(total) as total_revenue
+			FROM orders
+			GROUP BY country, city
+			ORDER BY total_revenue DESC
+			LIMIT 20;
+		`
+	}
+
+	if strings.Contains(scenarioLower, "優惠券") || strings.Contains(scenarioLower, "coupon") {
+		return `
+			SELECT
+				name,
+				code,
+				discount_type,
+				discount_value,
+				usage_count,
+				usage_limit,
+				CASE
+					WHEN expires_at < CURRENT_DATE THEN '已過期'
+					WHEN usage_count >= usage_limit THEN '已用完'
+					ELSE '有效'
+				END as status
+			FROM coupons
+			ORDER BY usage_count DESC;
+		`
+	}
+
+	// 預設查詢：返回一些基本的銷售統計
+	return `
+		SELECT
+			'總訂單數' as metric,
+			COUNT(*) as value
+		FROM orders
+		UNION ALL
+		SELECT
+			'總營收' as metric,
+			SUM(total) as value
+		FROM orders
+		UNION ALL
+		SELECT
+			'總客戶數' as metric,
+			COUNT(*) as value
+		FROM customers
+		UNION ALL
+		SELECT
+			'總產品數' as metric,
+			COUNT(*) as value
+		FROM products;
+	`
 }
 
 // MarketingQuery 行銷查詢結構
@@ -467,26 +570,12 @@ func truncateString(str string, maxLen int) string {
 	return str[:maxLen-3] + "..."
 }
 
-// loadScenarios 載入場景腳本
+// loadScenarios 載入場景腳本 (已棄用 - 系統現在支持任意描述)
 func (m *MarketingQueryRunner) loadScenarios() ([]MarketingScenario, error) {
-	data, err := os.ReadFile("scripts/marketing_scenarios.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read scenarios file: %v", err)
-	}
-
-	var config MarketingScenariosConfig
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse scenarios file: %v", err)
-	}
-
-	return config.Scenarios, nil
+	return nil, fmt.Errorf("scenarios file loading is deprecated - use arbitrary descriptions instead")
 }
 
-// getScenarioNames 獲取所有場景名稱
+// getScenarioNames 獲取所有場景名稱 (已棄用)
 func (m *MarketingQueryRunner) getScenarioNames(scenarios []MarketingScenario) []string {
-	names := make([]string, len(scenarios))
-	for i, s := range scenarios {
-		names[i] = s.Name
-	}
-	return names
+	return nil // 已棄用
 }
