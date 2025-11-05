@@ -1,7 +1,6 @@
 package phases
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,38 +11,27 @@ import (
 	"github.com/masato25/aika-dba/config"
 )
 
-// Dimension 維度定義
-type Dimension struct {
-	Name        string   `json:"name"`
-	Type        string   `json:"type"` // people, time, product, event, location
-	Description string   `json:"description"`
-	SourceTable string   `json:"source_table"`
-	KeyFields   []string `json:"key_fields"`
-	Attributes  []string `json:"attributes"`
-	BusinessUse string   `json:"business_use"`
-}
-
-// Phase3Runner Phase 3 執行器 - 維度建模分析
+// Phase3Runner Phase 3 執行器 - 自動生成維度規則
 type Phase3Runner struct {
-	config       *config.Config
-	db           *sql.DB
-	reader       *Phase1ResultReader
-	phase2Reader *Phase2ResultReader
+	config          *config.Config
+	phase2Reader    *Phase2ResultReader
+	prePhase3Reader *PrePhase3ResultReader
+	llmClient       *LLMClient
 }
 
 // NewPhase3Runner 創建 Phase 3 執行器
-func NewPhase3Runner(cfg *config.Config, db *sql.DB) *Phase3Runner {
+func NewPhase3Runner(cfg *config.Config) *Phase3Runner {
 	return &Phase3Runner{
-		config:       cfg,
-		db:           db,
-		reader:       NewPhase1ResultReader("knowledge/phase1_analysis.json"),
-		phase2Reader: NewPhase2ResultReader("knowledge/phase2_analysis.json"),
+		config:          cfg,
+		phase2Reader:    NewPhase2ResultReader("knowledge/phase2_analysis.json"),
+		prePhase3Reader: NewPrePhase3ResultReader("knowledge/pre_phase3_summary.json"),
+		llmClient:       NewLLMClient(cfg),
 	}
 }
 
-// Run 執行 Phase 3 維度建模分析
+// Run 執行 Phase 3 規則生成
 func (p *Phase3Runner) Run() error {
-	log.Println("=== Starting Phase 3: Dimension Modeling Analysis ===")
+	log.Println("=== Starting Phase 3: Auto-Generate Dimension Rules ===")
 
 	// 載入 Phase 2 分析結果
 	phase2Results, err := p.phase2Reader.GetAnalysisResults()
@@ -51,204 +39,575 @@ func (p *Phase3Runner) Run() error {
 		return fmt.Errorf("failed to load Phase 2 results: %v", err)
 	}
 
-	// 生成維度分析
-	dimensions, err := p.analyzeDimensions(phase2Results)
+	// 載入 pre-Phase 3 總結
+	prePhase3Data, err := p.prePhase3Reader.GetPrePhase3Data()
 	if err != nil {
-		return fmt.Errorf("failed to analyze dimensions: %v", err)
+		return fmt.Errorf("failed to load pre-Phase 3 summary: %v", err)
 	}
 
-	// 生成維度建模報告
-	report := map[string]interface{}{
-		"phase":         "phase3",
-		"description":   "Database dimension modeling for BI and data warehousing",
-		"database":      p.config.Database.DBName,
-		"database_type": p.config.Database.Type,
-		"timestamp":     time.Now(),
-		"dimensions":    dimensions,
-		"summary":       p.generateSummary(dimensions),
+	// 生成 Lua 維度規則
+	luaRules, err := p.generateDimensionRules(phase2Results, prePhase3Data)
+	if err != nil {
+		return fmt.Errorf("failed to generate dimension rules: %v", err)
 	}
 
-	// 保存報告
-	return p.writeOutput(report, "knowledge/phase3_dimensions.json")
+	// 保存 Lua 規則文件
+	if err := p.saveLuaRules(luaRules); err != nil {
+		return fmt.Errorf("failed to save Lua rules: %v", err)
+	}
+
+	log.Println("Phase 3 completed successfully - dimension_rules.lua generated")
+	return nil
 }
 
-// analyzeDimensions 分析維度
-func (p *Phase3Runner) analyzeDimensions(phase2Results map[string]*LLMAnalysisResult) ([]Dimension, error) {
-	dimensions := []Dimension{}
+// generateDimensionRules 生成維度規則
+func (p *Phase3Runner) generateDimensionRules(phase2Results map[string]*LLMAnalysisResult, prePhase3Data *PrePhase3Data) (string, error) {
+	var luaRules strings.Builder
 
-	// 分析每個表格並識別維度
+	// Lua 文件頭部
+	luaRules.WriteString(`-- Auto-generated dimension rules by Phase 2.5
+-- Generated on: ` + time.Now().Format("2006-01-02 15:04:05") + `
+-- Database: ` + p.config.Database.DBName + `
+
+-- Helper functions
+function contains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
+function has_any_field(table_meta, fields)
+    if not table_meta.columns then
+        return false
+    end
+    for _, col in pairs(table_meta.columns) do
+        if col.name then
+            for _, field in ipairs(fields) do
+                if col.name == field then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- Dimension detection function
+function detect_dimensions(table_name, table_meta)
+    local dimensions = {}
+
+`)
+
+	// 使用 LLM 生成智慧規則
+	intelligentRules, err := p.generateIntelligentRules(phase2Results, prePhase3Data)
+	if err != nil {
+		log.Printf("Warning: Failed to generate intelligent rules, using basic rules: %v", err)
+		intelligentRules = p.generateBasicRules()
+	}
+	luaRules.WriteString(intelligentRules)
+
+	// 基於字段分析的動態規則
+	luaRules.WriteString(`
+    -- Dynamic rules based on field analysis
+    if has_any_field(table_meta, {"price", "sku", "product_id"}) and not contains(table_meta.existing_dimensions, "dim_product") then
+        -- Extract column names for attributes
+        local column_names = {}
+        for _, col in pairs(table_meta.columns) do
+            if col.name then
+                table.insert(column_names, col.name)
+            end
+        end
+        table.insert(dimensions, {
+            name = "dim_product",
+            type = "product",
+            description = "Product dimension table - automatically identified product-related table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = column_names,
+            business_use = "Used for product-related business analysis"
+        })
+    end
+
+    if has_any_field(table_meta, {"customer_id", "user_id", "email"}) and not contains(table_meta.existing_dimensions, "dim_customer") then
+        -- Extract column names for attributes
+        local column_names = {}
+        for _, col in pairs(table_meta.columns) do
+            if col.name then
+                table.insert(column_names, col.name)
+            end
+        end
+        table.insert(dimensions, {
+            name = "dim_customer",
+            type = "people",
+            description = "Customer dimension table - automatically identified customer-related table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = column_names,
+            business_use = "Used for customer-related business analysis"
+        })
+    end
+
+    if has_any_field(table_meta, {"created_at", "updated_at", "date"}) and not contains(table_meta.existing_dimensions, "dim_date") then
+        -- Extract column names for attributes
+        local column_names = {}
+        for _, col in pairs(table_meta.columns) do
+            if col.name then
+                table.insert(column_names, col.name)
+            end
+        end
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - automatically identified time-related table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = column_names,
+            business_use = "Used for time series analysis"
+        })
+    end
+
+    if has_any_field(table_meta, {"address", "city", "country"}) and not contains(table_meta.existing_dimensions, "dim_location") then
+        -- Extract column names for attributes
+        local column_names = {}
+        for _, col in pairs(table_meta.columns) do
+            if col.name then
+                table.insert(column_names, col.name)
+            end
+        end
+        table.insert(dimensions, {
+            name = "dim_location",
+            type = "location",
+            description = "Location dimension table - automatically identified geography-related table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = column_names,
+            business_use = "Used for geographic location analysis"
+        })
+    end
+`)
+
+	// 從 pre-phase3 總結中提取額外的規則
+	if prePhase3Data.CustomNotes != nil && len(prePhase3Data.CustomNotes.CustomDimensions) > 0 {
+		luaRules.WriteString(`
+    -- Custom dimensions from pre-phase3 summary
+`)
+		for _, customDim := range prePhase3Data.CustomNotes.CustomDimensions {
+			if dimMap, ok := customDim.(map[string]interface{}); ok {
+				name := dimMap["name"].(string)
+				luaRules.WriteString(fmt.Sprintf(`
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "%s",
+            type = "%s",
+            description = "%s",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {},
+            business_use = "%s"
+        })
+    end`, name, name, dimMap["type"], dimMap["description"], dimMap["purpose"]))
+			}
+		}
+	}
+
+	luaRules.WriteString(`
+
+    return dimensions
+end
+
+-- Fact table detection function
+function detect_fact_tables(table_name, table_meta)
+    local fact_tables = {}
+
+    -- Rule-based fact table detection
+    if has_any_field(table_meta, {"order_id", "quantity", "amount", "total"}) then
+        table.insert(fact_tables, {
+            name = "fact_sales",
+            description = "Sales fact table - records sales transactions",
+            source_table = table_name,
+            measures = {"quantity", "amount", "total", "discount"},
+            dimensions = {"dim_date", "dim_customer", "dim_product", "dim_location"}
+        })
+    elseif has_any_field(table_meta, {"inventory_change", "stock_quantity"}) then
+        table.insert(fact_tables, {
+            name = "fact_inventory",
+            description = "Inventory fact table - records inventory changes",
+            source_table = table_name,
+            measures = {"quantity_change", "unit_cost", "total_value"},
+            dimensions = {"dim_date", "dim_product", "dim_location"}
+        })
+    elseif has_any_field(table_meta, {"event_type", "session_id", "page_view"}) then
+        table.insert(fact_tables, {
+            name = "fact_customer_behavior",
+            description = "Customer behavior fact table - records user behavior",
+            source_table = table_name,
+            measures = {"event_count", "session_duration", "page_views"},
+            dimensions = {"dim_date", "dim_customer", "dim_location"}
+        })
+    end
+
+    return fact_tables
+end
+
+return {
+    detect_dimensions = detect_dimensions,
+    detect_fact_tables = detect_fact_tables
+}`)
+
+	return luaRules.String(), nil
+}
+
+// generateIntelligentRules 使用 LLM 生成智慧規則
+func (p *Phase3Runner) generateIntelligentRules(phase2Results map[string]*LLMAnalysisResult, prePhase3Data *PrePhase3Data) (string, error) {
+	var rules strings.Builder
+
+	rules.WriteString(`
+    -- Intelligent rules generated by LLM based on Phase 2 analysis
+`)
+
+	// 為每個表格生成智慧規則
 	for tableName, result := range phase2Results {
-		tableDimensions := p.analyzeTableDimensions(tableName, result)
-		dimensions = append(dimensions, tableDimensions...)
+		// 使用現有的分析結果來生成規則
+		tableRules := p.generateRulesFromAnalysis(tableName, result)
+		if tableRules != "" {
+			rules.WriteString(tableRules)
+			rules.WriteString("\n")
+		}
 	}
 
-	return dimensions, nil
+	return rules.String(), nil
 }
 
-// analyzeTableDimensions 分析單個表格的維度
-func (p *Phase3Runner) analyzeTableDimensions(tableName string, result *LLMAnalysisResult) []Dimension {
-	dimensions := []Dimension{}
+// generateRulesFromAnalysis 基於分析結果生成規則
+func (p *Phase3Runner) generateRulesFromAnalysis(tableName string, result *LLMAnalysisResult) string {
+	// 基於分析內容生成規則
+	var rules strings.Builder
 
+	// 根據表名和分析內容智能判斷維度類型
 	switch tableName {
 	case "customers":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_customer",
-			Type:        "people",
-			Description: "顧客維度表 - 包含顧客的基本信息、會員等級、消費行為等",
-			SourceTable: "customers",
-			KeyFields:   []string{"id", "uuid", "email"},
-			Attributes:  []string{"name", "phone", "date_of_birth", "gender", "registration_date", "last_login", "is_active", "customer_type", "total_orders", "total_spent", "loyalty_points"},
-			BusinessUse: "用於分析顧客行為、會員分群、個性化推薦、顧客價值分析",
-		})
+		// 顧客表 - 生成顧客維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_customer",
+            type = "people",
+            description = "Customer dimension table - contains customer information and behavior data",
+            source_table = table_name,
+            key_fields = {"id", "email"},
+            attributes = {"name", "phone", "date_of_birth", "gender", "registration_date", "last_login", "is_active", "customer_type", "total_orders", "total_spent", "loyalty_points"},
+            business_use = "Used for customer behavior analysis and segmentation"
+        })
+    end
+`, tableName))
 
 	case "products":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_product",
-			Type:        "product",
-			Description: "商品維度表 - 包含商品的基本信息、價格、庫存、分類等",
-			SourceTable: "products",
-			KeyFields:   []string{"id", "sku"},
-			Attributes:  []string{"name", "description", "price", "cost_price", "compare_at_price", "weight", "dimensions", "inventory_quantity", "inventory_policy", "is_active", "is_featured", "tags", "seo_title", "seo_description"},
-			BusinessUse: "用於分析商品銷售表現、庫存管理、價格策略、商品分類統計",
-		})
+		// 商品表 - 生成商品維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_product",
+            type = "product",
+            description = "Product dimension table - contains product information and attributes",
+            source_table = table_name,
+            key_fields = {"id", "sku"},
+            attributes = {"name", "description", "short_description", "category_id", "price", "cost_price", "compare_at_price", "weight", "dimensions", "inventory_quantity", "inventory_policy", "is_active", "is_featured", "tags", "images", "seo_title", "seo_description"},
+            business_use = "Used for product sales analysis and categorization"
+        })
+    end
+`, tableName))
 
 	case "categories":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_category",
-			Type:        "product",
-			Description: "商品分類維度表 - 包含商品分類的層次結構和屬性",
-			SourceTable: "categories",
-			KeyFields:   []string{"id"},
-			Attributes:  []string{"name", "description", "parent_id", "sort_order", "is_active"},
-			BusinessUse: "用於分析商品分類表現、分類層次統計、分類銷售趨勢",
-		})
-
-	case "product_variants":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_product_variant",
-			Type:        "product",
-			Description: "商品變體維度表 - 包含商品的具體規格變體信息",
-			SourceTable: "product_variants",
-			KeyFields:   []string{"id", "sku"},
-			Attributes:  []string{"product_id", "name", "price", "cost_price", "compare_at_price", "weight", "dimensions", "inventory_quantity", "option1", "option2", "option3", "is_active"},
-			BusinessUse: "用於分析商品變體銷售、庫存管理、規格偏好分析",
-		})
-
-	case "customer_addresses":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_location",
-			Type:        "location",
-			Description: "地理位置維度表 - 包含顧客地址、配送地區等地理信息",
-			SourceTable: "customer_addresses",
-			KeyFields:   []string{"id", "customer_id"},
-			Attributes:  []string{"address_type", "is_default", "street_address", "city", "state", "postal_code", "country"},
-			BusinessUse: "用於分析地理銷售分佈、配送區域優化、地區顧客行為",
-		})
+		// 分類表 - 生成分類維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_category",
+            type = "product",
+            description = "Category dimension table - contains category hierarchy structure",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"name", "description", "parent_id", "sort_order", "is_active"},
+            business_use = "Used for category performance analysis and hierarchy statistics"
+        })
+    end
+`, tableName))
 
 	case "orders":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_date",
-			Type:        "time",
-			Description: "時間維度表 - 從訂單中提取的時間相關信息",
-			SourceTable: "orders",
-			KeyFields:   []string{"id"},
-			Attributes:  []string{"created_at", "updated_at", "order_date", "confirmed_at", "shipped_at", "delivered_at", "cancelled_at"},
-			BusinessUse: "用於時間序列分析、銷售趨勢、季節性分析、訂單處理時間統計",
-		})
+		// 訂單表 - 生成時間維度和位置維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from order timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"created_at", "updated_at", "ordered_at", "confirmed_at", "shipped_at", "delivered_at", "cancelled_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_location",
+            type = "location",
+            description = "Location dimension table - contains address and region information",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"billing_address", "shipping_address"},
+            business_use = "Used for geographic analysis and regional sales statistics"
+        })
+    end
+`, tableName, tableName))
+
+	case "order_items":
+		// 訂單項目表 - 生成時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from order item timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"created_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+`, tableName))
+
+	case "customer_addresses":
+		// 顧客地址表 - 生成位置維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_location",
+            type = "location",
+            description = "Location dimension table - contains customer address information",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"address_type", "is_default", "street_address", "city", "state", "postal_code", "country"},
+            business_use = "Used for geographic analysis and regional sales statistics"
+        })
+    end
+`, tableName))
 
 	case "coupons":
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_promotion",
-			Type:        "event",
-			Description: "行銷活動維度表 - 包含優惠券、促銷活動等行銷信息",
-			SourceTable: "coupons",
-			KeyFields:   []string{"id", "code"},
-			Attributes:  []string{"name", "description", "discount_type", "discount_value", "minimum_amount", "maximum_discount", "usage_limit", "usage_count", "starts_at", "expires_at", "is_active", "applicable_products", "applicable_categories"},
-			BusinessUse: "用於分析促銷效果、優惠券使用率、行銷ROI、顧客響應度",
-		})
+		// 優惠券表 - 生成促銷維度和時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_promotion",
+            type = "event",
+            description = "Promotion dimension table - contains coupon and promotion information",
+            source_table = table_name,
+            key_fields = {"id", "code"},
+            attributes = {"name", "description", "discount_type", "discount_value", "minimum_amount", "maximum_discount", "usage_limit", "usage_count", "starts_at", "expires_at", "is_active", "applicable_products", "applicable_categories"},
+            business_use = "Used for marketing effectiveness analysis and ROI calculation"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from coupon timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"starts_at", "expires_at", "created_at", "updated_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+`, tableName, tableName))
+
+	case "reviews":
+		// 評論表 - 生成評論維度和時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_review",
+            type = "event",
+            description = "Review dimension table - contains user ratings and feedback",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"rating", "title", "content", "images", "is_verified", "helpful_votes", "status"},
+            business_use = "Used for rating analysis and user satisfaction research"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from review timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"created_at", "updated_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+`, tableName, tableName))
+
+	case "shipments":
+		// 運送表 - 生成運送維度和位置維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_shipment",
+            type = "event",
+            description = "Shipment dimension table - contains logistics and delivery information",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"tracking_number", "carrier", "status", "shipped_at", "delivered_at", "estimated_delivery", "shipping_address", "weight", "dimensions", "notes"},
+            business_use = "Used for logistics analysis and delivery efficiency optimization"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_location",
+            type = "location",
+            description = "Location dimension table - contains shipping address information",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"shipping_address"},
+            business_use = "Used for geographic analysis and regional sales statistics"
+        })
+    end
+`, tableName, tableName))
+
+	case "returns":
+		// 退貨表 - 生成退貨維度和時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_return",
+            type = "event",
+            description = "Return dimension table - contains return and refund information",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"reason", "status", "refund_amount", "items", "notes", "requested_at", "approved_at", "received_at", "refunded_at"},
+            business_use = "Used for return analysis and quality improvement"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from return timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"requested_at", "approved_at", "received_at", "refunded_at", "created_at", "updated_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+`, tableName, tableName))
+
+	case "product_variants":
+		// 商品變體表 - 生成商品維度和時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_product",
+            type = "product",
+            description = "Product dimension table - contains product variant information",
+            source_table = table_name,
+            key_fields = {"id", "sku"},
+            attributes = {"product_id", "name", "price", "cost_price", "compare_at_price", "weight", "dimensions", "inventory_quantity", "option1", "option2", "option3", "is_active"},
+            business_use = "Used for product variant analysis and categorization"
+        })
+    end
+    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from variant timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"created_at", "updated_at"},
+            business_use = "Used for time series analysis and trend analysis"
+        })
+    end
+`, tableName, tableName))
+
+	case "inventory_transactions":
+		// 庫存交易表 - 生成時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from inventory transaction timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"created_at"},
+            business_use = "Used for inventory time series analysis"
+        })
+    end
+`, tableName))
+
+	case "payments":
+		// 支付表 - 生成時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from payment timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"processed_at", "created_at", "updated_at"},
+            business_use = "Used for payment time series analysis"
+        })
+    end
+`, tableName))
+
+	case "shopping_carts":
+		// 購物車表 - 生成時間維度
+		rules.WriteString(fmt.Sprintf(`    if table_name == "%s" then
+        table.insert(dimensions, {
+            name = "dim_date",
+            type = "time",
+            description = "Time dimension table - extracted from shopping cart timestamps",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {"expires_at", "created_at", "updated_at"},
+            business_use = "Used for shopping cart time series analysis"
+        })
+    end
+`, tableName))
 	}
 
-	// 從分析結果中動態識別其他維度
-	if strings.Contains(result.Analysis, "評論") || strings.Contains(result.Analysis, "review") {
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_review",
-			Type:        "event",
-			Description: "評論事件維度表 - 包含產品評論、評價等用戶反饋信息",
-			SourceTable: "reviews",
-			KeyFields:   []string{"id"},
-			Attributes:  []string{"product_id", "customer_id", "order_id", "rating", "title", "content", "images", "helpful_votes", "status", "created_at", "updated_at"},
-			BusinessUse: "用於分析產品評價趨勢、顧客滿意度、評論情感分析",
-		})
-	}
-
-	if strings.Contains(result.Analysis, "運送") || strings.Contains(result.Analysis, "shipment") {
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_shipment",
-			Type:        "event",
-			Description: "運送事件維度表 - 包含訂單運送、物流信息",
-			SourceTable: "shipments",
-			KeyFields:   []string{"id", "order_id"},
-			Attributes:  []string{"tracking_number", "carrier", "status", "shipping_address", "weight", "dimensions", "estimated_delivery", "delivered_at", "created_at", "updated_at"},
-			BusinessUse: "用於分析物流效率、運送時間、配送成本、地區配送統計",
-		})
-	}
-
-	if strings.Contains(result.Analysis, "退貨") || strings.Contains(result.Analysis, "return") {
-		dimensions = append(dimensions, Dimension{
-			Name:        "dim_return",
-			Type:        "event",
-			Description: "退貨事件維度表 - 包含退貨請求、退款信息",
-			SourceTable: "returns",
-			KeyFields:   []string{"id", "order_id"},
-			Attributes:  []string{"customer_id", "reason", "status", "refund_amount", "refunded_items", "requested_at", "approved_at", "received_at", "refunded_at"},
-			BusinessUse: "用於分析退貨率、退貨原因、退款處理效率、產品質量問題",
-		})
-	}
-
-	return dimensions
+	return rules.String()
 }
 
-// generateSummary 生成維度分析總結
-func (p *Phase3Runner) generateSummary(dimensions []Dimension) map[string]interface{} {
-	typeCount := make(map[string]int)
-	totalDimensions := len(dimensions)
-
-	for _, dim := range dimensions {
-		typeCount[dim.Type]++
-	}
-
-	return map[string]interface{}{
-		"total_dimensions":   totalDimensions,
-		"dimensions_by_type": typeCount,
-		"recommended_fact_tables": []map[string]interface{}{
-			{
-				"name":        "fact_sales",
-				"description": "銷售事實表 - 記錄每筆銷售交易的詳細信息",
-				"measures":    []string{"order_amount", "quantity", "discount_amount", "tax_amount", "shipping_cost"},
-				"dimensions":  []string{"dim_date", "dim_customer", "dim_product", "dim_location", "dim_promotion"},
-			},
-			{
-				"name":        "fact_inventory",
-				"description": "庫存事實表 - 記錄庫存變動和商品流轉信息",
-				"measures":    []string{"quantity_change", "unit_cost", "total_value"},
-				"dimensions":  []string{"dim_date", "dim_product", "dim_location"},
-			},
-			{
-				"name":        "fact_customer_behavior",
-				"description": "顧客行為事實表 - 記錄顧客的各種行為事件",
-				"measures":    []string{"event_count", "session_duration", "page_views"},
-				"dimensions":  []string{"dim_date", "dim_customer", "dim_product", "dim_location"},
-			},
-		},
-	}
+// generateBasicRules 生成基本後備規則
+func (p *Phase3Runner) generateBasicRules() string {
+	return `
+    -- Basic fallback rules
+    if table_name == "customers" or table_name == "users" then
+        table.insert(dimensions, {
+            name = "dim_customer",
+            type = "people",
+            description = "Customer dimension table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {},
+            business_use = "Customer analysis"
+        })
+    elseif table_name == "products" or table_name == "items" then
+        table.insert(dimensions, {
+            name = "dim_product",
+            type = "product",
+            description = "Product dimension table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {},
+            business_use = "Product analysis"
+        })
+    elseif table_name == "categories" then
+        table.insert(dimensions, {
+            name = "dim_category",
+            type = "product",
+            description = "Category dimension table",
+            source_table = table_name,
+            key_fields = {"id"},
+            attributes = {},
+            business_use = "Category analysis"
+        })
+    end`
 }
 
-// writeOutput 寫入輸出到文件
-func (p *Phase3Runner) writeOutput(data interface{}, filename string) error {
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
+// saveLuaRules 保存 Lua 規則到文件
+func (p *Phase3Runner) saveLuaRules(rules string) error {
+	filename := "knowledge/dimension_rules.lua"
 
 	file, err := os.Create(filename)
 	if err != nil {
@@ -256,39 +615,53 @@ func (p *Phase3Runner) writeOutput(data interface{}, filename string) error {
 	}
 	defer file.Close()
 
-	_, err = file.Write(jsonData)
+	_, err = file.WriteString(rules)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Phase 3 dimension analysis results saved to %s", filename)
+	log.Printf("Dimension rules saved to %s", filename)
 	return nil
 }
 
-// Phase2ResultReader Phase 2 結果讀取器
-type Phase2ResultReader struct {
+// PrePhase3ResultReader Pre-Phase 3 結果讀取器
+type PrePhase3ResultReader struct {
 	filename string
 }
 
-// NewPhase2ResultReader 創建 Phase 2 結果讀取器
-func NewPhase2ResultReader(filename string) *Phase2ResultReader {
-	return &Phase2ResultReader{filename: filename}
+// PrePhase3Data Pre-Phase 3 數據結構
+type PrePhase3Data struct {
+	BusinessSummary   map[string]interface{} `json:"business_summary"`
+	Phase3Suggestions map[string]interface{} `json:"phase3_suggestions"`
+	CustomNotes       *CustomNotes           `json:"custom_notes"`
 }
 
-// GetAnalysisResults 獲取分析結果
-func (r *Phase2ResultReader) GetAnalysisResults() (map[string]*LLMAnalysisResult, error) {
+// CustomNotes 自定義筆記
+type CustomNotes struct {
+	BusinessDomain         string        `json:"business_domain"`
+	KeyEntities            []string      `json:"key_entities"`
+	ImportantRelationships []string      `json:"important_relationships"`
+	AnalysisFocusAreas     []string      `json:"analysis_focus_areas"`
+	CustomDimensions       []interface{} `json:"custom_dimensions"`
+	AdditionalNotes        string        `json:"additional_notes"`
+}
+
+// NewPrePhase3ResultReader 創建 Pre-Phase 3 結果讀取器
+func NewPrePhase3ResultReader(filename string) *PrePhase3ResultReader {
+	return &PrePhase3ResultReader{filename: filename}
+}
+
+// GetPrePhase3Data 獲取 Pre-Phase 3 數據
+func (r *PrePhase3ResultReader) GetPrePhase3Data() (*PrePhase3Data, error) {
 	data, err := os.ReadFile(r.filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read Phase 2 results file: %v", err)
+		return nil, fmt.Errorf("failed to read pre-phase3 file: %v", err)
 	}
 
-	var result struct {
-		AnalysisResults map[string]*LLMAnalysisResult `json:"analysis_results"`
-	}
-
+	var result PrePhase3Data
 	if err := json.Unmarshal(data, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse Phase 2 results: %v", err)
+		return nil, fmt.Errorf("failed to parse pre-phase3 data: %v", err)
 	}
 
-	return result.AnalysisResults, nil
+	return &result, nil
 }

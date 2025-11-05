@@ -118,18 +118,27 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 	}
 }
 
-// runPhase3 執行 Phase 3: 維度建模分析
-func runPhase3(db *sql.DB, cfg *config.Config) {
-	runner := phases.NewPhase3Runner(cfg, db)
+// runPhase3 執行 Phase 3: 自動生成維度規則
+func runPhase3(cfg *config.Config) {
+	runner := phases.NewPhase3Runner(cfg)
 
 	if err := runner.Run(); err != nil {
 		log.Fatalf("Phase 3 failed: %v", err)
 	}
 }
 
+// runPhase4 執行 Phase 4: 使用 Lua 規則引擎進行維度建模
+func runPhase4(db *sql.DB, cfg *config.Config) {
+	runner := phases.NewPhase4Runner(cfg, db)
+
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 4 failed: %v", err)
+	}
+}
+
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
 	flag.Parse()
 
@@ -169,8 +178,10 @@ func main() {
 	case "phase2":
 		runPhase2(db, cfg)
 	case "phase3":
-		runPhase3(db, cfg)
+		runPhase3(cfg)
+	case "phase4":
+		runPhase4(db, cfg)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4", *command)
 	}
 }
