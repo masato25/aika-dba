@@ -1,49 +1,26 @@
 {
   "business_summary": {
-    "business_relationships": [
-      "訂單包含商品 (Orders contain Products)",
-      "顧客下訂單 (Customer places Orders)",
-      "商品屬於分類 (Products belong to Categories)"
-    ],
+    "business_relationships": [],
     "core_business_processes": [
-      "顧客管理 (Customer Management)",
-      "商品目錄管理 (Product Catalog Management)",
-      "訂單處理 (Order Processing)",
-      "購物車管理 (Shopping Cart Management)"
+      "顧客管理 (Customer Management)"
     ],
     "key_business_entities": [
-      "商品 (Product)",
-      "商品分類 (Category)",
-      "顧客 (Customer)",
-      "訂單 (Order)",
-      "訂單項目 (Order Item)"
+      "顧客 (Customer)"
     ],
-    "overall_business_domain": "零售/銷售系統 (Retail/Sales System)",
+    "overall_business_domain": "通用商業系統 (General Business System)",
     "table_categories": {
       "content_reviews": [],
       "customer_management": [
-        "customers",
-        "product_variants",
-        "products",
-        "returns",
-        "reviews",
-        "order_items",
-        "orders",
-        "customer_addresses",
-        "shipments"
+        "table_size"
       ],
       "inventory_management": [],
       "marketing_promotion": [],
-      "order_management": [
-        "inventory_transactions",
-        "payments"
+      "order_management": [],
+      "other": [
+        "tables",
+        "tables_count"
       ],
-      "other": [],
-      "product_management": [
-        "shopping_carts",
-        "categories",
-        "coupons"
-      ],
+      "product_management": [],
       "shipping_logistics": []
     }
   },
@@ -160,5 +137,5 @@
       }
     ]
   },
-  "timestamp": "2025-11-05T14:38:14.227552+08:00"
+  "timestamp": "2025-11-05T17:58:09.750181+08:00"
 }

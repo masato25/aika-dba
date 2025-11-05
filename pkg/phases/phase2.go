@@ -12,19 +12,27 @@ import (
 
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/mcp"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
 // Phase2Runner Phase 2 執行器
 type Phase2Runner struct {
-	config    *config.Config
-	db        *sql.DB
-	reader    *Phase1ResultReader
-	analyzer  *TableAnalysisOrchestrator
-	mcpServer *mcp.MCPServer
+	config       *config.Config
+	db           *sql.DB
+	reader       *Phase1ResultReader
+	analyzer     *TableAnalysisOrchestrator
+	mcpServer    *mcp.MCPServer
+	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewPhase2Runner 創建 Phase 2 執行器
-func NewPhase2Runner(cfg *config.Config, db *sql.DB) *Phase2Runner {
+func NewPhase2Runner(cfg *config.Config, db *sql.DB) (*Phase2Runner, error) {
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// 創建 phase1 結果讀取器
 	reader := NewPhase1ResultReader("knowledge/phase1_analysis.json")
 
@@ -32,15 +40,16 @@ func NewPhase2Runner(cfg *config.Config, db *sql.DB) *Phase2Runner {
 	mcpServer := mcp.NewMCPServer(db)
 
 	// 創建表格分析協調器
-	analyzer := NewTableAnalysisOrchestrator(cfg, reader, mcpServer)
+	analyzer := NewTableAnalysisOrchestrator(cfg, reader, mcpServer, knowledgeMgr)
 
 	return &Phase2Runner{
-		config:    cfg,
-		db:        db,
-		reader:    reader,
-		analyzer:  analyzer,
-		mcpServer: mcpServer,
-	}
+		config:       cfg,
+		db:           db,
+		reader:       reader,
+		analyzer:     analyzer,
+		mcpServer:    mcpServer,
+		knowledgeMgr: knowledgeMgr,
+	}, nil
 }
 
 // Run 執行 Phase 2 AI 分析
@@ -141,6 +150,14 @@ func (p *Phase2Runner) saveResults() error {
 		return err
 	}
 
+	// 將知識存儲到向量數據庫
+	if err := p.knowledgeMgr.StorePhaseKnowledge("phase2", output); err != nil {
+		log.Printf("Warning: Failed to store phase2 knowledge in vector store: %v", err)
+		// 不返回錯誤，因為 JSON 文件已經寫入成功
+	} else {
+		log.Printf("Phase 2 knowledge stored in vector database")
+	}
+
 	// 生成 Phase 3 準備文件
 	if err := p.generatePrePhase3Summary(results); err != nil {
 		return fmt.Errorf("failed to generate pre-phase3 summary: %v", err)
@@ -162,14 +179,25 @@ func (p *Phase2Runner) generateSummary(results map[string]*LLMAnalysisResult) ma
 		totalInsights += len(result.Insights)
 	}
 
+	// 避免除零錯誤
+	avgRecommendations := 0.0
+	avgIssues := 0.0
+	avgInsights := 0.0
+
+	if totalTables > 0 {
+		avgRecommendations = float64(totalRecommendations) / float64(totalTables)
+		avgIssues = float64(totalIssues) / float64(totalTables)
+		avgInsights = float64(totalInsights) / float64(totalTables)
+	}
+
 	return map[string]interface{}{
 		"total_tables_analyzed":             totalTables,
 		"total_recommendations":             totalRecommendations,
 		"total_issues_found":                totalIssues,
 		"total_insights":                    totalInsights,
-		"average_recommendations_per_table": float64(totalRecommendations) / float64(totalTables),
-		"average_issues_per_table":          float64(totalIssues) / float64(totalTables),
-		"average_insights_per_table":        float64(totalInsights) / float64(totalTables),
+		"average_recommendations_per_table": avgRecommendations,
+		"average_issues_per_table":          avgIssues,
+		"average_insights_per_table":        avgInsights,
 	}
 }
 
@@ -192,6 +220,14 @@ func (p *Phase2Runner) writeOutput(data interface{}, filename string) error {
 	}
 
 	log.Printf("Phase 2 AI analysis results saved to %s", filename)
+	return nil
+}
+
+// Close 關閉 Phase 2 執行器
+func (p *Phase2Runner) Close() error {
+	if p.knowledgeMgr != nil {
+		return p.knowledgeMgr.Close()
+	}
 	return nil
 }
 

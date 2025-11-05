@@ -9,20 +9,42 @@ import (
 	"os"
 	"strings"
 
+	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
 // MCPServer MCP 服務器
 type MCPServer struct {
-	db       *sql.DB
-	analyzer *analyzer.DatabaseAnalyzer
+	db           *sql.DB
+	analyzer     *analyzer.DatabaseAnalyzer
+	knowledgeMgr *vectorstore.KnowledgeManager
+	config       *config.Config
 }
 
 // NewMCPServer 創建 MCP 服務器
 func NewMCPServer(db *sql.DB) *MCPServer {
+	// 載入配置
+	cfg, err := config.LoadConfig("")
+	if err != nil {
+		log.Printf("Warning: failed to load config: %v, using defaults", err)
+		cfg = &config.Config{} // 使用默認配置
+	}
+
+	// 創建知識管理器
+	var knowledgeMgr *vectorstore.KnowledgeManager
+	if cfg.VectorStore.Enabled {
+		knowledgeMgr, err = vectorstore.NewKnowledgeManager(cfg)
+		if err != nil {
+			log.Printf("Warning: failed to create knowledge manager: %v", err)
+		}
+	}
+
 	return &MCPServer{
-		db:       db,
-		analyzer: analyzer.NewDatabaseAnalyzer(db),
+		db:           db,
+		analyzer:     analyzer.NewDatabaseAnalyzer(db),
+		knowledgeMgr: knowledgeMgr,
+		config:       cfg,
 	}
 }
 
@@ -49,6 +71,11 @@ func (s *MCPServer) Start() error {
 	}
 
 	return scanner.Err()
+}
+
+// HandleRequest 處理請求（公共方法，用於測試）
+func (s *MCPServer) HandleRequest(request string) (string, error) {
+	return s.handleRequest(request)
 }
 
 // handleRequest 處理請求
@@ -161,6 +188,90 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 				"required": []string{"table_name"},
 			},
 		},
+		{
+			"name":        "get_database_schema_analysis",
+			"description": "獲取 Phase 1 的資料庫架構分析結果，包括統計信息和樣本報告",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "查詢關鍵字，用於檢索相關的架構分析結果",
+						"default":     "",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "最大返回結果數，預設 10",
+						"default":     10,
+					},
+				},
+			},
+		},
+		{
+			"name":        "get_business_logic_analysis",
+			"description": "獲取 Phase 2 的業務邏輯分析結果，包括 AI 洞察和建議",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "查詢關鍵字，用於檢索相關的業務邏輯分析",
+						"default":     "",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "最大返回結果數，預設 10",
+						"default":     10,
+					},
+				},
+			},
+		},
+		{
+			"name":        "get_comprehensive_business_overview",
+			"description": "獲取 Phase 3 的綜合業務概覽，包括數據預處理和轉換計劃",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "查詢關鍵字，用於檢索相關的業務概覽",
+						"default":     "",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "最大返回結果數，預設 10",
+						"default":     10,
+					},
+				},
+			},
+		},
+		{
+			"name":        "get_dimensional_analysis",
+			"description": "獲取 Phase 4 的維度分析結果，包括星形架構設計和 ETL 計劃",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "查詢關鍵字，用於檢索相關的維度分析",
+						"default":     "",
+					},
+					"limit": map[string]interface{}{
+						"type":        "integer",
+						"description": "最大返回結果數，預設 10",
+						"default":     10,
+					},
+				},
+			},
+		},
+		{
+			"name":        "get_knowledge_stats",
+			"description": "獲取知識庫統計信息，包括各 phase 的知識塊數量",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{},
+			},
+		},
 	}
 
 	response := map[string]interface{}{
@@ -205,6 +316,16 @@ func (s *MCPServer) handleToolsCall(req map[string]interface{}) (string, error) 
 		result, err = s.executeQuery(toolArgs)
 	case "get_more_samples":
 		result, err = s.getMoreSamples(toolArgs)
+	case "get_database_schema_analysis":
+		result, err = s.getDatabaseSchemaAnalysis(toolArgs)
+	case "get_business_logic_analysis":
+		result, err = s.getBusinessLogicAnalysis(toolArgs)
+	case "get_comprehensive_business_overview":
+		result, err = s.getComprehensiveBusinessOverview(toolArgs)
+	case "get_dimensional_analysis":
+		result, err = s.getDimensionalAnalysis(toolArgs)
+	case "get_knowledge_stats":
+		result, err = s.getKnowledgeStats(toolArgs)
 	default:
 		return s.createErrorResponse(req, -32601, "Tool not found")
 	}
@@ -423,4 +544,160 @@ func (s *MCPServer) createErrorResponse(req map[string]interface{}, code int, me
 		return "", err
 	}
 	return string(jsonData), nil
+}
+
+// getDatabaseSchemaAnalysis 獲取 Phase 1 資料庫架構分析
+func (s *MCPServer) getDatabaseSchemaAnalysis(args map[string]interface{}) (interface{}, error) {
+	if s.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	query := ""
+	if q, ok := args["query"].(string); ok {
+		query = q
+	}
+
+	limit := 10
+	if l, ok := args["limit"]; ok {
+		if limitFloat, ok := l.(float64); ok {
+			limit = int(limitFloat)
+		}
+	}
+
+	log.Printf("Getting database schema analysis (query: %s, limit: %d)", query, limit)
+
+	results, err := s.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve phase1 knowledge: %v", err)
+	}
+
+	return map[string]interface{}{
+		"phase":       "phase1",
+		"description": "Database statistical analysis with table schemas, constraints, and sample data",
+		"query":       query,
+		"results":     results,
+		"count":       len(results),
+	}, nil
+}
+
+// getBusinessLogicAnalysis 獲取 Phase 2 業務邏輯分析
+func (s *MCPServer) getBusinessLogicAnalysis(args map[string]interface{}) (interface{}, error) {
+	if s.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	query := ""
+	if q, ok := args["query"].(string); ok {
+		query = q
+	}
+
+	limit := 10
+	if l, ok := args["limit"]; ok {
+		if limitFloat, ok := l.(float64); ok {
+			limit = int(limitFloat)
+		}
+	}
+
+	log.Printf("Getting business logic analysis (query: %s, limit: %d)", query, limit)
+
+	results, err := s.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve phase2 knowledge: %v", err)
+	}
+
+	return map[string]interface{}{
+		"phase":       "phase2",
+		"description": "AI-powered business logic analysis with LLM insights and recommendations",
+		"query":       query,
+		"results":     results,
+		"count":       len(results),
+	}, nil
+}
+
+// getComprehensiveBusinessOverview 獲取 Phase 3 綜合業務概覽
+func (s *MCPServer) getComprehensiveBusinessOverview(args map[string]interface{}) (interface{}, error) {
+	if s.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	query := ""
+	if q, ok := args["query"].(string); ok {
+		query = q
+	}
+
+	limit := 10
+	if l, ok := args["limit"]; ok {
+		if limitFloat, ok := l.(float64); ok {
+			limit = int(limitFloat)
+		}
+	}
+
+	log.Printf("Getting comprehensive business overview (query: %s, limit: %d)", query, limit)
+
+	results, err := s.knowledgeMgr.RetrievePhaseKnowledge("phase3", query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve phase3 knowledge: %v", err)
+	}
+
+	return map[string]interface{}{
+		"phase":       "phase3",
+		"description": "Data preprocessing and transformation preparation",
+		"query":       query,
+		"results":     results,
+		"count":       len(results),
+	}, nil
+}
+
+// getDimensionalAnalysis 獲取 Phase 4 維度分析
+func (s *MCPServer) getDimensionalAnalysis(args map[string]interface{}) (interface{}, error) {
+	if s.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	query := ""
+	if q, ok := args["query"].(string); ok {
+		query = q
+	}
+
+	limit := 10
+	if l, ok := args["limit"]; ok {
+		if limitFloat, ok := l.(float64); ok {
+			limit = int(limitFloat)
+		}
+	}
+
+	log.Printf("Getting dimensional analysis (query: %s, limit: %d)", query, limit)
+
+	results, err := s.knowledgeMgr.RetrievePhaseKnowledge("phase4", query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve phase4 knowledge: %v", err)
+	}
+
+	return map[string]interface{}{
+		"phase":       "phase4",
+		"description": "Dimensional modeling with star schema design and ETL planning",
+		"query":       query,
+		"results":     results,
+		"count":       len(results),
+	}, nil
+}
+
+// getKnowledgeStats 獲取知識統計信息
+func (s *MCPServer) getKnowledgeStats(args map[string]interface{}) (interface{}, error) {
+	if s.knowledgeMgr == nil {
+		return nil, fmt.Errorf("knowledge manager not available")
+	}
+
+	log.Printf("Getting knowledge statistics")
+
+	stats, err := s.knowledgeMgr.GetKnowledgeStats()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get knowledge stats: %v", err)
+	}
+
+	return map[string]interface{}{
+		"knowledge_stats": stats,
+		"vector_store_enabled": s.config.VectorStore.Enabled,
+		"database_path":       s.config.VectorStore.DatabasePath,
+	}, nil
 }

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
 // LLMAnalysisResult LLM 分析結果
@@ -33,35 +35,59 @@ type TableAnalysisTask struct {
 
 // TableAnalysisOrchestrator 表格分析協調器
 type TableAnalysisOrchestrator struct {
-	config      *config.Config
-	reader      *Phase1ResultReader
-	tasks       []*TableAnalysisTask
-	llmClient   *LLMClient
-	mcpServer   MCPServer
-	currentTask *TableAnalysisTask
-	results     map[string]*LLMAnalysisResult
+	config       *config.Config
+	reader       *Phase1ResultReader
+	tasks        []*TableAnalysisTask
+	llmClient    *LLMClient
+	mcpServer    MCPServer
+	currentTask  *TableAnalysisTask
+	results      map[string]*LLMAnalysisResult
+	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewTableAnalysisOrchestrator 創建表格分析協調器
-func NewTableAnalysisOrchestrator(cfg *config.Config, reader *Phase1ResultReader, mcpServer MCPServer) *TableAnalysisOrchestrator {
+func NewTableAnalysisOrchestrator(cfg *config.Config, reader *Phase1ResultReader, mcpServer MCPServer, knowledgeMgr *vectorstore.KnowledgeManager) *TableAnalysisOrchestrator {
 	return &TableAnalysisOrchestrator{
-		config:    cfg,
-		reader:    reader,
-		tasks:     make([]*TableAnalysisTask, 0),
-		llmClient: NewLLMClient(cfg),
-		mcpServer: mcpServer,
-		results:   make(map[string]*LLMAnalysisResult),
+		config:       cfg,
+		reader:       reader,
+		tasks:        make([]*TableAnalysisTask, 0),
+		llmClient:    NewLLMClient(cfg),
+		mcpServer:    mcpServer,
+		results:      make(map[string]*LLMAnalysisResult),
+		knowledgeMgr: knowledgeMgr,
 	}
 }
 
 // InitializeTasks 初始化分析任務
 func (o *TableAnalysisOrchestrator) InitializeTasks() error {
-	tableNames, err := o.reader.GetTableNames()
+	// 從向量存儲檢索 phase1 的知識來獲取表格列表
+	query := "database tables analysis schema columns constraints"
+	results, err := o.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 10)
 	if err != nil {
-		return fmt.Errorf("failed to get table names: %v", err)
+		log.Printf("Warning: Failed to retrieve phase1 knowledge from vector store: %v", err)
+		log.Printf("Falling back to file-based reader")
+		// 後備方案：使用文件讀取器
+		tableNames, err := o.reader.GetTableNames()
+		if err != nil {
+			return fmt.Errorf("failed to get table names from both vector store and file: %v", err)
+		}
+		o.initializeTasksFromNames(tableNames)
+		return nil
 	}
 
-	log.Printf("Initializing analysis tasks for %d tables", len(tableNames))
+	if len(results) == 0 {
+		log.Printf("No phase1 knowledge found in vector store, falling back to file reader")
+		tableNames, err := o.reader.GetTableNames()
+		if err != nil {
+			return fmt.Errorf("failed to get table names: %v", err)
+		}
+		o.initializeTasksFromNames(tableNames)
+		return nil
+	}
+
+	// 從檢索到的知識中提取表格名稱
+	tableNames := o.extractTableNamesFromKnowledge(results)
+	log.Printf("Initializing analysis tasks for %d tables from vector store", len(tableNames))
 
 	for _, tableName := range tableNames {
 		task := &TableAnalysisTask{
@@ -73,6 +99,98 @@ func (o *TableAnalysisOrchestrator) InitializeTasks() error {
 	}
 
 	return nil
+}
+
+// initializeTasksFromNames 從表格名稱列表初始化任務
+func (o *TableAnalysisOrchestrator) initializeTasksFromNames(tableNames []string) {
+	log.Printf("Initializing analysis tasks for %d tables from file", len(tableNames))
+
+	for _, tableName := range tableNames {
+		task := &TableAnalysisTask{
+			TableName: tableName,
+			Status:    "pending",
+			Priority:  0, // 所有任務優先級相同
+		}
+		o.tasks = append(o.tasks, task)
+	}
+}
+
+// extractTableNamesFromKnowledge 從知識結果中提取表格名稱
+func (o *TableAnalysisOrchestrator) extractTableNamesFromKnowledge(results []vectorstore.KnowledgeResult) []string {
+	tableNames := make([]string, 0)
+	seen := make(map[string]bool)
+
+	for _, result := range results {
+		content := result.Content
+
+		// 嘗試解析為 JSON
+		var knowledgeData map[string]interface{}
+		if err := json.Unmarshal([]byte(content), &knowledgeData); err != nil {
+			log.Printf("Failed to parse knowledge content as JSON: %v, trying text parsing", err)
+			// 後備：文本解析
+			o.extractTableNamesFromText(content, &tableNames, seen)
+			continue
+		}
+
+		// 從 JSON 中提取表格名稱
+		if tablesData, ok := knowledgeData["tables"].(map[string]interface{}); ok {
+			for tableName := range tablesData {
+				if tableName != "" && !seen[tableName] && o.isValidTableName(tableName) {
+					log.Printf("Found valid table name from JSON: %s", tableName)
+					tableNames = append(tableNames, tableName)
+					seen[tableName] = true
+				}
+			}
+		} else {
+			// 如果沒有 tables 鍵，嘗試文本解析
+			o.extractTableNamesFromText(content, &tableNames, seen)
+		}
+	}
+
+	log.Printf("Extracted %d valid table names: %v", len(tableNames), tableNames)
+	return tableNames
+}
+
+// extractTableNamesFromText 從文本中提取表格名稱（後備方法）
+func (o *TableAnalysisOrchestrator) extractTableNamesFromText(content string, tableNames *[]string, seen map[string]bool) {
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// 查找包含表格名稱的行
+		lowerLine := strings.ToLower(line)
+		if strings.Contains(lowerLine, "table") || strings.Contains(line, "表格") {
+			// 跳過包含約束信息的行
+			if strings.Contains(lowerLine, "constraint") || strings.Contains(lowerLine, "foreign") ||
+			   strings.Contains(lowerLine, "primary") || strings.Contains(lowerLine, "unique") {
+				continue
+			}
+
+			// 嘗試提取表格名稱 - 查找單詞邊界
+			words := strings.Fields(line)
+			for _, word := range words {
+				word = strings.Trim(word, ".,;:\"'")
+				if o.isValidTableName(word) && !seen[word] {
+					log.Printf("Found potential table name from text: %s", word)
+					*tableNames = append(*tableNames, word)
+					seen[word] = true
+					break // 只取每行的第一個有效名稱
+				}
+			}
+		}
+	}
+}
+
+// isValidTableName 驗證表格名稱是否有效
+func (o *TableAnalysisOrchestrator) isValidTableName(name string) bool {
+	// 表格名稱應該只包含字母、數字和下劃線
+	for _, char := range name {
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+			 (char >= '0' && char <= '9') || char == '_') {
+			return false
+		}
+	}
+	return len(name) > 0 && len(name) <= 50
 }
 
 // GetNextTask 獲取下一個待處理的任務
@@ -113,6 +231,48 @@ func (o *TableAnalysisOrchestrator) FailTask(task *TableAnalysisTask, err error)
 func (o *TableAnalysisOrchestrator) AnalyzeTable(ctx context.Context, task *TableAnalysisTask) (*LLMAnalysisResult, error) {
 	log.Printf("Analyzing table: %s", task.TableName)
 
+	// 從向量存儲檢索表格相關知識
+	query := fmt.Sprintf("table %s schema columns constraints sample data analysis", task.TableName)
+	results, err := o.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 5)
+	if err != nil {
+		log.Printf("Warning: Failed to retrieve table knowledge from vector store: %v", err)
+		log.Printf("Falling back to file-based reader")
+		// 後備方案：使用文件讀取器
+		return o.analyzeTableWithFileReader(ctx, task)
+	}
+
+	if len(results) == 0 {
+		log.Printf("No knowledge found for table %s in vector store, falling back to file reader", task.TableName)
+		return o.analyzeTableWithFileReader(ctx, task)
+	}
+
+	// 從檢索到的知識構建表格摘要
+	summary := o.buildTableSummaryFromKnowledge(task.TableName, results)
+
+	// 準備 LLM 分析提示
+	prompt := o.buildAnalysisPrompt(summary)
+
+	// 調用 LLM 進行分析
+	llmResponse, err := o.llmClient.AnalyzeTable(ctx, task.TableName, prompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to analyze table with LLM: %v", err)
+	}
+
+	// 解析 LLM 回應
+	result := &LLMAnalysisResult{
+		TableName:       task.TableName,
+		Analysis:        llmResponse.Analysis,
+		Recommendations: llmResponse.Recommendations,
+		Issues:          llmResponse.Issues,
+		Insights:        llmResponse.Insights,
+		Timestamp:       time.Now(),
+	}
+
+	return result, nil
+}
+
+// analyzeTableWithFileReader 使用文件讀取器分析表格（後備方案）
+func (o *TableAnalysisOrchestrator) analyzeTableWithFileReader(ctx context.Context, task *TableAnalysisTask) (*LLMAnalysisResult, error) {
 	// 獲取表格摘要
 	summary, err := o.reader.GetTableSummary(task.TableName)
 	if err != nil {
@@ -139,6 +299,72 @@ func (o *TableAnalysisOrchestrator) AnalyzeTable(ctx context.Context, task *Tabl
 	}
 
 	return result, nil
+}
+
+// buildTableSummaryFromKnowledge 從知識結果構建表格摘要
+func (o *TableAnalysisOrchestrator) buildTableSummaryFromKnowledge(tableName string, results []vectorstore.KnowledgeResult) map[string]interface{} {
+	summary := map[string]interface{}{
+		"table_name":    tableName,
+		"column_count":  0,
+		"sample_count":  0,
+		"columns":       []map[string]interface{}{},
+		"constraints":   map[string]interface{}{},
+		"samples":       []map[string]interface{}{},
+	}
+
+	// 合併所有相關知識內容
+	var combinedContent strings.Builder
+	for _, result := range results {
+		combinedContent.WriteString(result.Content)
+		combinedContent.WriteString("\n")
+	}
+
+	content := combinedContent.String()
+
+	// 簡單的文本解析來提取信息
+	// 這裡可以實現更複雜的解析邏輯
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.Contains(line, "column_count") || strings.Contains(line, "欄位數量") {
+			// 提取欄位數量
+			parts := strings.Split(line, ":")
+			if len(parts) >= 2 {
+				if count := o.extractNumber(parts[1]); count > 0 {
+					summary["column_count"] = count
+				}
+			}
+		} else if strings.Contains(line, "sample_count") || strings.Contains(line, "樣本數據數量") {
+			// 提取樣本數量
+			parts := strings.Split(line, ":")
+			if len(parts) >= 2 {
+				if count := o.extractNumber(parts[1]); count > 0 {
+					summary["sample_count"] = count
+				}
+			}
+		}
+	}
+
+	return summary
+}
+
+// extractNumber 從字符串中提取數字
+func (o *TableAnalysisOrchestrator) extractNumber(s string) int {
+	s = strings.TrimSpace(s)
+	for i, char := range s {
+		if char < '0' || char > '9' {
+			if i > 0 {
+				if num, err := strconv.Atoi(s[:i]); err == nil {
+					return num
+				}
+			}
+			break
+		}
+	}
+	if num, err := strconv.Atoi(s); err == nil {
+		return num
+	}
+	return 0
 }
 
 // buildAnalysisPrompt 構建分析提示
