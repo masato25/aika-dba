@@ -1,194 +1,3476 @@
 {
+  "analysis": {
+    "total_tables": 17,
+    "total_records": 90,
+    "avg_records_per_table": 5.294117647058823,
+    "largest_table": "categories",
+    "smallest_table": "product_variants"
+  },
   "database_info": {
     "type": "postgres",
-    "version": "PostgreSQL 13.22 (Debian 13.22-1.pgdg13+1) on aarc...",
-    "name": "postgres"
+    "version": "PostgreSQL 15.14 on aarch64-unknown-linux-musl, co...",
+    "name": "ecommerce_db"
   },
+  "table_count": 17,
   "tables": [
     {
-      "name": "customers",
-      "type": "BASE TABLE",
-      "estimated_rows": 0,
-      "columns": [
+      "table_name": "reviews",
+      "record_count": 6,
+      "column_analyses": [
         {
-          "name": "id",
-          "type": "integer",
-          "nullable": false,
-          "default_value": "nextval('customers_id_seq'::regclass)",
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "min_value": 25,
+          "max_value": 30,
+          "avg_value": "MjcuNTAwMDAwMDAwMDAwMDAwMA==",
           "sample_values": [
-            "6",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29"
+          ]
+        },
+        {
+          "column_name": "product_id",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": 31,
+          "max_value": 39,
+          "avg_value": "MzQuMzMzMzMzMzMzMzMzMzMzMw==",
+          "sample_values": [
+            "31",
+            "34",
+            "39",
+            "32",
+            "36"
+          ]
+        },
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": 45,
+          "max_value": 48,
+          "avg_value": "NDYuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "45",
+            "46",
+            "46",
+            "47",
+            "47"
+          ]
+        },
+        {
+          "column_name": "order_id",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": 21,
+          "max_value": 24,
+          "avg_value": "MjIuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "21",
+            "22",
+            "22",
+            "23",
+            "23"
+          ]
+        },
+        {
+          "column_name": "rating",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 3,
+          "max_value": 5,
+          "avg_value": "NC4zMzMzMzMzMzMzMzMzMzMz",
+          "sample_values": [
             "5",
             "4",
-            "3",
-            "2"
-          ],
-          "description": null
-        },
-        {
-          "name": "name",
-          "type": "character varying(100)",
-          "nullable": false,
-          "default_value": null,
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
-          "sample_values": [
-            "周八",
-            "孫七",
-            "趙六",
-            "王五",
-            "李四"
-          ],
-          "description": null
-        },
-        {
-          "name": "email",
-          "type": "character varying(255)",
-          "nullable": true,
-          "default_value": null,
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
-          "sample_values": [
-            "zhou@example.com",
-            "sun@example.com",
-            "zhao@example.com",
-            "wang@example.com",
-            "li@example.com"
-          ],
-          "description": null
-        },
-        {
-          "name": "created_at",
-          "type": "timestamp without time zone",
-          "nullable": true,
-          "default_value": "CURRENT_TIMESTAMP",
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
-          "sample_values": [
-            "2025-11-05T15:00:00Z",
-            "2025-11-05T10:00:00Z",
-            "2025-11-03T10:00:00Z",
-            "2025-11-01T10:00:00Z",
-            "2025-06-01T10:00:00Z"
-          ],
-          "description": null
-        }
-      ],
-      "indexes": [
-        {
-          "name": "customers_email_key",
-          "columns": [
-            "email"
-          ],
-          "type": "indices",
-          "unique": true
-        },
-        {
-          "name": "customers_pkey",
-          "columns": [
-            "id"
-          ],
-          "type": "indices",
-          "unique": true
-        }
-      ]
-    },
-    {
-      "name": "products",
-      "type": "BASE TABLE",
-      "estimated_rows": 0,
-      "columns": [
-        {
-          "name": "id",
-          "type": "integer",
-          "nullable": false,
-          "default_value": "nextval('products_id_seq'::regclass)",
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
-          "sample_values": [
-            "8",
-            "7",
-            "6",
+            "5",
             "5",
             "4"
-          ],
-          "description": null
+          ]
         },
         {
-          "name": "name",
-          "type": "character varying(200)",
-          "nullable": false,
-          "default_value": null,
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
+          "column_name": "title",
+          "column_type": "character varying(255)",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
           "sample_values": [
-            "鍵盤套",
-            "充電器",
-            "手機",
-            "耳機",
-            "顯示器"
-          ],
-          "description": null
+            "非常滿意！",
+            "品質不錯",
+            "瑜伽墊很棒",
+            "三星手機真心不錯",
+            "咖啡機好用"
+          ]
         },
         {
-          "name": "price",
-          "type": "numeric",
-          "nullable": false,
-          "default_value": null,
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
+          "column_name": "content",
+          "column_type": "text",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
           "sample_values": [
-            "199.00",
-            "399.00",
-            "15999.00",
-            "1999.00",
-            "8999.00"
-          ],
-          "description": null
+            "iPhone 15 Pro 表現超乎預期，相機和效能都非常棒！",
+            "純棉材質穿起來很舒服，尺碼也很合身",
+            "防滑效果很好，厚度適中，非常適合居家瑜伽",
+            "S Pen 功能很實用，拍照效果也很好",
+            "磨豆功能很方便，咖啡味道也很棒"
+          ]
         },
         {
-          "name": "category",
-          "type": "character varying(50)",
-          "nullable": true,
-          "default_value": null,
-          "is_primary_key": false,
-          "is_foreign_key": false,
-          "references": null,
+          "column_name": "images",
+          "column_type": "ARRAY",
+          "total_count": 6,
+          "not_null_count": 0,
+          "null_count": 6,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "is_verified",
+          "column_type": "boolean",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
           "sample_values": [
-            "配件",
-            "配件",
-            "電子產品",
-            "配件",
-            "電子產品"
-          ],
-          "description": null
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "helpful_votes",
+          "column_type": "integer",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "min_value": 0,
+          "max_value": 0,
+          "avg_value": "MC4wMDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "0",
+            "0",
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "column_name": "status",
+          "column_type": "character varying(20)",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "approved",
+            "approved",
+            "approved",
+            "approved",
+            "approved"
+          ]
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 6,
+          "not_null_count": 6,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC",
+            "2025-11-05 03:48:15.000062 +0000 UTC"
+          ]
         }
       ],
-      "indexes": [
+      "summary": {
+        "total_columns": 13,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.07692307692307693,
+        "data_completeness": 0.9230769230769231
+      }
+    },
+    {
+      "table_name": "payments",
+      "record_count": 4,
+      "column_analyses": [
         {
-          "name": "products_pkey",
-          "columns": [
-            "id"
-          ],
-          "type": "indices",
-          "unique": true
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": 13,
+          "max_value": 16,
+          "avg_value": "MTQuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "13",
+            "14",
+            "15",
+            "16"
+          ]
+        },
+        {
+          "column_name": "order_id",
+          "column_type": "integer",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": 21,
+          "max_value": 24,
+          "avg_value": "MjIuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "21",
+            "22",
+            "23",
+            "24"
+          ]
+        },
+        {
+          "column_name": "amount",
+          "column_type": "numeric",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": "NDU4LjAw",
+          "max_value": "Mzk1NzAuMDA=",
+          "avg_value": "MTkzOTYuMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 57 53 55 48 46 48 48]",
+            "[49 51 55 54 46 48 48]",
+            "[51 54 49 56 48 46 48 48]",
+            "[52 53 56 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "currency",
+          "column_type": "character varying(3)",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "TWD",
+            "TWD",
+            "TWD",
+            "TWD"
+          ]
+        },
+        {
+          "column_name": "payment_method",
+          "column_type": "character varying(50)",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "credit_card",
+            "credit_card",
+            "bank_transfer",
+            "credit_card"
+          ]
+        },
+        {
+          "column_name": "transaction_id",
+          "column_type": "character varying(255)",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "sample_values": [
+            "txn_abc123",
+            "txn_def456",
+            "txn_ghi789",
+            "txn_jkl012"
+          ]
+        },
+        {
+          "column_name": "status",
+          "column_type": "character varying(20)",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "completed",
+            "completed",
+            "completed",
+            "completed"
+          ]
+        },
+        {
+          "column_name": "gateway_response",
+          "column_type": "jsonb",
+          "total_count": 4,
+          "not_null_count": 0,
+          "null_count": 4,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "processed_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "sample_values": [
+            "2025-10-06 03:47:59.137775 +0000 UTC",
+            "2025-10-21 03:47:59.137775 +0000 UTC",
+            "2025-11-02 03:47:59.137775 +0000 UTC",
+            "2025-11-04 03:47:59.137775 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 4,
+          "not_null_count": 4,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC"
+          ]
         }
-      ]
+      ],
+      "summary": {
+        "total_columns": 11,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.09090909090909091,
+        "data_completeness": 0.9090909090909091
+      }
+    },
+    {
+      "table_name": "order_items",
+      "record_count": 8,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 8,
+          "min_value": 33,
+          "max_value": 40,
+          "avg_value": "MzYuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "33",
+            "34",
+            "35",
+            "36",
+            "37"
+          ]
+        },
+        {
+          "column_name": "order_id",
+          "column_type": "integer",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": 21,
+          "max_value": 25,
+          "avg_value": "MjIuNjI1MDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "21",
+            "21",
+            "22",
+            "22",
+            "23"
+          ]
+        },
+        {
+          "column_name": "product_id",
+          "column_type": "integer",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "min_value": 31,
+          "max_value": 40,
+          "avg_value": "MzUuMjUwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "31",
+            "40",
+            "34",
+            "39",
+            "32"
+          ]
+        },
+        {
+          "column_name": "variant_id",
+          "column_type": "integer",
+          "total_count": 8,
+          "not_null_count": 0,
+          "null_count": 8,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "sku",
+          "column_type": "character varying(50)",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "sample_values": [
+            "PHONE-IP15-128",
+            "HEADPHONES-WF",
+            "TSHIRT-COTTON-M",
+            "YOGA-MAT",
+            "PHONE-S23-256"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(255)",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "sample_values": [
+            "iPhone 15 Pro 128GB 黑色",
+            "無線耳機",
+            "純棉圓領T恤 男款 M碼",
+            "專業瑜伽墊",
+            "Samsung Galaxy S23 Ultra 256GB"
+          ]
+        },
+        {
+          "column_name": "quantity",
+          "column_type": "integer",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "min_value": 1,
+          "max_value": 2,
+          "avg_value": "MS4xMjUwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "1",
+            "1",
+            "2",
+            "1",
+            "1"
+          ]
+        },
+        {
+          "column_name": "price",
+          "column_type": "numeric",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "min_value": "NDUwLjAw",
+          "max_value": "MzU5MDAuMDA=",
+          "avg_value": "MTE4MTIuNTAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 53 57 48 48 46 48 48]",
+            "[53 56 48 48 46 48 48]",
+            "[52 53 48 46 48 48]",
+            "[49 50 48 48 46 48 48]",
+            "[51 50 57 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "cost_price",
+          "column_type": "numeric",
+          "total_count": 8,
+          "not_null_count": 0,
+          "null_count": 8,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "total",
+          "column_type": "numeric",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 7,
+          "min_value": "NDUwLjAw",
+          "max_value": "MzU5MDAuMDA=",
+          "avg_value": "MTE4NjguNzUwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 53 57 48 48 46 48 48]",
+            "[53 56 48 48 46 48 48]",
+            "[57 48 48 46 48 48]",
+            "[49 50 48 48 46 48 48]",
+            "[51 50 57 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "properties",
+          "column_type": "jsonb",
+          "total_count": 8,
+          "not_null_count": 0,
+          "null_count": 8,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 8,
+          "not_null_count": 8,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:54.396982 +0000 UTC",
+            "2025-11-05 03:47:54.396982 +0000 UTC",
+            "2025-11-05 03:47:54.396982 +0000 UTC",
+            "2025-11-05 03:47:54.396982 +0000 UTC",
+            "2025-11-05 03:47:54.396982 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 12,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.25,
+        "data_completeness": 0.75
+      }
+    },
+    {
+      "table_name": "orders",
+      "record_count": 5,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": 21,
+          "max_value": 25,
+          "avg_value": "MjMuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "21",
+            "22",
+            "23",
+            "24",
+            "25"
+          ]
+        },
+        {
+          "column_name": "order_number",
+          "column_type": "character varying(50)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "sample_values": [
+            "ORD-2024-001",
+            "ORD-2024-002",
+            "ORD-2024-003",
+            "ORD-2024-004",
+            "ORD-2024-005"
+          ]
+        },
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": 45,
+          "max_value": 49,
+          "avg_value": "NDcuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "45",
+            "46",
+            "47",
+            "48",
+            "49"
+          ]
+        },
+        {
+          "column_name": "email",
+          "column_type": "character varying(255)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "sample_values": [
+            "alice.johnson@email.com",
+            "bob.smith@email.com",
+            "carol.davis@email.com",
+            "david.wilson@email.com",
+            "emma.brown@email.com"
+          ]
+        },
+        {
+          "column_name": "status",
+          "column_type": "character varying(30)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "sample_values": [
+            "delivered",
+            "shipped",
+            "processing",
+            "confirmed",
+            "pending"
+          ]
+        },
+        {
+          "column_name": "payment_status",
+          "column_type": "character varying(20)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "paid",
+            "paid",
+            "paid",
+            "paid",
+            "pending"
+          ]
+        },
+        {
+          "column_name": "fulfillment_status",
+          "column_type": "character varying(20)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "fulfilled",
+            "fulfilled",
+            "partial",
+            "unfulfilled",
+            "unfulfilled"
+          ]
+        },
+        {
+          "column_name": "subtotal",
+          "column_type": "numeric",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": "MzUwLjAw",
+          "max_value": "MzY1MDAuMDA=",
+          "avg_value": "MTYwOTAuMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 54 53 48 48 46 48 48]",
+            "[49 50 48 48 46 48 48]",
+            "[51 51 53 48 48 46 48 48]",
+            "[51 53 48 46 48 48]",
+            "[56 57 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "tax_amount",
+          "column_type": "numeric",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": "MjguMDA=",
+          "max_value": "MjkyMC4wMA==",
+          "avg_value": "MTI4Ny4yMDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[50 57 50 48 46 48 48]",
+            "[57 54 46 48 48]",
+            "[50 54 56 48 46 48 48]",
+            "[50 56 46 48 48]",
+            "[55 49 50 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "shipping_amount",
+          "column_type": "numeric",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": "MC4wMA==",
+          "max_value": "MTUwLjAw",
+          "avg_value": "OTIuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "[49 53 48 46 48 48]",
+            "[56 48 46 48 48]",
+            "[48 46 48 48]",
+            "[56 48 46 48 48]",
+            "[49 53 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "discount_amount",
+          "column_type": "numeric",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "min_value": "MC4wMA==",
+          "max_value": "MC4wMA==",
+          "avg_value": "MC4wMDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "[48 46 48 48]",
+            "[48 46 48 48]",
+            "[48 46 48 48]",
+            "[48 46 48 48]",
+            "[48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "total",
+          "column_type": "numeric",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": "NDU4LjAw",
+          "max_value": "Mzk1NzAuMDA=",
+          "avg_value": "MTc0NjkuMjAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 57 53 55 48 46 48 48]",
+            "[49 51 55 54 46 48 48]",
+            "[51 54 49 56 48 46 48 48]",
+            "[52 53 56 46 48 48]",
+            "[57 55 54 50 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "currency",
+          "column_type": "character varying(3)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "TWD",
+            "TWD",
+            "TWD",
+            "TWD",
+            "TWD"
+          ]
+        },
+        {
+          "column_name": "billing_address",
+          "column_type": "jsonb",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "shipping_address",
+          "column_type": "jsonb",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "payment_method",
+          "column_type": "character varying(50)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "credit_card",
+            "credit_card",
+            "bank_transfer",
+            "credit_card",
+            "credit_card"
+          ]
+        },
+        {
+          "column_name": "shipping_method",
+          "column_type": "character varying(100)",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "standard",
+            "standard",
+            "express",
+            "standard",
+            "express"
+          ]
+        },
+        {
+          "column_name": "notes",
+          "column_type": "text",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "tags",
+          "column_type": "ARRAY",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "ordered_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "sample_values": [
+            "2025-10-06 03:47:39.742118 +0000 UTC",
+            "2025-10-21 03:47:39.742118 +0000 UTC",
+            "2025-11-02 03:47:39.742118 +0000 UTC",
+            "2025-11-04 03:47:39.742118 +0000 UTC",
+            "2025-11-05 01:47:39.742118 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "confirmed_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "shipped_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "delivered_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "cancelled_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 0,
+          "null_count": 5,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 5,
+          "not_null_count": 5,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC",
+            "2025-11-05 03:47:39.742118 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 26,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.3076923076923077,
+        "data_completeness": 0.6923076923076923
+      }
+    },
+    {
+      "table_name": "product_variants",
+      "record_count": 0,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "product_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "sku",
+          "column_type": "character varying(50)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(255)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "price",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "cost_price",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "compare_at_price",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "weight",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "dimensions",
+          "column_type": "jsonb",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "inventory_quantity",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "option1",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "option2",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "option3",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        }
+      ],
+      "summary": {
+        "total_columns": 16,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 0
+      }
+    },
+    {
+      "table_name": "products",
+      "record_count": 10,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 31,
+          "max_value": 40,
+          "avg_value": "MzUuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+          ]
+        },
+        {
+          "column_name": "sku",
+          "column_type": "character varying(50)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "PHONE-IP15-128",
+            "PHONE-S23-256",
+            "LAPTOP-MBP14",
+            "TSHIRT-COTTON-M",
+            "TSHIRT-COTTON-W"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "iPhone 15 Pro 128GB",
+            "Samsung Galaxy S23 Ultra 256GB",
+            "MacBook Pro 14吋 M2",
+            "純棉圓領T恤 男款 M碼",
+            "純棉圓領T恤 女款 M碼"
+          ]
+        },
+        {
+          "column_name": "description",
+          "column_type": "text",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "最新款 iPhone 15 Pro，搭載 A17 Pro 晶片，128GB 儲存空間",
+            "三星 Galaxy S23 Ultra，S Pen 支援，256GB 儲存空間",
+            "MacBook Pro 14吋，搭載 M2 晶片，16GB RAM，512GB SSD",
+            "100% 純棉材質，舒適透氣，經典圓領設計",
+            "100% 純棉材質，修身版型，時尚設計"
+          ]
+        },
+        {
+          "column_name": "short_description",
+          "column_type": "character varying(500)",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "category_id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 8,
+          "min_value": 50,
+          "max_value": 57,
+          "avg_value": "NTMuMjAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "52",
+            "52",
+            "53",
+            "54",
+            "55"
+          ]
+        },
+        {
+          "column_name": "price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": "NDUwLjAw",
+          "max_value": "ODk5MDAuMDA=",
+          "avg_value": "MTg5MDEuMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 53 57 48 48 46 48 48]",
+            "[51 50 57 48 48 46 48 48]",
+            "[56 57 57 48 48 46 48 48]",
+            "[52 53 48 46 48 48]",
+            "[52 56 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "cost_price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": "MTgwLjAw",
+          "max_value": "NzUwMDAuMDA=",
+          "avg_value": "MTQ1MjguMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[50 56 48 48 48 46 48 48]",
+            "[50 54 48 48 48 46 48 48]",
+            "[55 53 48 48 48 46 48 48]",
+            "[49 56 48 46 48 48]",
+            "[50 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "compare_at_price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "weight",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "dimensions",
+          "column_type": "jsonb",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "inventory_quantity",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 15,
+          "max_value": 200,
+          "avg_value": "NzMuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "50",
+            "30",
+            "20",
+            "200",
+            "150"
+          ]
+        },
+        {
+          "column_name": "inventory_policy",
+          "column_type": "character varying(20)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "deny",
+            "deny",
+            "deny",
+            "deny",
+            "deny"
+          ]
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "is_featured",
+          "column_type": "boolean",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "false",
+            "false"
+          ]
+        },
+        {
+          "column_name": "tags",
+          "column_type": "ARRAY",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "[123 230 137 139 230 169 159 44 65 112 112 108 101 44 53 71 125]",
+            "[123 230 137 139 230 169 159 44 83 97 109 115 117 110 103 44 53 71 44 34 83 32 80 101 110 34 125]",
+            "[123 231 173 134 233 155 187 44 65 112 112 108 101 44 77 50 125]",
+            "[123 84 230 129 164 44 231 148 183 232 163 157 44 231 180 148 230 163 137 125]",
+            "[123 84 230 129 164 44 229 165 179 232 163 157 44 231 180 148 230 163 137 125]"
+          ]
+        },
+        {
+          "column_name": "images",
+          "column_type": "jsonb",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "seo_title",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "seo_description",
+          "column_type": "text",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 21,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.3333333333333333,
+        "data_completeness": 0.6666666666666666
+      }
+    },
+    {
+      "table_name": "shipments",
+      "record_count": 3,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 10,
+          "max_value": 12,
+          "avg_value": "MTEuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "10",
+            "11",
+            "12"
+          ]
+        },
+        {
+          "column_name": "order_id",
+          "column_type": "integer",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 21,
+          "max_value": 23,
+          "avg_value": "MjIuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "21",
+            "22",
+            "23"
+          ]
+        },
+        {
+          "column_name": "tracking_number",
+          "column_type": "character varying(100)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "SF123456789",
+            "SF987654321",
+            "DHL555666777"
+          ]
+        },
+        {
+          "column_name": "carrier",
+          "column_type": "character varying(50)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "SF Express",
+            "SF Express",
+            "DHL"
+          ]
+        },
+        {
+          "column_name": "status",
+          "column_type": "character varying(20)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "delivered",
+            "shipped",
+            "in_transit"
+          ]
+        },
+        {
+          "column_name": "shipped_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "2025-10-11 03:47:59.137775 +0000 UTC",
+            "2025-10-26 03:47:59.137775 +0000 UTC",
+            "2025-11-03 03:47:59.137775 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "delivered_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "estimated_delivery",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "2025-10-16 03:47:59.137775 +0000 UTC",
+            "2025-11-07 03:47:59.137775 +0000 UTC",
+            "2025-11-08 03:47:59.137775 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "shipping_address",
+          "column_type": "jsonb",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "weight",
+          "column_type": "numeric",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "dimensions",
+          "column_type": "jsonb",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "notes",
+          "column_type": "text",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC",
+            "2025-11-05 03:47:59.137775 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 14,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.35714285714285715,
+        "data_completeness": 0.6428571428571429
+      }
+    },
+    {
+      "table_name": "inventory_transactions",
+      "record_count": 0,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "product_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "variant_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "transaction_type",
+          "column_type": "character varying(20)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "quantity",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "previous_quantity",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "new_quantity",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "reference_type",
+          "column_type": "character varying(50)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "reference_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "notes",
+          "column_type": "text",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_by",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        }
+      ],
+      "summary": {
+        "total_columns": 12,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 0
+      }
+    },
+    {
+      "table_name": "coupons",
+      "record_count": 3,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 7,
+          "max_value": 9,
+          "avg_value": "OC4wMDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "7",
+            "8",
+            "9"
+          ]
+        },
+        {
+          "column_name": "code",
+          "column_type": "character varying(50)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "WELCOME10",
+            "SUMMER20",
+            "FLASH500"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(255)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "新用戶優惠",
+            "夏日特惠",
+            "閃購優惠"
+          ]
+        },
+        {
+          "column_name": "description",
+          "column_type": "text",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "新註冊用戶首次購物9折",
+            "全館8折優惠",
+            "滿3000折500"
+          ]
+        },
+        {
+          "column_name": "discount_type",
+          "column_type": "character varying(20)",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "percentage",
+            "percentage",
+            "fixed_amount"
+          ]
+        },
+        {
+          "column_name": "discount_value",
+          "column_type": "numeric",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": "MTAuMDA=",
+          "max_value": "NTAwLjAw",
+          "avg_value": "MTc2LjY2NjY2NjY2NjY2NjY2Njc=",
+          "sample_values": [
+            "[49 48 46 48 48]",
+            "[50 48 46 48 48]",
+            "[53 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "minimum_amount",
+          "column_type": "numeric",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": "NTAwLjAw",
+          "max_value": "MzAwMC4wMA==",
+          "avg_value": "MTUwMC4wMDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[53 48 48 46 48 48]",
+            "[49 48 48 48 46 48 48]",
+            "[51 48 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "maximum_discount",
+          "column_type": "numeric",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "usage_limit",
+          "column_type": "integer",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 200,
+          "max_value": 1000,
+          "avg_value": "NTY2LjY2NjY2NjY2NjY2NjY2Njc=",
+          "sample_values": [
+            "1000",
+            "500",
+            "200"
+          ]
+        },
+        {
+          "column_name": "usage_count",
+          "column_type": "integer",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "min_value": 0,
+          "max_value": 0,
+          "avg_value": "MC4wMDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "0",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "column_name": "starts_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "expires_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "2026-11-05 03:46:50.142111 +0000 UTC",
+            "2026-02-05 03:46:50.142111 +0000 UTC",
+            "2025-11-12 03:46:50.142111 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "applicable_products",
+          "column_type": "jsonb",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "applicable_categories",
+          "column_type": "jsonb",
+          "total_count": 3,
+          "not_null_count": 0,
+          "null_count": 3,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 3,
+          "not_null_count": 3,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC",
+            "2025-11-05 03:46:50.142111 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 17,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.17647058823529413,
+        "data_completeness": 0.8235294117647058
+      }
+    },
+    {
+      "table_name": "customer_addresses",
+      "record_count": 0,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "address_type",
+          "column_type": "character varying(20)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "is_default",
+          "column_type": "boolean",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "street_address",
+          "column_type": "text",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "city",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "state",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "postal_code",
+          "column_type": "character varying(20)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "country",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        }
+      ],
+      "summary": {
+        "total_columns": 11,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 0
+      }
+    },
+    {
+      "table_name": "customers",
+      "record_count": 10,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 45,
+          "max_value": 54,
+          "avg_value": "NDkuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "45",
+            "46",
+            "47",
+            "48",
+            "49"
+          ]
+        },
+        {
+          "column_name": "uuid",
+          "column_type": "uuid",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "[100 57 56 49 55 102 56 100 45 55 54 51 97 45 52 100 56 51 45 98 98 99 97 45 56 53 99 55 53 52 102 54 51 99 57 97]",
+            "[56 48 54 99 55 56 50 48 45 101 100 54 52 45 52 55 49 98 45 57 100 57 56 45 98 102 55 102 57 98 99 101 51 53 100 51]",
+            "[101 98 48 49 50 50 101 48 45 101 98 50 54 45 52 51 56 49 45 57 98 54 97 45 98 100 98 99 101 48 49 102 52 54 50 101]",
+            "[102 49 98 53 102 50 102 57 45 98 98 101 101 45 52 98 57 55 45 97 55 98 54 45 56 100 100 99 53 97 97 99 57 57 50 49]",
+            "[52 57 49 56 50 53 99 52 45 55 50 57 48 45 52 54 56 56 45 56 56 51 48 45 51 56 57 100 101 97 54 52 48 53 50 98]"
+          ]
+        },
+        {
+          "column_name": "email",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "alice.johnson@email.com",
+            "bob.smith@email.com",
+            "carol.davis@email.com",
+            "david.wilson@email.com",
+            "emma.brown@email.com"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(100)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "Alice Johnson",
+            "Bob Smith",
+            "Carol Davis",
+            "David Wilson",
+            "Emma Brown"
+          ]
+        },
+        {
+          "column_name": "phone",
+          "column_type": "character varying(20)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "+886-912345678",
+            "+886-987654321",
+            "+886-955511122",
+            "+886-933344455",
+            "+886-966677788"
+          ]
+        },
+        {
+          "column_name": "date_of_birth",
+          "column_type": "date",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "gender",
+          "column_type": "character varying(10)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "female",
+            "male",
+            "female",
+            "male",
+            "female"
+          ]
+        },
+        {
+          "column_name": "registration_date",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-09-05 03:46:50.137605 +0000 UTC",
+            "2025-09-05 03:46:50.137605 +0000 UTC",
+            "2025-09-05 03:46:50.137605 +0000 UTC",
+            "2025-09-05 03:46:50.137605 +0000 UTC",
+            "2025-09-05 03:46:50.137605 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "last_login",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "customer_type",
+          "column_type": "character varying(20)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "sample_values": [
+            "premium",
+            "regular",
+            "vip",
+            "regular",
+            "premium"
+          ]
+        },
+        {
+          "column_name": "total_orders",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 1,
+          "max_value": 32,
+          "avg_value": "MTEuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "15",
+            "3",
+            "28",
+            "1",
+            "8"
+          ]
+        },
+        {
+          "column_name": "total_spent",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": "MzUwLjAw",
+          "max_value": "NTIwMDAuMDA=",
+          "avg_value": "MTUyNDAuMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[50 53 48 48 48 46 48 48]",
+            "[49 50 48 48 46 48 48]",
+            "[52 53 48 48 48 46 48 48]",
+            "[51 53 48 46 48 48]",
+            "[56 53 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "loyalty_points",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 35,
+          "max_value": 5200,
+          "avg_value": "MTUyNC4wMDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "2500",
+            "120",
+            "4500",
+            "35",
+            "850"
+          ]
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:46:50.136361 +0000 UTC",
+            "2025-11-05 03:46:50.136361 +0000 UTC",
+            "2025-11-05 03:46:50.136361 +0000 UTC",
+            "2025-11-05 03:46:50.136361 +0000 UTC",
+            "2025-11-05 03:46:50.136361 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:46:50.137605 +0000 UTC",
+            "2025-11-05 03:46:50.137605 +0000 UTC",
+            "2025-11-05 03:46:50.137605 +0000 UTC",
+            "2025-11-05 03:46:50.137605 +0000 UTC",
+            "2025-11-05 03:46:50.137605 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 16,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.125,
+        "data_completeness": 0.875
+      }
+    },
+    {
+      "table_name": "categories",
+      "record_count": 11,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 11,
+          "min_value": 47,
+          "max_value": 57,
+          "avg_value": "NTIuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "47",
+            "48",
+            "49",
+            "50",
+            "51"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(100)",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 11,
+          "sample_values": [
+            "電子產品",
+            "服飾",
+            "家居用品",
+            "書籍",
+            "運動健身"
+          ]
+        },
+        {
+          "column_name": "description",
+          "column_type": "text",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 11,
+          "sample_values": [
+            "各種電子產品和配件",
+            "男裝、女裝和配件",
+            "家居裝飾和日常用品",
+            "各類書籍和雜誌",
+            "運動器材和健身用品"
+          ]
+        },
+        {
+          "column_name": "parent_id",
+          "column_type": "integer",
+          "total_count": 11,
+          "not_null_count": 6,
+          "null_count": 5,
+          "null_ratio": 0.45454545454545453,
+          "unique_count": 3,
+          "min_value": 47,
+          "max_value": 49,
+          "avg_value": "NDguMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "47",
+            "47",
+            "48",
+            "48",
+            "49"
+          ]
+        },
+        {
+          "column_name": "sort_order",
+          "column_type": "integer",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 5,
+          "min_value": 1,
+          "max_value": 5,
+          "avg_value": "Mi4xODE4MTgxODE4MTgxODE4",
+          "sample_values": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ]
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 11,
+          "not_null_count": 11,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC",
+            "2025-11-05 03:46:50.134021 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 8,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.125,
+        "data_completeness": 0.9431818181818181
+      }
+    },
+    {
+      "table_name": "shopping_carts",
+      "record_count": 0,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "session_id",
+          "column_type": "character varying(255)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "items",
+          "column_type": "jsonb",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "subtotal",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "total",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "expires_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        }
+      ],
+      "summary": {
+        "total_columns": 9,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 0
+      }
+    },
+    {
+      "table_name": "returns",
+      "record_count": 0,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "order_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "reason",
+          "column_type": "character varying(100)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "status",
+          "column_type": "character varying(20)",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "refund_amount",
+          "column_type": "numeric",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "items",
+          "column_type": "jsonb",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "notes",
+          "column_type": "text",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "requested_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "approved_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "received_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "refunded_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 0,
+          "not_null_count": 0,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 0,
+          "sample_values": null
+        }
+      ],
+      "summary": {
+        "total_columns": 14,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 0
+      }
+    },
+    {
+      "table_name": "active_products",
+      "record_count": 10,
+      "column_analyses": [
+        {
+          "column_name": "id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 31,
+          "max_value": 40,
+          "avg_value": "MzUuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+          ]
+        },
+        {
+          "column_name": "sku",
+          "column_type": "character varying(50)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "PHONE-IP15-128",
+            "PHONE-S23-256",
+            "LAPTOP-MBP14",
+            "TSHIRT-COTTON-M",
+            "TSHIRT-COTTON-W"
+          ]
+        },
+        {
+          "column_name": "name",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "iPhone 15 Pro 128GB",
+            "Samsung Galaxy S23 Ultra 256GB",
+            "MacBook Pro 14吋 M2",
+            "純棉圓領T恤 男款 M碼",
+            "純棉圓領T恤 女款 M碼"
+          ]
+        },
+        {
+          "column_name": "description",
+          "column_type": "text",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "最新款 iPhone 15 Pro，搭載 A17 Pro 晶片，128GB 儲存空間",
+            "三星 Galaxy S23 Ultra，S Pen 支援，256GB 儲存空間",
+            "MacBook Pro 14吋，搭載 M2 晶片，16GB RAM，512GB SSD",
+            "100% 純棉材質，舒適透氣，經典圓領設計",
+            "100% 純棉材質，修身版型，時尚設計"
+          ]
+        },
+        {
+          "column_name": "short_description",
+          "column_type": "character varying(500)",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "category_id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 8,
+          "min_value": 50,
+          "max_value": 57,
+          "avg_value": "NTMuMjAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "52",
+            "52",
+            "53",
+            "54",
+            "55"
+          ]
+        },
+        {
+          "column_name": "price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": "NDUwLjAw",
+          "max_value": "ODk5MDAuMDA=",
+          "avg_value": "MTg5MDEuMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 53 57 48 48 46 48 48]",
+            "[51 50 57 48 48 46 48 48]",
+            "[56 57 57 48 48 46 48 48]",
+            "[52 53 48 46 48 48]",
+            "[52 56 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "cost_price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": "MTgwLjAw",
+          "max_value": "NzUwMDAuMDA=",
+          "avg_value": "MTQ1MjguMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[50 56 48 48 48 46 48 48]",
+            "[50 54 48 48 48 46 48 48]",
+            "[55 53 48 48 48 46 48 48]",
+            "[49 56 48 46 48 48]",
+            "[50 48 48 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "compare_at_price",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "weight",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "dimensions",
+          "column_type": "jsonb",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "inventory_quantity",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 15,
+          "max_value": 200,
+          "avg_value": "NzMuMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "50",
+            "30",
+            "20",
+            "200",
+            "150"
+          ]
+        },
+        {
+          "column_name": "inventory_policy",
+          "column_type": "character varying(20)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "deny",
+            "deny",
+            "deny",
+            "deny",
+            "deny"
+          ]
+        },
+        {
+          "column_name": "is_active",
+          "column_type": "boolean",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "column_name": "is_featured",
+          "column_type": "boolean",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "sample_values": [
+            "true",
+            "true",
+            "true",
+            "false",
+            "false"
+          ]
+        },
+        {
+          "column_name": "tags",
+          "column_type": "ARRAY",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "[123 230 137 139 230 169 159 44 65 112 112 108 101 44 53 71 125]",
+            "[123 230 137 139 230 169 159 44 83 97 109 115 117 110 103 44 53 71 44 34 83 32 80 101 110 34 125]",
+            "[123 231 173 134 233 155 187 44 65 112 112 108 101 44 77 50 125]",
+            "[123 84 230 129 164 44 231 148 183 232 163 157 44 231 180 148 230 163 137 125]",
+            "[123 84 230 129 164 44 229 165 179 232 163 157 44 231 180 148 230 163 137 125]"
+          ]
+        },
+        {
+          "column_name": "images",
+          "column_type": "jsonb",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "seo_title",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "seo_description",
+          "column_type": "text",
+          "total_count": 10,
+          "not_null_count": 0,
+          "null_count": 10,
+          "null_ratio": 1,
+          "unique_count": 0,
+          "sample_values": null
+        },
+        {
+          "column_name": "created_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC"
+          ]
+        },
+        {
+          "column_name": "updated_at",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 1,
+          "sample_values": [
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC",
+            "2025-11-05 03:47:21.416644 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 21,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.3333333333333333,
+        "data_completeness": 0.6666666666666666
+      }
+    },
+    {
+      "table_name": "customer_order_summary",
+      "record_count": 10,
+      "column_analyses": [
+        {
+          "column_name": "customer_id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 45,
+          "max_value": 54,
+          "avg_value": "NDkuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "54",
+            "45",
+            "51",
+            "50",
+            "49"
+          ]
+        },
+        {
+          "column_name": "customer_name",
+          "column_type": "character varying(100)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "Jack Anderson",
+            "Alice Johnson",
+            "Grace Lee",
+            "Frank Miller",
+            "Emma Brown"
+          ]
+        },
+        {
+          "column_name": "email",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "jack.anderson@email.com",
+            "alice.johnson@email.com",
+            "grace.lee@email.com",
+            "frank.miller@email.com",
+            "emma.brown@email.com"
+          ]
+        },
+        {
+          "column_name": "total_orders",
+          "column_type": "bigint",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 2,
+          "min_value": 0,
+          "max_value": 1,
+          "avg_value": "MC41MDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "0",
+            "1",
+            "0",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "column_name": "total_spent",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 6,
+          "min_value": "MA==",
+          "max_value": "Mzk1NzAuMDA=",
+          "avg_value": "ODczNC42MDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[48]",
+            "[51 57 53 55 48 46 48 48]",
+            "[48]",
+            "[48]",
+            "[57 55 54 50 46 48 48]"
+          ]
+        },
+        {
+          "column_name": "last_order_date",
+          "column_type": "timestamp with time zone",
+          "total_count": 10,
+          "not_null_count": 5,
+          "null_count": 5,
+          "null_ratio": 0.5,
+          "unique_count": 5,
+          "sample_values": [
+            "2025-10-06 03:47:39.742118 +0000 UTC",
+            "2025-11-05 01:47:39.742118 +0000 UTC",
+            "2025-10-21 03:47:39.742118 +0000 UTC",
+            "2025-11-04 03:47:39.742118 +0000 UTC",
+            "2025-11-02 03:47:39.742118 +0000 UTC"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 6,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0.16666666666666666,
+        "data_completeness": 0.9166666666666666
+      }
+    },
+    {
+      "table_name": "product_sales_summary",
+      "record_count": 10,
+      "column_analyses": [
+        {
+          "column_name": "product_id",
+          "column_type": "integer",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "min_value": 31,
+          "max_value": 40,
+          "avg_value": "MzUuNTAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "31",
+            "32",
+            "33",
+            "34",
+            "35"
+          ]
+        },
+        {
+          "column_name": "product_name",
+          "column_type": "character varying(255)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "iPhone 15 Pro 128GB",
+            "Samsung Galaxy S23 Ultra 256GB",
+            "MacBook Pro 14吋 M2",
+            "純棉圓領T恤 男款 M碼",
+            "純棉圓領T恤 女款 M碼"
+          ]
+        },
+        {
+          "column_name": "sku",
+          "column_type": "character varying(50)",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 10,
+          "sample_values": [
+            "PHONE-IP15-128",
+            "PHONE-S23-256",
+            "LAPTOP-MBP14",
+            "TSHIRT-COTTON-M",
+            "TSHIRT-COTTON-W"
+          ]
+        },
+        {
+          "column_name": "total_sold",
+          "column_type": "bigint",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 3,
+          "min_value": 0,
+          "max_value": 2,
+          "avg_value": "MC44MDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "1",
+            "1",
+            "0",
+            "2",
+            "0"
+          ]
+        },
+        {
+          "column_name": "total_quantity_sold",
+          "column_type": "bigint",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 4,
+          "min_value": 0,
+          "max_value": 3,
+          "avg_value": "MC45MDAwMDAwMDAwMDAwMDAwMDAwMA==",
+          "sample_values": [
+            "1",
+            "1",
+            "0",
+            "3",
+            "0"
+          ]
+        },
+        {
+          "column_name": "total_revenue",
+          "column_type": "numeric",
+          "total_count": 10,
+          "not_null_count": 10,
+          "null_count": 0,
+          "null_ratio": 0,
+          "unique_count": 7,
+          "min_value": "MA==",
+          "max_value": "MzU5MDAuMDA=",
+          "avg_value": "OTQ5NS4wMDAwMDAwMDAwMDAwMDAw",
+          "sample_values": [
+            "[51 53 57 48 48 46 48 48]",
+            "[51 50 57 48 48 46 48 48]",
+            "[48]",
+            "[49 51 53 48 46 48 48]",
+            "[48]"
+          ]
+        }
+      ],
+      "summary": {
+        "total_columns": 6,
+        "primary_keys": 0,
+        "foreign_keys": 0,
+        "nullable_ratio": 0,
+        "data_completeness": 1
+      }
     }
   ],
-  "relationships": null,
-  "metadata": {
-    "collected_at": "2025-11-05T11:12:52.436344+08:00",
-    "collection_duration_ms": 113,
-    "total_tables": 2,
-    "total_columns": 8
-  }
+  "timestamp": "2025-11-05T12:01:00.905718+08:00"
 }

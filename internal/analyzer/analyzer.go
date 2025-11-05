@@ -25,58 +25,58 @@ func NewDatabaseAnalyzer(db *sql.DB, dbType string) *DatabaseAnalyzer {
 
 // AnalysisResult 分析結果
 type AnalysisResult struct {
-	DatabaseName    string                 `json:"database_name"`
-	AnalysisTime    time.Time              `json:"analysis_time"`
-	TableAnalyses   []TableAnalysis        `json:"table_analyses"`
-	Summary         DatabaseSummary        `json:"summary"`
+	DatabaseName  string          `json:"database_name"`
+	AnalysisTime  time.Time       `json:"analysis_time"`
+	TableAnalyses []TableAnalysis `json:"table_analyses"`
+	Summary       DatabaseSummary `json:"summary"`
 }
 
 // TableAnalysis 表格分析結果
 type TableAnalysis struct {
-	TableName      string            `json:"table_name"`
-	RecordCount    int64             `json:"record_count"`
-	ColumnAnalyses []ColumnAnalysis  `json:"column_analyses"`
-	Summary        TableSummary      `json:"summary"`
+	TableName      string           `json:"table_name"`
+	RecordCount    int64            `json:"record_count"`
+	ColumnAnalyses []ColumnAnalysis `json:"column_analyses"`
+	Summary        TableSummary     `json:"summary"`
 }
 
 // ColumnAnalysis 欄位分析結果
 type ColumnAnalysis struct {
-	ColumnName    string      `json:"column_name"`
-	ColumnType    string      `json:"column_type"`
-	TotalCount    int64       `json:"total_count"`
-	NotNullCount  int64       `json:"not_null_count"`
-	NullCount     int64       `json:"null_count"`
-	NullRatio     float64     `json:"null_ratio"`
-	UniqueCount   int64       `json:"unique_count"`
-	MinValue      interface{} `json:"min_value,omitempty"`
-	MaxValue      interface{} `json:"max_value,omitempty"`
-	AvgValue      interface{} `json:"avg_value,omitempty"`
-	SampleValues  []string    `json:"sample_values"`
+	ColumnName   string      `json:"column_name"`
+	ColumnType   string      `json:"column_type"`
+	TotalCount   int64       `json:"total_count"`
+	NotNullCount int64       `json:"not_null_count"`
+	NullCount    int64       `json:"null_count"`
+	NullRatio    float64     `json:"null_ratio"`
+	UniqueCount  int64       `json:"unique_count"`
+	MinValue     interface{} `json:"min_value,omitempty"`
+	MaxValue     interface{} `json:"max_value,omitempty"`
+	AvgValue     interface{} `json:"avg_value,omitempty"`
+	SampleValues []string    `json:"sample_values"`
 }
 
 // TableSummary 表格摘要
 type TableSummary struct {
-	TotalColumns   int     `json:"total_columns"`
-	PrimaryKeys    int     `json:"primary_keys"`
-	ForeignKeys    int     `json:"foreign_keys"`
-	NullableRatio  float64 `json:"nullable_ratio"`
+	TotalColumns     int     `json:"total_columns"`
+	PrimaryKeys      int     `json:"primary_keys"`
+	ForeignKeys      int     `json:"foreign_keys"`
+	NullableRatio    float64 `json:"nullable_ratio"`
 	DataCompleteness float64 `json:"data_completeness"`
 }
 
 // DatabaseSummary 資料庫摘要
 type DatabaseSummary struct {
-	TotalTables     int     `json:"total_tables"`
-	TotalRecords    int64   `json:"total_records"`
+	TotalTables        int     `json:"total_tables"`
+	TotalRecords       int64   `json:"total_records"`
 	AvgRecordsPerTable float64 `json:"avg_records_per_table"`
-	LargestTable    string  `json:"largest_table"`
-	SmallestTable   string  `json:"smallest_table"`
+	LargestTable       string  `json:"largest_table"`
+	SmallestTable      string  `json:"smallest_table"`
 }
 
 // AnalyzeDatabase 分析整個資料庫
 func (a *DatabaseAnalyzer) AnalyzeDatabase(dbSchema *schema.DatabaseSchema) (*AnalysisResult, error) {
 	result := &AnalysisResult{
-		DatabaseName: dbSchema.DatabaseInfo.Name,
-		AnalysisTime: time.Now(),
+		DatabaseName:  dbSchema.DatabaseInfo.Name,
+		AnalysisTime:  time.Now(),
 		TableAnalyses: make([]TableAnalysis, 0, len(dbSchema.Tables)),
 	}
 
@@ -141,6 +141,11 @@ func (a *DatabaseAnalyzer) getRecordCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+// GetRecordCount 獲取表格記錄數 (公開方法)
+func (a *DatabaseAnalyzer) GetRecordCount(tableName string) (int64, error) {
+	return a.getRecordCount(tableName)
+}
+
 // analyzeColumn 分析單個欄位
 func (a *DatabaseAnalyzer) analyzeColumn(tableName string, column schema.Column, totalRecords int64) (*ColumnAnalysis, error) {
 	analysis := &ColumnAnalysis{
@@ -156,7 +161,13 @@ func (a *DatabaseAnalyzer) analyzeColumn(tableName string, column schema.Column,
 	}
 	analysis.NotNullCount = notNullCount
 	analysis.NullCount = totalRecords - notNullCount
-	analysis.NullRatio = float64(analysis.NullCount) / float64(totalRecords)
+
+	// 計算空值比例，避免除以零
+	if totalRecords > 0 {
+		analysis.NullRatio = float64(analysis.NullCount) / float64(totalRecords)
+	} else {
+		analysis.NullRatio = 0.0
+	}
 
 	// 計算唯一值數量
 	uniqueCount, err := a.getUniqueCount(tableName, column.Name)
@@ -183,6 +194,11 @@ func (a *DatabaseAnalyzer) analyzeColumn(tableName string, column schema.Column,
 	}
 
 	return analysis, nil
+}
+
+// AnalyzeColumn 分析單個欄位 (公開方法)
+func (a *DatabaseAnalyzer) AnalyzeColumn(tableName string, column schema.Column, totalRecords int64) (*ColumnAnalysis, error) {
+	return a.analyzeColumn(tableName, column, totalRecords)
 }
 
 // getNotNullCount 獲取非空值數量
@@ -277,6 +293,11 @@ func (a *DatabaseAnalyzer) generateTableSummary(table schema.Table, columnAnalys
 	}
 
 	return summary
+}
+
+// GenerateTableSummary 生成表格摘要 (公開方法)
+func (a *DatabaseAnalyzer) GenerateTableSummary(table schema.Table, columnAnalyses []ColumnAnalysis, recordCount int64) TableSummary {
+	return a.generateTableSummary(table, columnAnalyses, recordCount)
 }
 
 // generateDatabaseSummary 生成資料庫摘要
