@@ -1,21 +1,46 @@
 {
   "business_summary": {
-    "business_relationships": [],
-    "core_business_processes": [],
-    "key_business_entities": [],
+    "business_relationships": [
+      "訂單包含商品 (Orders contain Products)",
+      "顧客評論商品 (Customers review Products)",
+      "訂單需要運送 (Orders require Shipping)",
+      "商品屬於分類 (Products belong to Categories)"
+    ],
+    "core_business_processes": [
+      "顧客管理 (Customer Management)",
+      "商品目錄管理 (Product Catalog Management)"
+    ],
+    "key_business_entities": [
+      "顧客 (Customer)",
+      "商品 (Product)",
+      "商品分類 (Category)"
+    ],
     "overall_business_domain": "通用商業系統 (General Business System)",
     "table_categories": {
       "content_reviews": [],
-      "customer_management": [],
+      "customer_management": [
+        "shipments",
+        "returns",
+        "customers",
+        "orders",
+        "customer_addresses",
+        "coupons",
+        "inventory_transactions"
+      ],
       "inventory_management": [],
       "marketing_promotion": [],
       "order_management": [],
       "other": [
-        "table_size",
-        "tables_count",
-        "tables"
+        "payments"
       ],
-      "product_management": [],
+      "product_management": [
+        "categories",
+        "products",
+        "shopping_carts",
+        "order_items",
+        "reviews",
+        "product_variants"
+      ],
       "shipping_logistics": []
     }
   },
@@ -132,5 +157,5 @@
       }
     ]
   },
-  "timestamp": "2025-11-05T18:10:48.412852+08:00"
+  "timestamp": "2025-11-05T18:26:50.957956+08:00"
 }

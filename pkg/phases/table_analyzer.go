@@ -60,44 +60,29 @@ func NewTableAnalysisOrchestrator(cfg *config.Config, reader *Phase1ResultReader
 
 // InitializeTasks 初始化分析任務
 func (o *TableAnalysisOrchestrator) InitializeTasks() error {
-	// 從向量存儲檢索 phase1 的知識來獲取表格列表
-	query := "database tables analysis schema columns constraints"
-	results, err := o.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 10)
+	// 優先使用文件讀取器獲取表格名稱，因為向量存儲的解析可能不完整
+	log.Printf("Initializing analysis tasks using file-based reader")
+	tableNames, err := o.reader.GetTableNames()
 	if err != nil {
-		log.Printf("Warning: Failed to retrieve phase1 knowledge from vector store: %v", err)
-		log.Printf("Falling back to file-based reader")
-		// 後備方案：使用文件讀取器
-		tableNames, err := o.reader.GetTableNames()
+		log.Printf("Failed to get table names from file reader: %v", err)
+		log.Printf("Attempting to retrieve from vector store as fallback")
+		// 後備方案：從向量存儲檢索
+		query := "database tables analysis schema columns constraints"
+		results, err := o.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 10)
 		if err != nil {
-			return fmt.Errorf("failed to get table names from both vector store and file: %v", err)
+			return fmt.Errorf("failed to get table names from both file reader and vector store: %v", err)
 		}
-		o.initializeTasksFromNames(tableNames)
-		return nil
+
+		if len(results) == 0 {
+			return fmt.Errorf("no table information found in either file reader or vector store")
+		}
+
+		// 從檢索到的知識中提取表格名稱
+		tableNames = o.extractTableNamesFromKnowledge(results)
 	}
 
-	if len(results) == 0 {
-		log.Printf("No phase1 knowledge found in vector store, falling back to file reader")
-		tableNames, err := o.reader.GetTableNames()
-		if err != nil {
-			return fmt.Errorf("failed to get table names: %v", err)
-		}
-		o.initializeTasksFromNames(tableNames)
-		return nil
-	}
-
-	// 從檢索到的知識中提取表格名稱
-	tableNames := o.extractTableNamesFromKnowledge(results)
-	log.Printf("Initializing analysis tasks for %d tables from vector store", len(tableNames))
-
-	for _, tableName := range tableNames {
-		task := &TableAnalysisTask{
-			TableName: tableName,
-			Status:    "pending",
-			Priority:  0, // 所有任務優先級相同
-		}
-		o.tasks = append(o.tasks, task)
-	}
-
+	log.Printf("Initializing analysis tasks for %d tables", len(tableNames))
+	o.initializeTasksFromNames(tableNames)
 	return nil
 }
 

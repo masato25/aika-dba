@@ -86,17 +86,8 @@ func (p *Phase4Runner) Run() error {
 		return fmt.Errorf("failed to execute Lua rules: %v", err)
 	}
 
-	// 生成維度建模報告
-	report := map[string]interface{}{
-		"phase":         "phase4",
-		"description":   "Database dimension modeling using Lua rule engine with vector-enhanced knowledge",
-		"database":      p.config.Database.DBName,
-		"database_type": p.config.Database.Type,
-		"timestamp":     time.Now(),
-		"dimensions":    dimensions,
-		"fact_tables":   factTables,
-		"summary":       p.generateSummary(dimensions, factTables),
-	}
+	// 生成維度建模報告 - 按照分類組織
+	report := p.generateCategorizedReport(dimensions, factTables)
 
 	// 保存報告並存儲到向量數據庫
 	if err := p.writeOutput(report, "knowledge/phase4_dimensions.json"); err != nil {
@@ -150,15 +141,17 @@ func (p *Phase4Runner) retrievePhase2Knowledge() (map[string]*LLMAnalysisResult,
 		return nil, fmt.Errorf("knowledge manager not available")
 	}
 
-	// 檢索 Phase 2 的分析結果
+	// 首先嘗試從向量存儲檢索
 	query := "business logic analysis AI insights recommendations"
 	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, 20)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve phase2 knowledge: %v", err)
+		log.Printf("Failed to retrieve from vector store: %v, trying JSON file", err)
+		return p.retrievePhase2FromJSON()
 	}
 
 	if len(results) == 0 {
-		return nil, fmt.Errorf("no phase2 knowledge found in vector store")
+		log.Printf("No Phase 2 knowledge found in vector store, trying JSON file")
+		return p.retrievePhase2FromJSON()
 	}
 
 	// 從檢索到的知識中重建分析結果
@@ -229,8 +222,19 @@ func (p *Phase4Runner) retrievePhase2Knowledge() (map[string]*LLMAnalysisResult,
 		}
 	}
 
+	if len(phase2Results) == 0 {
+		log.Printf("No valid Phase 2 results from vector store, trying JSON file")
+		return p.retrievePhase2FromJSON()
+	}
+
 	log.Printf("Retrieved %d table analysis results from vector store", len(phase2Results))
 	return phase2Results, nil
+}
+
+// retrievePhase2FromJSON 從 JSON 文件檢索 Phase 2 知識（備用方案）
+func (p *Phase4Runner) retrievePhase2FromJSON() (map[string]*LLMAnalysisResult, error) {
+	reader := NewPhase2ResultReader("knowledge/phase2_analysis.json")
+	return reader.GetAnalysisResults()
 }
 
 // initLuaVM 初始化 Lua 虛擬機並載入規則
@@ -251,80 +255,76 @@ func (p *Phase4Runner) initLuaVM(rulesContent string) error {
 	return nil
 }
 
-// retrieveTableAnalysis 從向量存儲檢索表格分析信息
-func (p *Phase4Runner) retrieveTableAnalysis(tableName string) (*TableAnalysisResult, error) {
-	if p.knowledgeMgr == nil {
-		return nil, fmt.Errorf("knowledge manager not available")
-	}
-
-	// 檢索 Phase 1 的表格分析
-	query := fmt.Sprintf("table analysis schema %s phase1", tableName)
-	results, err := p.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 10)
+// retrieveTableAnalysisFromFile 從 phase1_analysis.json 文件中檢索表格分析信息
+func (p *Phase4Runner) retrieveTableAnalysisFromFile(tableName string) (*TableAnalysisResult, error) {
+	// 讀取 phase1_analysis.json 文件
+	data, err := os.ReadFile("knowledge/phase1_analysis.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve table analysis: %v", err)
+		return nil, fmt.Errorf("failed to read phase1_analysis.json: %v", err)
 	}
 
-	if len(results) == 0 {
-		return nil, fmt.Errorf("no table analysis found for %s", tableName)
+	var phase1Data struct {
+		Tables map[string]interface{} `json:"tables"`
 	}
 
-	// 從檢索到的知識中重建表格分析
-	for _, result := range results {
-		content := result.Content
+	if err := json.Unmarshal(data, &phase1Data); err != nil {
+		return nil, fmt.Errorf("failed to parse phase1_analysis.json: %v", err)
+	}
 
-		// 嘗試解析為 JSON
-		var analysisData map[string]interface{}
-		if err := json.Unmarshal([]byte(content), &analysisData); err != nil {
-			log.Printf("Failed to parse table analysis as JSON: %v", err)
-			continue
-		}
+	// 查找指定的表格
+	tableData, ok := phase1Data.Tables[tableName]
+	if !ok {
+		return nil, fmt.Errorf("table %s not found in phase1_analysis.json", tableName)
+	}
 
-		// 檢查是否包含表格分析
-		if tables, ok := analysisData["tables"].(map[string]interface{}); ok {
-			if tableData, ok := tables[tableName].(map[string]interface{}); ok {
-				tableAnalysis := &TableAnalysisResult{}
+	tableMap, ok := tableData.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid table data format for %s", tableName)
+	}
 
-				if schema, ok := tableData["schema"].([]interface{}); ok {
-					tableAnalysis.Schema = make([]map[string]interface{}, len(schema))
-					for i, col := range schema {
-						if colMap, ok := col.(map[string]interface{}); ok {
-							tableAnalysis.Schema[i] = colMap
-						}
-					}
-				}
+	tableAnalysis := &TableAnalysisResult{}
 
-				if constraints, ok := tableData["constraints"].(map[string]interface{}); ok {
-					tableAnalysis.Constraints = constraints
-				}
-
-				if indexes, ok := tableData["indexes"].([]interface{}); ok {
-					tableAnalysis.Indexes = make([]map[string]interface{}, len(indexes))
-					for i, idx := range indexes {
-						if idxMap, ok := idx.(map[string]interface{}); ok {
-							tableAnalysis.Indexes[i] = idxMap
-						}
-					}
-				}
-
-				if samples, ok := tableData["samples"].([]interface{}); ok {
-					tableAnalysis.Samples = make([]map[string]interface{}, len(samples))
-					for i, sample := range samples {
-						if sampleMap, ok := sample.(map[string]interface{}); ok {
-							tableAnalysis.Samples[i] = sampleMap
-						}
-					}
-				}
-
-				if stats, ok := tableData["stats"].(map[string]interface{}); ok {
-					tableAnalysis.Stats = stats
-				}
-
-				return tableAnalysis, nil
+	// 解析 schema
+	if schema, ok := tableMap["schema"].([]interface{}); ok {
+		tableAnalysis.Schema = make([]map[string]interface{}, len(schema))
+		for i, col := range schema {
+			if colMap, ok := col.(map[string]interface{}); ok {
+				tableAnalysis.Schema[i] = colMap
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("table analysis not found for %s", tableName)
+	// 解析約束
+	if constraints, ok := tableMap["constraints"].(map[string]interface{}); ok {
+		tableAnalysis.Constraints = constraints
+	}
+
+	// 解析索引
+	if indexes, ok := tableMap["indexes"].([]interface{}); ok {
+		tableAnalysis.Indexes = make([]map[string]interface{}, len(indexes))
+		for i, idx := range indexes {
+			if idxMap, ok := idx.(map[string]interface{}); ok {
+				tableAnalysis.Indexes[i] = idxMap
+			}
+		}
+	}
+
+	// 解析樣本
+	if samples, ok := tableMap["samples"].([]interface{}); ok {
+		tableAnalysis.Samples = make([]map[string]interface{}, len(samples))
+		for i, sample := range samples {
+			if sampleMap, ok := sample.(map[string]interface{}); ok {
+				tableAnalysis.Samples[i] = sampleMap
+			}
+		}
+	}
+
+	// 解析統計
+	if stats, ok := tableMap["stats"].(map[string]interface{}); ok {
+		tableAnalysis.Stats = stats
+	}
+
+	return tableAnalysis, nil
 }
 
 // executeLuaRules 執行 Lua 規則來生成維度和事實表
@@ -403,10 +403,10 @@ func (p *Phase4Runner) executeLuaRules(phase2Results map[string]*LLMAnalysisResu
 func (p *Phase4Runner) createTableMeta(tableName string, result *LLMAnalysisResult) *lua.LTable {
 	meta := p.luaState.NewTable()
 
-	// 從向量存儲檢索 Phase 1 的表格分析信息
-	tableAnalysis, err := p.retrieveTableAnalysis(tableName)
+	// 從 phase1_analysis.json 文件中讀取表格結構
+	tableAnalysis, err := p.retrieveTableAnalysisFromFile(tableName)
 	if err != nil {
-		log.Printf("Warning: Failed to get table analysis for %s: %v", tableName, err)
+		log.Printf("Warning: Failed to get table analysis for %s from file: %v", tableName, err)
 		// 返回空的元數據
 		meta.RawSetString("columns", p.luaState.NewTable())
 		meta.RawSetString("existing_dimensions", p.luaState.NewTable())
@@ -519,25 +519,178 @@ func (p *Phase4Runner) luaTableToStringSlice(luaTable *lua.LTable) []string {
 	return result
 }
 
-// generateSummary 生成總結
-func (p *Phase4Runner) generateSummary(dimensions []Dimension, factTables []FactTable) map[string]interface{} {
-	typeCount := make(map[string]int)
-	totalDimensions := len(dimensions)
-	totalFactTables := len(factTables)
+// generateCategorizedReport 生成按分類組織的報告
+func (p *Phase4Runner) generateCategorizedReport(dimensions []Dimension, factTables []FactTable) map[string]interface{} {
+	// 按照 5 個分類組織維度
+	categorizedDimensions := map[string][]Dimension{
+		"people":   {}, // 人 - 客戶、使用者、供應商等
+		"time":     {}, // 時間 - 時間維度
+		"product":  {}, // 物體 - 產品、折扣券等
+		"event":    {}, // 事件 - 運輸、銷售等事件
+		"location": {}, // 地點 - 地理位置
+	}
 
+	// 將維度按類型分類
 	for _, dim := range dimensions {
-		typeCount[dim.Type]++
+		switch dim.Type {
+		case "people":
+			categorizedDimensions["people"] = append(categorizedDimensions["people"], dim)
+		case "time":
+			categorizedDimensions["time"] = append(categorizedDimensions["time"], dim)
+		case "product":
+			categorizedDimensions["product"] = append(categorizedDimensions["product"], dim)
+		case "event":
+			categorizedDimensions["event"] = append(categorizedDimensions["event"], dim)
+		case "location":
+			categorizedDimensions["location"] = append(categorizedDimensions["location"], dim)
+		default:
+			// 如果沒有匹配的類型，嘗試根據名稱智能分類
+			if p.isPeopleDimension(dim) {
+				categorizedDimensions["people"] = append(categorizedDimensions["people"], dim)
+			} else if p.isTimeDimension(dim) {
+				categorizedDimensions["time"] = append(categorizedDimensions["time"], dim)
+			} else if p.isProductDimension(dim) {
+				categorizedDimensions["product"] = append(categorizedDimensions["product"], dim)
+			} else if p.isEventDimension(dim) {
+				categorizedDimensions["event"] = append(categorizedDimensions["event"], dim)
+			} else if p.isLocationDimension(dim) {
+				categorizedDimensions["location"] = append(categorizedDimensions["location"], dim)
+			} else {
+				// 如果還是無法分類，放進最可能的類別
+				categorizedDimensions["product"] = append(categorizedDimensions["product"], dim)
+			}
+		}
+	}
+
+	// 生成總結統計
+	summary := p.generateCategorizedSummary(categorizedDimensions, factTables)
+
+	return map[string]interface{}{
+		"phase":         "phase4",
+		"description":   "Database dimension modeling using Lua rule engine with categorized output",
+		"database":      p.config.Database.DBName,
+		"database_type": p.config.Database.Type,
+		"timestamp":     time.Now(),
+		"classifications": map[string]interface{}{
+			"people": map[string]interface{}{
+				"description": "人 - 資料模型裡面的對象 (客戶、使用者、供應商等)",
+				"dimensions":  categorizedDimensions["people"],
+				"count":       len(categorizedDimensions["people"]),
+			},
+			"time": map[string]interface{}{
+				"description": "時間 - 時間維度",
+				"dimensions":  categorizedDimensions["time"],
+				"count":       len(categorizedDimensions["time"]),
+			},
+			"product": map[string]interface{}{
+				"description": "物體 - 資料模型裡面的物體 (產品、折扣券等)",
+				"dimensions":  categorizedDimensions["product"],
+				"count":       len(categorizedDimensions["product"]),
+			},
+			"event": map[string]interface{}{
+				"description": "事件 - 資料模型裡面的事件 (運輸、銷售等)",
+				"dimensions":  categorizedDimensions["event"],
+				"count":       len(categorizedDimensions["event"]),
+			},
+			"location": map[string]interface{}{
+				"description": "地點 - 上述發生的地點",
+				"dimensions":  categorizedDimensions["location"],
+				"count":       len(categorizedDimensions["location"]),
+			},
+		},
+		"fact_tables": factTables,
+		"summary":     summary,
+	}
+}
+
+// generateCategorizedSummary 生成分類總結
+func (p *Phase4Runner) generateCategorizedSummary(categorizedDimensions map[string][]Dimension, factTables []FactTable) map[string]interface{} {
+	totalDimensions := 0
+	for _, dims := range categorizedDimensions {
+		totalDimensions += len(dims)
 	}
 
 	return map[string]interface{}{
-		"total_dimensions":   totalDimensions,
-		"total_fact_tables":  totalFactTables,
-		"dimensions_by_type": typeCount,
+		"total_dimensions":  totalDimensions,
+		"total_fact_tables": len(factTables),
+		"classification_counts": map[string]int{
+			"people":   len(categorizedDimensions["people"]),
+			"time":     len(categorizedDimensions["time"]),
+			"product":  len(categorizedDimensions["product"]),
+			"event":    len(categorizedDimensions["event"]),
+			"location": len(categorizedDimensions["location"]),
+		},
 		"rule_engine_info": map[string]interface{}{
 			"lua_script": "knowledge/dimension_rules.lua",
 			"engine":     "Gopher-Lua v1.1.1",
 		},
 	}
+}
+
+// 智能分類輔助方法
+func (p *Phase4Runner) isPeopleDimension(dim Dimension) bool {
+	name := strings.ToLower(dim.Name)
+	desc := strings.ToLower(dim.Description)
+
+	peopleKeywords := []string{"customer", "user", "person", "people", "client", "supplier", "vendor", "employee", "staff", "member"}
+	for _, keyword := range peopleKeywords {
+		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Phase4Runner) isTimeDimension(dim Dimension) bool {
+	name := strings.ToLower(dim.Name)
+	desc := strings.ToLower(dim.Description)
+
+	timeKeywords := []string{"date", "time", "datetime", "timestamp", "calendar", "period", "month", "year", "day", "hour"}
+	for _, keyword := range timeKeywords {
+		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Phase4Runner) isProductDimension(dim Dimension) bool {
+	name := strings.ToLower(dim.Name)
+	desc := strings.ToLower(dim.Description)
+
+	productKeywords := []string{"product", "item", "goods", "merchandise", "sku", "inventory", "catalog", "category", "coupon", "discount", "price"}
+	for _, keyword := range productKeywords {
+		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Phase4Runner) isEventDimension(dim Dimension) bool {
+	name := strings.ToLower(dim.Name)
+	desc := strings.ToLower(dim.Description)
+
+	eventKeywords := []string{"order", "transaction", "sale", "purchase", "shipment", "delivery", "payment", "review", "feedback", "event", "action", "behavior"}
+	for _, keyword := range eventKeywords {
+		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Phase4Runner) isLocationDimension(dim Dimension) bool {
+	name := strings.ToLower(dim.Name)
+	desc := strings.ToLower(dim.Description)
+
+	locationKeywords := []string{"location", "address", "city", "country", "region", "state", "province", "zip", "postal", "geo", "place", "area"}
+	for _, keyword := range locationKeywords {
+		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
+			return true
+		}
+	}
+	return false
 }
 
 // writeOutput 寫入輸出到文件

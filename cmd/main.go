@@ -102,7 +102,10 @@ func runServer(db *sql.DB, cfg *config.Config) {
 // runPhase1 執行 Phase 1: 統計分析
 func runPhase1(db *sql.DB, cfg *config.Config) {
 	analyzer := analyzer.NewDatabaseAnalyzer(db)
-	runner := phases.NewPhase1Runner(analyzer, cfg)
+	runner, err := phases.NewPhase1Runner(analyzer, cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 1 runner: %v", err)
+	}
 
 	if err := runner.Run(); err != nil {
 		log.Fatalf("Phase 1 failed: %v", err)
@@ -111,7 +114,10 @@ func runPhase1(db *sql.DB, cfg *config.Config) {
 
 // runPhase2 執行 Phase 2: AI 分析
 func runPhase2(db *sql.DB, cfg *config.Config) {
-	runner := phases.NewPhase2Runner(cfg, db)
+	runner, err := phases.NewPhase2Runner(cfg, db)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 2 runner: %v", err)
+	}
 
 	if err := runner.Run(); err != nil {
 		log.Fatalf("Phase 2 failed: %v", err)
