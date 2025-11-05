@@ -145,7 +145,7 @@ func (o *TableAnalysisOrchestrator) AnalyzeTable(ctx context.Context, task *Tabl
 func (o *TableAnalysisOrchestrator) buildAnalysisPrompt(summary map[string]interface{}) string {
 	var prompt strings.Builder
 
-	prompt.WriteString("請分析以下資料庫表格的結構和數據：\n\n")
+	prompt.WriteString("請分析以下資料庫表格的商業邏輯和用途：\n\n")
 
 	// 表格基本信息
 	prompt.WriteString(fmt.Sprintf("表格名稱: %s\n", summary["table_name"]))
@@ -184,32 +184,30 @@ func (o *TableAnalysisOrchestrator) buildAnalysisPrompt(summary map[string]inter
 		}
 	}
 
-	// 索引信息
-	if indexes, ok := summary["indexes"].([]map[string]interface{}); ok && len(indexes) > 0 {
-		prompt.WriteString("\n索引:\n")
-		for _, idx := range indexes {
-			unique := ""
-			if idx["unique"].(bool) {
-				unique = " (唯一)"
+	// 樣本數據
+	if samples, ok := summary["samples"].([]map[string]interface{}); ok && len(samples) > 0 {
+		prompt.WriteString("\n樣本數據:\n")
+		for i, sample := range samples {
+			if i >= 3 { // 只顯示前3個樣本
+				break
 			}
-			prompt.WriteString(fmt.Sprintf("- %s%s: %v\n", idx["name"], unique, idx["columns"]))
+			prompt.WriteString(fmt.Sprintf("樣本 %d:\n", i+1))
+			for key, value := range sample {
+				prompt.WriteString(fmt.Sprintf("  %s: %v\n", key, value))
+			}
+			prompt.WriteString("\n")
 		}
 	}
 
-	// 統計信息
-	if stats, ok := summary["stats"].(map[string]interface{}); ok {
-		prompt.WriteString("\n統計信息:\n")
-		for key, value := range stats {
-			prompt.WriteString(fmt.Sprintf("- %s: %v\n", key, value))
-		}
-	}
+	prompt.WriteString("\n請基於以上資訊，描述這個表格的商業邏輯用途：\n")
+	prompt.WriteString("1. 這個表格在整個系統中的角色和功能是什麼？\n")
+	prompt.WriteString("2. 根據欄位定義和樣本數據，這個表格存儲的是什麼類型的業務數據？\n")
+	prompt.WriteString("3. 這個表格與其他表格的業務關係是什麼？（例如：客戶表、訂單表、產品表等）\n")
+	prompt.WriteString("4. 從樣本數據可以看出什麼業務模式或用戶行為？\n")
+	prompt.WriteString("5. 這個表格支持哪些業務流程？（例如：用戶註冊、購物、下單、支付等）\n")
+	prompt.WriteString("6. 根據約束和索引設計，可以推斷出這個表格的主要查詢場景是什麼？\n")
 
-	prompt.WriteString("\n請提供以下分析:\n")
-	prompt.WriteString("1. 表格設計評估（結構合理性、命名規範等）\n")
-	prompt.WriteString("2. 性能優化建議（索引、查詢優化等）\n")
-	prompt.WriteString("3. 數據完整性分析（約束、數據質量等）\n")
-	prompt.WriteString("4. 潛在問題識別\n")
-	prompt.WriteString("5. 改進建議\n")
+	prompt.WriteString("\n請用自然、易懂的語言描述這個表格的商業用途，不要過度關注技術細節。")
 
 	return prompt.String()
 }
