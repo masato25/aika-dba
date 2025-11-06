@@ -132,7 +132,7 @@ func (s *MCPServer) handleInitialize(req map[string]interface{}) (string, error)
 func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) {
 	tools := []map[string]interface{}{
 		{
-			"name":        "get_table_info",
+			"name":        "database_get_table_schema",
 			"description": "獲取特定資料表的所有資訊，包括 schema、constraints、indexes 和樣本數據",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -146,7 +146,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "execute_query",
+			"name":        "database_execute_sql_query",
 			"description": "執行自定義 SQL 查詢並返回結果",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -165,7 +165,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "get_more_samples",
+			"name":        "database_get_table_samples",
 			"description": "獲取特定資料表的更多樣本數據",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -189,7 +189,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "get_database_schema_analysis",
+			"name":        "analysis_get_schema_analysis",
 			"description": "獲取 Phase 1 的資料庫架構分析結果，包括統計信息和樣本報告",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -208,7 +208,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "get_business_logic_analysis",
+			"name":        "analysis_get_business_logic",
 			"description": "獲取 Phase 2 的業務邏輯分析結果，包括 AI 洞察和建議",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -227,7 +227,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "get_comprehensive_business_overview",
+			"name":        "analysis_get_business_overview",
 			"description": "獲取 Phase 3 的綜合業務概覽，包括數據預處理和轉換計劃",
 			"inputSchema": map[string]interface{}{
 				"type": "object",
@@ -246,7 +246,7 @@ func (s *MCPServer) handleToolsList(req map[string]interface{}) (string, error) 
 			},
 		},
 		{
-			"name":        "get_knowledge_stats",
+			"name":        "knowledge_get_statistics",
 			"description": "獲取知識庫統計信息，包括各 phase 的知識塊數量",
 			"inputSchema": map[string]interface{}{
 				"type":       "object",
@@ -291,19 +291,19 @@ func (s *MCPServer) handleToolsCall(req map[string]interface{}) (string, error) 
 	var err error
 
 	switch toolName {
-	case "get_table_info":
+	case "database_get_table_schema":
 		result, err = s.getTableInfo(toolArgs)
-	case "execute_query":
+	case "database_execute_sql_query":
 		result, err = s.executeQuery(toolArgs)
-	case "get_more_samples":
+	case "database_get_table_samples":
 		result, err = s.getMoreSamples(toolArgs)
-	case "get_database_schema_analysis":
+	case "analysis_get_schema_analysis":
 		result, err = s.getDatabaseSchemaAnalysis(toolArgs)
-	case "get_business_logic_analysis":
+	case "analysis_get_business_logic":
 		result, err = s.getBusinessLogicAnalysis(toolArgs)
-	case "get_comprehensive_business_overview":
+	case "analysis_get_business_overview":
 		result, err = s.getComprehensiveBusinessOverview(toolArgs)
-	case "get_knowledge_stats":
+	case "knowledge_get_statistics":
 		result, err = s.getKnowledgeStats(toolArgs)
 	default:
 		return s.createErrorResponse(req, -32601, "Tool not found")

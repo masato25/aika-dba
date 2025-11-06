@@ -14,7 +14,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
@@ -69,7 +68,6 @@ func (s *APIServer) handleDatabaseOverview(w http.ResponseWriter, r *http.Reques
 // Start 啟動服務器
 func (s *APIServer) Start(port int) error {
 	addr := fmt.Sprintf(":%d", port)
-	log.Printf("Starting API server on %s", addr)
 	return http.ListenAndServe(addr, s.router)
 }
 
@@ -248,12 +246,6 @@ func main() {
 	var phases = flag.String("phases", "phase3", "Comma-separated list of phases to delete (for delete-vector command)")
 	var query = flag.String("query", "", "Natural language query for marketing command")
 	flag.Parse()
-
-	// 載入 .env 文件
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: Error loading .env file: %v", err)
-		log.Println("Continuing with environment variables or defaults...")
-	}
 
 	// 載入配置
 	cfg, err := config.LoadConfig(*configPath)

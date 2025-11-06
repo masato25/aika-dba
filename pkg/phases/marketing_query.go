@@ -1,6 +1,7 @@
 package phases
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/llm"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
@@ -16,7 +18,7 @@ type MarketingQueryRunner struct {
 	config       *config.Config
 	db           *sql.DB
 	knowledgeMgr *vectorstore.KnowledgeManager
-	llmClient    *LLMClient
+	llmClient    *llm.Client
 }
 
 // NewMarketingQueryRunner 創建營銷查詢執行器
@@ -32,7 +34,7 @@ func NewMarketingQueryRunner(cfg *config.Config, db *sql.DB) *MarketingQueryRunn
 		config:       cfg,
 		db:           db,
 		knowledgeMgr: knowledgeMgr,
-		llmClient:    NewLLMClient(cfg),
+		llmClient:    llm.NewClient(cfg),
 	}
 }
 
@@ -105,26 +107,41 @@ func (m *MarketingQueryRunner) retrieveRelevantKnowledge(query string) (string, 
 	var allKnowledge []string
 
 	// 檢索 Phase 1 知識 (架構分析)
-	phase1Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 5)
+	phase1Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase1", query, 1)
 	if err == nil {
 		for _, result := range phase1Results {
-			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 1 - Schema Analysis: %s", result.Content))
+			// 截斷知識內容以適應 LLM 上下文限制
+			truncatedContent := result.Content
+			if len(truncatedContent) > 500 {
+				truncatedContent = truncatedContent[:500] + "..."
+			}
+			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 1 - Schema Analysis: %s", truncatedContent))
 		}
 	}
 
 	// 檢索 Phase 2 知識 (業務邏輯分析)
-	phase2Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, 5)
+	phase2Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase2", query, 1)
 	if err == nil {
 		for _, result := range phase2Results {
-			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 2 - Business Logic: %s", result.Content))
+			// 截斷知識內容以適應 LLM 上下文限制
+			truncatedContent := result.Content
+			if len(truncatedContent) > 500 {
+				truncatedContent = truncatedContent[:500] + "..."
+			}
+			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 2 - Business Logic: %s", truncatedContent))
 		}
 	}
 
 	// 檢索 Phase 3 知識 (商業邏輯描述)
-	phase3Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase3", query, 5)
+	phase3Results, err := m.knowledgeMgr.RetrievePhaseKnowledge("phase3", query, 1)
 	if err == nil {
 		for _, result := range phase3Results {
-			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 3 - Business Description: %s", result.Content))
+			// 截斷知識內容以適應 LLM 上下文限制
+			truncatedContent := result.Content
+			if len(truncatedContent) > 500 {
+				truncatedContent = truncatedContent[:500] + "..."
+			}
+			allKnowledge = append(allKnowledge, fmt.Sprintf("Phase 3 - Business Description: %s", truncatedContent))
 		}
 	}
 
@@ -143,46 +160,80 @@ func (m *MarketingQueryRunner) generateSQLQuery(naturalLanguageQuery, relevantKn
 		return "", "", fmt.Errorf("failed to get database schema: %v", err)
 	}
 
-	// 構造 LLM 提示
-	prompt := fmt.Sprintf(`You are a SQL expert. Based on the following database schema and business knowledge, generate a SQL query to answer the user's question.
+	// 構造 LLM 提示 - 強制使用向量知識生成 SQL
+	prompt := fmt.Sprintf(`You are a SQL expert. You MUST use the business knowledge from our vector database to generate accurate SQL queries.
 
 Database Schema:
 %s
 
-Business Knowledge:
+Business Knowledge from Vector Database:
 %s
 
 User Question: %s
 
-Instructions:
-1. Generate a SELECT query that answers the question
-2. Use proper table joins if needed
-3. Include appropriate WHERE, GROUP BY, ORDER BY clauses
-4. Limit results to 50 rows maximum for performance
-5. Return only the SQL query, no explanations
+CRITICAL REQUIREMENTS:
+1. You MUST analyze the business knowledge to understand table relationships and column meanings
+2. Generate ONLY SELECT queries that directly answer the user's question
+3. Use EXACTLY the table names and column names found in the Database Schema above
+4. Do NOT invent column names - use only the columns listed in the schema
+5. For date filtering, use 'created_at' column if available, not 'order_date'
+6. Include appropriate JOINs, WHERE, GROUP BY, ORDER BY clauses as needed
+7. Limit results to maximum 50 rows for performance
+8. If the business knowledge doesn't contain enough information, still attempt to generate the best possible SQL based on the schema
 
-SQL Query:`, schemaInfo, relevantKnowledge, naturalLanguageQuery)
+Return ONLY the SQL query without any explanations or markdown formatting:`, schemaInfo, relevantKnowledge, naturalLanguageQuery)
 
 	// 調用 LLM 生成 SQL
-	response, err := m.llmClient.CallLLM(prompt)
+	response, err := m.llmClient.GenerateCompletion(context.Background(), prompt)
 	if err != nil {
-		// 後備模式：使用簡單的規則生成 SQL
-		log.Printf("LLM failed, using fallback SQL generation: %v", err)
-		sqlQuery, explanation := m.fallbackSQLGeneration(naturalLanguageQuery)
-		return sqlQuery, explanation, nil
+		// 如果 LLM 完全失敗，返回錯誤而不是使用寫死 SQL
+		return "", "", fmt.Errorf("LLM failed to generate SQL query: %v. Business knowledge may be insufficient or LLM service unavailable", err)
 	}
 
 	// 清理響應，提取 SQL 查詢
 	sqlQuery := strings.TrimSpace(response)
-	sqlQuery = strings.TrimPrefix(sqlQuery, "SQL Query:")
+
+	// 移除可能的 markdown 代碼塊標記
+	sqlQuery = strings.TrimPrefix(sqlQuery, "```sql")
+	sqlQuery = strings.TrimPrefix(sqlQuery, "```")
+	sqlQuery = strings.TrimSuffix(sqlQuery, "```")
+
+	// 如果響應包含多行，只取第一個 SELECT 語句
+	lines := strings.Split(sqlQuery, "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(strings.ToUpper(line), "SELECT") {
+			// 找到 SELECT 語句，從這裡開始取，直到分號或結束
+			sqlQuery = line
+			for j := i + 1; j < len(lines); j++ {
+				nextLine := strings.TrimSpace(lines[j])
+				sqlQuery += " " + nextLine
+				if strings.Contains(nextLine, ";") {
+					break
+				}
+			}
+			break
+		}
+	}
+
 	sqlQuery = strings.TrimSpace(sqlQuery)
+	// 移除末尾的分號
+	sqlQuery = strings.TrimSuffix(sqlQuery, ";")
+
+	log.Printf("Generated SQL query: %s", sqlQuery)
 
 	// 驗證 SQL 查詢安全性
 	if !m.isSafeSQLQuery(sqlQuery) {
-		return "", "", fmt.Errorf("generated SQL query is not safe")
+		log.Printf("SQL query failed security validation: %s", sqlQuery)
+		return "", "", fmt.Errorf("generated SQL query failed security validation")
 	}
 
-	explanation := fmt.Sprintf("Generated SQL query based on business knowledge and database schema to answer: %s", naturalLanguageQuery)
+	// 確保是 SELECT 查詢
+	if !strings.HasPrefix(strings.ToUpper(strings.TrimSpace(sqlQuery)), "SELECT") {
+		return "", "", fmt.Errorf("generated query is not a SELECT statement")
+	}
+
+	explanation := fmt.Sprintf("SQL query generated by LLM using business knowledge from vector database to answer: %s", naturalLanguageQuery)
 
 	return sqlQuery, explanation, nil
 }
@@ -230,18 +281,26 @@ func (m *MarketingQueryRunner) isSafeSQLQuery(query string) bool {
 
 	// 只允許 SELECT 查詢
 	if !strings.HasPrefix(upperQuery, "SELECT") {
+		log.Printf("Query rejected: not a SELECT statement")
 		return false
 	}
 
-	// 不允許危險的關鍵字
+	// 不允許危險的關鍵字 (使用詞邊界檢查)
 	dangerousKeywords := []string{
 		"DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "CREATE", "TRUNCATE",
 		"EXEC", "EXECUTE", "MERGE", "BULK", "BACKUP", "RESTORE",
 	}
 
-	for _, keyword := range dangerousKeywords {
-		if strings.Contains(upperQuery, keyword) {
-			return false
+	// 將查詢分割成單詞來檢查
+	words := strings.Fields(upperQuery)
+	for _, word := range words {
+		// 移除標點符號
+		word = strings.Trim(word, ".,;()[]")
+		for _, keyword := range dangerousKeywords {
+			if word == keyword {
+				log.Printf("Query rejected: contains dangerous keyword '%s'", keyword)
+				return false
+			}
 		}
 	}
 
@@ -314,13 +373,13 @@ func (m *MarketingQueryRunner) generateBusinessInsights(query string, results []
 	// 構造 LLM 提示
 	resultSummary := fmt.Sprintf("Query returned %d rows with %d columns", len(results), len(results[0]))
 
-	prompt := fmt.Sprintf(`You are a business analyst. Based on the following query, results, and business knowledge, provide key business insights.
+	prompt := fmt.Sprintf(`You are a business analyst. Based on the following query, results, and business knowledge from our vector database, provide key business insights.
 
 User Query: %s
 
 Query Results Summary: %s
 
-Business Knowledge: %s
+Business Knowledge from Vector Database: %s
 
 Please provide:
 1. Key findings from the data
@@ -328,72 +387,17 @@ Please provide:
 3. Recommendations for action
 4. Any trends or patterns observed
 
-Keep the response concise but insightful.`, query, resultSummary, knowledge)
+Keep the response concise but insightful. Focus on actionable business insights.`, query, resultSummary, knowledge)
 
 	// 調用 LLM 生成洞察
-	response, err := m.llmClient.CallLLM(prompt)
+	response, err := m.llmClient.GenerateCompletion(context.Background(), prompt)
 	if err != nil {
-		// 後備模式：生成簡單的洞察
-		log.Printf("LLM failed for insights, using fallback: %v", err)
-		return m.fallbackBusinessInsights(query, results), nil
+		// 如果 LLM 失敗，提供基本的結果摘要
+		log.Printf("LLM failed for insights: %v", err)
+		return fmt.Sprintf("Query executed successfully, returned %d results. LLM analysis unavailable.", len(results)), nil
 	}
 
 	return strings.TrimSpace(response), nil
-}
-
-// fallbackBusinessInsights 後備業務洞察生成
-func (m *MarketingQueryRunner) fallbackBusinessInsights(query string, results []map[string]interface{}) string {
-	queryLower := strings.ToLower(query)
-
-	if strings.Contains(queryLower, "how many customers") && len(results) > 0 {
-		if count, ok := results[0]["customer_count"]; ok {
-			return fmt.Sprintf("The system has %v registered customers. This represents the total customer base available for marketing campaigns and analysis.", count)
-		}
-	}
-
-	if strings.Contains(queryLower, "total orders") && len(results) > 0 {
-		if count, ok := results[0]["order_count"]; ok {
-			return fmt.Sprintf("There are %v total orders in the system. This indicates the overall transaction volume and business activity level.", count)
-		}
-	}
-
-	if strings.Contains(queryLower, "total revenue") && len(results) > 0 {
-		if revenue, ok := results[0]["total_revenue"]; ok {
-			return fmt.Sprintf("Total revenue from completed orders is %v. This represents the financial performance and should be monitored for growth trends.", revenue)
-		}
-	}
-
-	return "Data retrieved successfully. Further analysis may be needed to extract specific business insights."
-}
-
-// fallbackSQLGeneration 後備 SQL 生成（當 LLM 不可用時使用）
-func (m *MarketingQueryRunner) fallbackSQLGeneration(query string) (string, string) {
-	queryLower := strings.ToLower(query)
-
-	// 簡單的關鍵字匹配來生成 SQL
-	if strings.Contains(queryLower, "how many customers") || strings.Contains(queryLower, "customer count") {
-		return "SELECT COUNT(*) as customer_count FROM members", "Count of total customers in the system"
-	}
-
-	if strings.Contains(queryLower, "total orders") || strings.Contains(queryLower, "order count") || strings.Contains(queryLower, "how many orders") {
-		return "SELECT COUNT(*) as order_count FROM orders", "Count of total orders in the system"
-	}
-
-	if strings.Contains(queryLower, "total revenue") || strings.Contains(queryLower, "revenue") {
-		// 使用更通用的查詢，因為不知道確切的欄位名稱
-		return "SELECT COUNT(*) as total_records FROM orders", "Total number of order records (revenue calculation requires specific column knowledge)"
-	}
-
-	if strings.Contains(queryLower, "top products") || strings.Contains(queryLower, "best selling") {
-		return "SELECT COUNT(*) as product_count FROM products", "Count of products in the system"
-	}
-
-	if strings.Contains(queryLower, "recent orders") {
-		return "SELECT id, created_at FROM orders ORDER BY created_at DESC LIMIT 5", "Most recent 5 orders by creation date"
-	}
-
-	// 默認查詢
-	return "SELECT COUNT(*) as record_count FROM members", "Fallback query - total member count"
 }
 
 // SaveQueryResult 保存查詢結果
