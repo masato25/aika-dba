@@ -29,7 +29,7 @@ func NewPhaseLogger(phase string, progressMgr *ProgressManager, debugEnabled boo
 // Info 記錄信息級別日誌
 func (pl *PhaseLogger) Info(message string) {
 	pl.baseLogger.Println("INFO:", message)
-	if pl.debugEnabled {
+	if pl.progressMgr != nil {
 		pl.progressMgr.AddLog(pl.phase, "info", message)
 	}
 }
@@ -45,7 +45,7 @@ func (pl *PhaseLogger) Debug(message string) {
 // Warn 記錄警告級別日誌
 func (pl *PhaseLogger) Warn(message string) {
 	pl.baseLogger.Println("WARN:", message)
-	if pl.debugEnabled {
+	if pl.progressMgr != nil {
 		pl.progressMgr.AddLog(pl.phase, "warn", message)
 	}
 }
@@ -53,7 +53,7 @@ func (pl *PhaseLogger) Warn(message string) {
 // Error 記錄錯誤級別日誌
 func (pl *PhaseLogger) Error(message string) {
 	pl.baseLogger.Println("ERROR:", message)
-	if pl.debugEnabled {
+	if pl.progressMgr != nil {
 		pl.progressMgr.AddLog(pl.phase, "error", message)
 	}
 }
@@ -62,7 +62,7 @@ func (pl *PhaseLogger) Error(message string) {
 func (pl *PhaseLogger) Printf(format string, args ...interface{}) {
 	message := fmt.Sprintf(format, args...)
 	pl.baseLogger.Println(message)
-	if pl.debugEnabled {
+	if pl.progressMgr != nil {
 		pl.progressMgr.AddLog(pl.phase, "info", message)
 	}
 }

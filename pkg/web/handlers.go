@@ -19,6 +19,7 @@ import (
 	"github.com/masato25/aika-dba/pkg/phases"
 	"github.com/masato25/aika-dba/pkg/progress"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
+	"golang.org/x/net/websocket"
 )
 
 // APIServer API 服務器
@@ -90,6 +91,9 @@ func (s *APIServer) setupRoutes() {
 		api.GET("/vector/stats", s.handleVectorStats)
 		api.GET("/vector/search", s.handleVectorSearch)
 		api.GET("/vector/knowledge/:phase", s.handleVectorKnowledge)
+
+		// 進度推送 WebSocket
+		api.GET("/ws/progress", s.handleProgressWebsocket)
 
 		// 知識文件瀏覽
 		api.GET("/knowledge/files", s.handleKnowledgeFiles)
@@ -403,6 +407,29 @@ func (s *APIServer) handleKnowledgeFile(c *gin.Context) {
 	c.JSON(200, response)
 }
 
+// handleProgressWebsocket 推送進度更新的 WebSocket
+func (s *APIServer) handleProgressWebsocket(c *gin.Context) {
+	handler := websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+
+		updates, unsubscribe := s.progressMgr.Subscribe()
+		defer unsubscribe()
+
+		for {
+			update, ok := <-updates
+			if !ok {
+				return
+			}
+			if err := websocket.JSON.Send(ws, update); err != nil {
+				log.Printf("Failed to send progress update via WebSocket: %v", err)
+				return
+			}
+		}
+	})
+
+	handler.ServeHTTP(c.Writer, c.Request)
+}
+
 // writeOutput 寫入輸出到文件
 func (s *APIServer) writeOutput(data interface{}, filename string) error {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
@@ -445,13 +472,18 @@ func (s *APIServer) runPhase1() error {
 	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
 
 	// 開始進度追蹤
+	s.progressMgr.StartPhase(phase, 1)
+	s.progressMgr.UpdateProgress(phase, 0, "Collecting table metadata")
+	logger.Info("Collecting database tables for analysis")
+
 	tables, err := s.analyzer.GetAllTables()
 	if err != nil {
 		return err
 	}
 
 	totalTables := len(tables)
-	s.progressMgr.StartPhase(phase, totalTables)
+	s.progressMgr.SetTotalSteps(phase, totalTables)
+	s.progressMgr.UpdateProgress(phase, 0, fmt.Sprintf("Preparing to analyze %d tables", totalTables))
 
 	logger.Info(fmt.Sprintf("Starting Phase 1: Statistical Analysis - Found %d tables", totalTables))
 
@@ -599,20 +631,20 @@ func (s *APIServer) runPhase2Prefix() error {
 
 	logger.Info("Starting Phase 2 Prefix: Column Depth Analysis")
 
-	log.Println("DEBUG: Creating Phase 2 prefix runner...")
+	logger.Info("Creating Phase 2 prefix runner")
 	runner, err := phases.NewPhase2PrefixRunner(s.config)
 	if err != nil {
 		return fmt.Errorf("failed to create Phase 2 prefix runner: %w", err)
 	}
-	log.Println("DEBUG: Phase 2 prefix runner created successfully")
+	logger.Info("Phase 2 prefix runner created successfully")
 
 	s.progressMgr.UpdateProgress(phase, 1, "Phase 2 prefix runner created")
 
-	log.Println("DEBUG: Calling runner.Run()...")
+	logger.Info("Executing Phase 2 prefix analysis")
+	s.progressMgr.UpdateProgress(phase, 5, "Phase 2 prefix analysis running")
 	if err := runner.Run(); err != nil {
 		return fmt.Errorf("Phase 2 prefix failed: %w", err)
 	}
-	log.Println("DEBUG: Phase 2 prefix completed successfully")
 
 	s.progressMgr.UpdateProgress(phase, 10, "Phase 2 prefix completed")
 	logger.Info("Phase 2 prefix completed successfully")

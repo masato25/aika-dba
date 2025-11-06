@@ -530,6 +530,133 @@
             sidebar.classList.toggle('show');
         }
 
+        function escapeHtml(text) {
+            if (text === null || text === undefined) {
+                return '';
+            }
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        let progressSocket = null;
+        let websocketConnected = false;
+        let websocketReconnectTimer = null;
+        let fallbackPollingInterval = null;
+        let activePhase = null;
+
+        function connectProgressWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = protocol + '://' + window.location.host + '/api/ws/progress';
+
+            if (progressSocket && (progressSocket.readyState === WebSocket.OPEN || progressSocket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            try {
+                progressSocket = new WebSocket(wsUrl);
+            } catch (error) {
+                console.error('Failed to create progress WebSocket:', error);
+                scheduleWebSocketReconnect();
+                return;
+            }
+
+            progressSocket.onopen = () => {
+                websocketConnected = true;
+                console.log('Progress WebSocket connected');
+                if (websocketReconnectTimer) {
+                    clearTimeout(websocketReconnectTimer);
+                    websocketReconnectTimer = null;
+                }
+                stopProgressPolling();
+                if (activePhase) {
+                    fetchProgressOnce(activePhase);
+                }
+            };
+
+            progressSocket.onmessage = event => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'progress' && data.progress) {
+                        const phase = data.phase || (data.progress && data.progress.phase);
+                        if (!activePhase || phase !== activePhase) {
+                            return;
+                        }
+                        displayProgress(data.progress);
+                        displayLogs(data.progress.logs || []);
+                    }
+                } catch (error) {
+                    console.error('Failed to parse progress event:', error);
+                }
+            };
+
+            progressSocket.onerror = event => {
+                console.error('Progress WebSocket error:', event);
+            };
+
+            progressSocket.onclose = () => {
+                console.warn('Progress WebSocket closed');
+                websocketConnected = false;
+                if (activePhase) {
+                    startProgressPolling(activePhase);
+                }
+                scheduleWebSocketReconnect();
+            };
+        }
+
+        function scheduleWebSocketReconnect() {
+            if (websocketReconnectTimer) {
+                return;
+            }
+            websocketReconnectTimer = setTimeout(() => {
+                websocketReconnectTimer = null;
+                connectProgressWebSocket();
+            }, 5000);
+        }
+
+        function startProgressPolling(phase) {
+            stopProgressPolling();
+            if (!phase) {
+                return;
+            }
+            fallbackPollingInterval = setInterval(() => {
+                fetchProgressOnce(phase);
+            }, 2000);
+            fetchProgressOnce(phase);
+        }
+
+        function stopProgressPolling() {
+            if (fallbackPollingInterval) {
+                clearInterval(fallbackPollingInterval);
+                fallbackPollingInterval = null;
+            }
+        }
+
+        async function fetchProgressOnce(phase) {
+            if (!phase) {
+                return;
+            }
+            try {
+                const response = await fetch('/api/phases/progress/' + phase);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        return;
+                    }
+                    throw new Error('HTTP ' + response.status);
+                }
+                const progress = await response.json();
+                if (!activePhase || phase === activePhase) {
+                    displayProgress(progress);
+                    displayLogs(progress.logs || []);
+                }
+            } catch (error) {
+                console.error('Progress fetch failed:', error);
+            }
+        }
+
         function showSection(sectionName) {
             // Hide all sections
             const sections = document.querySelectorAll('.content-section');
@@ -566,11 +693,22 @@
             const progressContainer = document.getElementById('progress-container');
             const logsContainer = document.getElementById('logs-container');
 
+            activePhase = phase;
+            stopProgressPolling();
+
             statusDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>執行中...</div>';
 
             // Show progress and logs containers
             progressContainer.style.display = 'block';
             logsContainer.style.display = 'block';
+
+            displayProgress({
+                phase: phase,
+                status: 'running',
+                progress: 0,
+                message: '等待階段啟動中...'
+            });
+            displayLogs([]);
 
             console.log('Starting phase:', phase);
 
@@ -585,18 +723,23 @@
                 if (response.ok) {
                     statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>' + result.message + '</div>';
 
-                    // Start polling for progress and logs
-                    startProgressPolling(phase);
+                    if (websocketConnected) {
+                        fetchProgressOnce(phase);
+                    } else {
+                        startProgressPolling(phase);
+                    }
                 } else {
                     statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>錯誤: ' + result.error + '</div>';
                     progressContainer.style.display = 'none';
                     logsContainer.style.display = 'none';
+                    activePhase = null;
                 }
             } catch (error) {
                 console.error('Trigger error:', error);
                 statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
                 progressContainer.style.display = 'none';
                 logsContainer.style.display = 'none';
+                activePhase = null;
             }
         }
 
@@ -823,6 +966,7 @@
         window.onload = function() {
             loadVectorStats();
             loadKnowledgeFiles();
+            connectProgressWebSocket();
             updateLastUpdate();
         };
 
@@ -836,97 +980,69 @@
         // 每分鐘更新一次時間
         setInterval(updateLastUpdate, 60000);
 
-        // Progress polling variables
-        let progressPollingInterval = null;
-        let currentPollingPhase = null;
-
-        function startProgressPolling(phase) {
-            // Clear any existing polling
-            stopProgressPolling();
-
-            currentPollingPhase = phase;
-
-            // Start polling every 2 seconds
-            progressPollingInterval = setInterval(() => {
-                updateProgress(phase);
-                updateLogs(phase);
-            }, 2000);
-
-            // Initial update
-            updateProgress(phase);
-            updateLogs(phase);
-        }
-
-        function stopProgressPolling() {
-            if (progressPollingInterval) {
-                clearInterval(progressPollingInterval);
-                progressPollingInterval = null;
-                currentPollingPhase = null;
-            }
-        }
-
-        async function updateProgress(phase) {
-            try {
-                console.log('Polling progress for phase:', phase);
-                const response = await fetch('/api/phases/progress/' + phase);
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        // Phase completed or not found, stop polling
-                        console.log('Phase completed or not found, stopping polling');
-                        stopProgressPolling();
-                        return;
-                    }
-                    throw new Error('HTTP ' + response.status);
-                }
-
-                const progress = await response.json();
-                console.log('Progress data:', progress);
-                displayProgress(progress);
-            } catch (error) {
-                console.error('Progress update failed:', error);
-                // If we get errors, stop polling after a few attempts
-                if (error.message.includes('404') || error.message.includes('500')) {
-                    stopProgressPolling();
-                }
-            }
-        }
-
         function displayProgress(progress) {
             const progressBarsDiv = document.getElementById('progress-bars');
 
-            if (!progress || progress.status === 'completed' || progress.status === 'failed') {
-                // Phase completed, stop polling
-                stopProgressPolling();
+            if (!progress) {
+                progressBarsDiv.innerHTML = '';
                 return;
             }
 
+            const status = progress.status || 'running';
+            const statusLabelMap = {
+                running: '執行中',
+                completed: '完成',
+                failed: '失敗',
+                idle: '就緒'
+            };
+            const badgeLabel = statusLabelMap[status] || status;
+            const percentage = Math.max(0, Math.min(100, Math.round(progress.progress || 0)));
+            const phaseName = escapeHtml(getPhaseDisplayName(progress.phase));
+            const baseMessage = progress.message || (status === 'completed' ? '完成' : status === 'failed' ? '執行失敗' : '處理中...');
+            const message = escapeHtml(baseMessage);
+            const errorDetail = status === 'failed' ? escapeHtml(progress.error || '') : '';
+            const currentStep = progress.current_step ? escapeHtml(progress.current_step) : '';
+
+            let barClasses = 'progress-bar';
+            let badgeClass = 'bg-info';
+            let autoStop = false;
+
+            if (status === 'completed') {
+                barClasses += ' bg-success';
+                badgeClass = 'bg-success';
+                autoStop = true;
+            } else if (status === 'failed') {
+                barClasses += ' bg-danger';
+                badgeClass = 'bg-danger';
+                autoStop = true;
+            } else {
+                barClasses += ' progress-bar-striped progress-bar-animated';
+            }
+
             let html = '<div class="progress-item">';
-            html += '<div class="d-flex justify-content-between mb-1">';
-            html += '<span>' + getPhaseDisplayName(progress.phase) + '</span>';
-            html += '<span>' + Math.round(progress.progress) + '%</span>';
+            html += '<div class="d-flex justify-content-between align-items-center mb-1">';
+            html += '<span>' + phaseName + '</span>';
+            html += '<div class="d-flex align-items-center gap-2">';
+            html += '<span class="text-muted small">' + percentage + '%</span>';
+            html += '<span class="badge ' + badgeClass + ' text-uppercase">' + escapeHtml(badgeLabel) + '</span>';
+            html += '</div>';
             html += '</div>';
             html += '<div class="progress" style="height: 20px;">';
-            html += '<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: ' + progress.progress + '%" aria-valuenow="' + progress.progress + '" aria-valuemin="0" aria-valuemax="100">';
-            html += progress.message || '處理中...';
-            html += '</div></div></div>';
+            html += '<div class="' + barClasses + '" role="progressbar" style="width: ' + percentage + '%" aria-valuenow="' + percentage + '" aria-valuemin="0" aria-valuemax="100">';
+            html += message;
+            html += '</div></div>';
+            if (errorDetail) {
+                html += '<div class="text-danger small mt-2"><i class="bi bi-exclamation-triangle me-1"></i>' + errorDetail + '</div>';
+            }
+            if (currentStep) {
+                html += '<div class="text-muted small mt-1">' + currentStep + '</div>';
+            }
+            html += '</div>';
 
             progressBarsDiv.innerHTML = html;
-        }
 
-        async function updateLogs(phase) {
-            try {
-                console.log('Polling logs for phase:', phase);
-                const response = await fetch('/api/phases/logs/' + phase);
-                if (!response.ok) {
-                    console.log('Logs request failed:', response.status);
-                    return; // Silently fail for logs
-                }
-
-                const logs = await response.json();
-                console.log('Logs data:', logs);
-                displayLogs(logs);
-            } catch (error) {
-                console.error('Logs update failed:', error);
+            if (autoStop) {
+                stopProgressPolling();
             }
         }
 
@@ -940,12 +1056,20 @@
 
             let html = '';
             logs.forEach(log => {
-                const timestamp = new Date(log.timestamp).toLocaleTimeString('zh-TW');
-                const levelClass = 'log-level-' + log.level.toLowerCase();
+                let timestamp = '';
+                if (log.timestamp) {
+                    const dateValue = new Date(log.timestamp);
+                    if (!Number.isNaN(dateValue.getTime())) {
+                        timestamp = dateValue.toLocaleTimeString('zh-TW');
+                    }
+                }
+                const level = (log.level || 'info').toLowerCase();
+                const levelClass = 'log-level-' + level;
+                const message = escapeHtml(log.message || '');
                 html += '<div class="log-entry">';
                 html += '<span class="log-timestamp">[' + timestamp + ']</span>';
-                html += '<span class="' + levelClass + '">[' + log.level.toUpperCase() + ']</span> ';
-                html += '<span>' + log.message + '</span>';
+                html += '<span class="' + levelClass + '">[' + level.toUpperCase() + ']</span> ';
+                html += '<span>' + message + '</span>';
                 html += '</div>';
             });
 
