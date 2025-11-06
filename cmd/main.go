@@ -126,6 +126,18 @@ func runPhase1Post(cfg *config.Config) {
 	}
 }
 
+// runPhase1Put 執行 Phase 1 Put: 根據 post 分析結果更新 phase1
+func runPhase1Put(cfg *config.Config) {
+	runner, err := phases.NewPhase1PutRunner(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 1 put runner: %v", err)
+	}
+
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 1 put failed: %v", err)
+	}
+}
+
 // runPhase2 執行 Phase 2: AI 分析
 func runPhase2(db *sql.DB, cfg *config.Config) {
 	runner, err := phases.NewPhase2Runner(cfg, db)
@@ -253,7 +265,7 @@ func runDeleteVectorData(cfg *config.Config, phasesStr string) {
 
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase1_post, phase2, phase3, marketing, delete-vector")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase1_post, phase1_put, phase2, phase3, marketing, delete-vector")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
 	var phases = flag.String("phases", "phase3", "Comma-separated list of phases to delete (for delete-vector command)")
 	var query = flag.String("query", "", "Natural language query for marketing command")
@@ -288,6 +300,8 @@ func main() {
 		runPhase1(db, cfg)
 	case "phase1_post":
 		runPhase1Post(cfg)
+	case "phase1_put":
+		runPhase1Put(cfg)
 	case "phase2":
 		runPhase2(db, cfg)
 	case "phase3":
@@ -297,6 +311,6 @@ func main() {
 	case "delete-vector":
 		runDeleteVectorData(cfg, *phases)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase1_post, phase2, phase3, marketing, delete-vector", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase1_post, phase1_put, phase2, phase3, marketing, delete-vector", *command)
 	}
 }

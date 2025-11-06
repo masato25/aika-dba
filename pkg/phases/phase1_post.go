@@ -57,27 +57,27 @@ func (p *Phase1PostRunner) Run() error {
 	if hasResponses {
 		// 如果有用戶回答，處理回答並生成決策
 		log.Println("Found user responses, processing decisions...")
-		
+
 		// 讀取問題詳細信息
 		questions, err := p.loadQuestions()
 		if err != nil {
 			log.Printf("Warning: Failed to load questions: %v", err)
 		}
-		
+
 		decisions := p.processUserResponses(phase1Data, userResponses, questions)
-		
+
 		// 生成最終分析結果
 		finalAnalysis := p.generateFinalAnalysis(phase1Data, decisions)
-		
+
 		// 創建輸出
 		output := map[string]interface{}{
-			"database":                p.config.Database.DBName,
-			"timestamp":               time.Now(),
-			"phase":                   "phase1_post",
-			"user_responses":          userResponses,
-			"questions":               questions,
-			"decisions":               decisions,
-			"final_analysis":          finalAnalysis,
+			"database":       p.config.Database.DBName,
+			"timestamp":      time.Now(),
+			"phase":          "phase1_post",
+			"user_responses": userResponses,
+			"questions":      questions,
+			"decisions":      decisions,
+			"final_analysis": finalAnalysis,
 		}
 
 		// 寫入文件
@@ -93,20 +93,20 @@ func (p *Phase1PostRunner) Run() error {
 		}
 
 		log.Println("Phase 1 post-processing completed with user decisions applied")
-		
+
 	} else {
 		// 如果沒有用戶回答，生成問題讓用戶回答
 		log.Println("No user responses found, generating questions for review...")
 		questions := p.generateQuestions(phase1Data)
-		
+
 		// 顯示問題
 		p.displayQuestions(questions)
-		
+
 		// 保存問題供用戶回答
 		if err := p.saveQuestionsForUser(questions); err != nil {
 			return fmt.Errorf("failed to save questions: %v", err)
 		}
-		
+
 		log.Println("Questions generated and saved. Please review and provide answers in phase1_post_responses.json")
 	}
 
@@ -215,12 +215,12 @@ func (p *Phase1PostRunner) generateDefaultQuestions(phase1Data map[string]interf
 		if !ok {
 			continue
 		}
-		
+
 		recordCount, ok := getRowCount(stats)
 		if !ok {
 			continue
 		}
-		
+
 		if recordCount == 0 {
 			questions = append(questions, map[string]interface{}{
 				"question_id":    fmt.Sprintf("q%d", questionID),
@@ -240,12 +240,12 @@ func (p *Phase1PostRunner) generateDefaultQuestions(phase1Data map[string]interf
 		if !ok {
 			continue
 		}
-		
+
 		recordCount, ok := getRowCount(stats)
 		if !ok || recordCount == 0 {
 			continue
 		}
-		
+
 		if recordCount > 0 && recordCount < 10 {
 			questions = append(questions, map[string]interface{}{
 				"question_id":    fmt.Sprintf("q%d", questionID),
@@ -269,14 +269,14 @@ func (p *Phase1PostRunner) displayQuestions(questions []map[string]interface{}) 
 
 	for i, q := range questions {
 		fmt.Printf("%d. [%s] %s\n", i+1, q["question_type"], q["question"])
-		
+
 		if options, ok := q["options"].([]interface{}); ok {
 			fmt.Println("   選項：")
 			for j, option := range options {
 				fmt.Printf("   %d) %s\n", j+1, option)
 			}
 		}
-		
+
 		if tables, ok := q["related_tables"].([]interface{}); ok {
 			fmt.Printf("   相關表格: %v\n", tables)
 		}
@@ -334,9 +334,9 @@ func (p *Phase1PostRunner) processUserResponses(phase1Data map[string]interface{
 	decisions := map[string]interface{}{
 		"table_decisions": map[string]interface{}{},
 		"summary": map[string]interface{}{
-			"tables_to_drop": []string{},
-			"tables_to_keep": []string{},
-			"tables_to_merge": []map[string]interface{}{},
+			"tables_to_drop":   []string{},
+			"tables_to_keep":   []string{},
+			"tables_to_merge":  []map[string]interface{}{},
 			"tables_to_review": []string{},
 		},
 	}
@@ -349,26 +349,26 @@ func (p *Phase1PostRunner) processUserResponses(phase1Data map[string]interface{
 
 		responseStr := fmt.Sprintf("%v", response)
 		tables := questionToTables[questionID]
-		
+
 		// 根據回答決定行動
 		switch {
 		case containsString(responseStr, "刪除") || containsString(responseStr, "drop") || containsString(responseStr, "可以刪除"):
 			decisions["summary"].(map[string]interface{})["tables_to_drop"] = append(
-				decisions["summary"].(map[string]interface{})["tables_to_drop"].([]string), 
+				decisions["summary"].(map[string]interface{})["tables_to_drop"].([]string),
 				tables...)
 		case containsString(responseStr, "保留") || containsString(responseStr, "keep") || containsString(responseStr, "仍在使用"):
 			decisions["summary"].(map[string]interface{})["tables_to_keep"] = append(
-				decisions["summary"].(map[string]interface{})["tables_to_keep"].([]string), 
+				decisions["summary"].(map[string]interface{})["tables_to_keep"].([]string),
 				tables...)
 		case containsString(responseStr, "合併") || containsString(responseStr, "merge"):
 			for _, table := range tables {
 				decisions["summary"].(map[string]interface{})["tables_to_merge"] = append(
-					decisions["summary"].(map[string]interface{})["tables_to_merge"].([]map[string]interface{}), 
+					decisions["summary"].(map[string]interface{})["tables_to_merge"].([]map[string]interface{}),
 					map[string]interface{}{"table": table, "decision": responseStr, "question_id": questionID})
 			}
 		default:
 			decisions["summary"].(map[string]interface{})["tables_to_review"] = append(
-				decisions["summary"].(map[string]interface{})["tables_to_review"].([]string), 
+				decisions["summary"].(map[string]interface{})["tables_to_review"].([]string),
 				tables...)
 		}
 	}
@@ -380,16 +380,16 @@ func (p *Phase1PostRunner) processUserResponses(phase1Data map[string]interface{
 func (p *Phase1PostRunner) generateFinalAnalysis(phase1Data map[string]interface{}, decisions map[string]interface{}) map[string]interface{} {
 	// 基於用戶決策生成最終分析
 	// 排除已決定刪除或合併的表格
-	
+
 	summary := decisions["summary"].(map[string]interface{})
-	
+
 	return map[string]interface{}{
 		"total_questions_answered": len(decisions["table_decisions"].(map[string]interface{})),
-		"tables_to_drop_count": len(summary["tables_to_drop"].([]string)),
-		"tables_to_keep_count": len(summary["tables_to_keep"].([]string)),
-		"tables_to_merge_count": len(summary["tables_to_merge"].([]map[string]interface{})),
-		"tables_to_review_count": len(summary["tables_to_review"].([]string)),
-		"decisions_applied": decisions,
+		"tables_to_drop_count":     len(summary["tables_to_drop"].([]string)),
+		"tables_to_keep_count":     len(summary["tables_to_keep"].([]string)),
+		"tables_to_merge_count":    len(summary["tables_to_merge"].([]map[string]interface{})),
+		"tables_to_review_count":   len(summary["tables_to_review"].([]string)),
+		"decisions_applied":        decisions,
 	}
 }
 
@@ -413,17 +413,17 @@ func (p *Phase1PostRunner) loadPhase1Results() (map[string]interface{}, error) {
 // loadQuestions 讀取問題文件
 func (p *Phase1PostRunner) loadQuestions() (map[string]interface{}, error) {
 	questionsFile := "knowledge/phase1_post_questions.json"
-	
+
 	data, err := os.ReadFile(questionsFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read questions file: %w", err)
 	}
-	
+
 	var questionsData map[string]interface{}
 	if err := json.Unmarshal(data, &questionsData); err != nil {
 		return nil, fmt.Errorf("failed to parse questions file: %w", err)
 	}
-	
+
 	return questionsData, nil
 }
 
@@ -435,22 +435,22 @@ func (p *Phase1PostRunner) createDataSummary(phase1Data map[string]interface{}) 
 	}
 
 	summary := map[string]interface{}{
-		"database": phase1Data["database"],
-		"total_tables": len(tables),
-		"empty_tables": []string{},
-		"low_usage_tables": []map[string]interface{}{},
+		"database":          phase1Data["database"],
+		"total_tables":      len(tables),
+		"empty_tables":      []string{},
+		"low_usage_tables":  []map[string]interface{}{},
 		"high_usage_tables": []map[string]interface{}{},
 	}
 
 	for tableName, tableData := range tables {
 		tableInfo := tableData.(map[string]interface{})
-		
+
 		// 從 stats 中獲取 row_count
 		stats, ok := tableInfo["stats"].(map[string]interface{})
 		if !ok {
 			continue
 		}
-		
+
 		recordCount, ok := getRowCount(stats)
 		if !ok {
 			continue
@@ -459,10 +459,10 @@ func (p *Phase1PostRunner) createDataSummary(phase1Data map[string]interface{}) 
 		if recordCount == 0 {
 			summary["empty_tables"] = append(summary["empty_tables"].([]string), tableName)
 		} else if recordCount < 10 {
-			summary["low_usage_tables"] = append(summary["low_usage_tables"].([]map[string]interface{}), 
+			summary["low_usage_tables"] = append(summary["low_usage_tables"].([]map[string]interface{}),
 				map[string]interface{}{"name": tableName, "count": recordCount})
 		} else if recordCount > 10000 {
-			summary["high_usage_tables"] = append(summary["high_usage_tables"].([]map[string]interface{}), 
+			summary["high_usage_tables"] = append(summary["high_usage_tables"].([]map[string]interface{}),
 				map[string]interface{}{"name": tableName, "count": recordCount})
 		}
 	}
