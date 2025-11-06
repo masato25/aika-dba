@@ -128,17 +128,27 @@ go build -o bin/aika-dba ./cmd
 
 ### 設定資料庫連接
 
-編輯 `config/database.yaml`:
+1. 複製配置範本：
+```bash
+cp config.example.yaml config.yaml
+```
+
+2. 編輯 `config.yaml` 設定您的資料庫連接：
 
 ```yaml
 database:
-  type: mysql
-  host: localhost
-  port: 3306
-  user: your_user
-  password: your_password
-  dbname: your_database
+  type: postgres          # 或 mysql
+  host: localhost         # 資料庫主機
+  port: 5432             # 資料庫端口
+  user: your_username    # 資料庫用戶名
+  password: your_password # 資料庫密碼
+  dbname: your_database   # 資料庫名稱
 ```
+
+⚠️ **安全提醒**：
+- `config.yaml` 包含敏感信息，已被加入 `.gitignore`
+- 不要將真實的資料庫憑證提交到版本控制系統
+- 建議使用環境變數或專用的密鑰管理服務
 
 ## 🤝 開發準則
 
