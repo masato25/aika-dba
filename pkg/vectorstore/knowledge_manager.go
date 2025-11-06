@@ -279,6 +279,21 @@ func (km *KnowledgeManager) Close() error {
 	return km.vectorStore.Close()
 }
 
+// DeletePhaseKnowledge 刪除特定 phase 的知識
+func (km *KnowledgeManager) DeletePhaseKnowledge(phase string) error {
+	log.Printf("Deleting knowledge for phase: %s", phase)
+
+	err := km.vectorStore.DeleteByMetadata("phase", phase)
+	if err != nil {
+		return fmt.Errorf("failed to delete phase %s knowledge: %v", phase, err)
+	}
+
+	log.Printf("Successfully deleted knowledge for phase %s", phase)
+	return nil
+}
+
+// ExportKnowledgeToFile 將知識導出到文件（用於調試）
+
 // ExportKnowledgeToFile 將知識導出到文件（用於調試）
 func (km *KnowledgeManager) ExportKnowledgeToFile(filename string) error {
 	chunks, err := km.vectorStore.GetAllChunks()

@@ -223,3 +223,49 @@ func (vs *VectorStore) Clear() error {
 	_, err := vs.db.Exec("DELETE FROM vector_chunks")
 	return err
 }
+
+// DeleteByMetadata 根據元數據刪除向量塊
+func (vs *VectorStore) DeleteByMetadata(key string, value interface{}) error {
+	// 獲取所有塊，然後過濾並刪除
+	rows, err := vs.db.Query("SELECT id, metadata FROM vector_chunks")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var idsToDelete []int
+	for rows.Next() {
+		var id int
+		var metadataStr string
+
+		if err := rows.Scan(&id, &metadataStr); err != nil {
+			continue
+		}
+
+		var metadata map[string]interface{}
+		if metadataStr != "" {
+			if err := json.Unmarshal([]byte(metadataStr), &metadata); err != nil {
+				continue
+			}
+		}
+
+		// 檢查元數據是否匹配
+		if metadata != nil {
+			if metaValue, ok := metadata[key]; ok {
+				if metaValue == value {
+					idsToDelete = append(idsToDelete, id)
+				}
+			}
+		}
+	}
+
+	// 刪除匹配的記錄
+	for _, id := range idsToDelete {
+		_, err := vs.db.Exec("DELETE FROM vector_chunks WHERE id = ?", id)
+		if err != nil {
+			return fmt.Errorf("failed to delete chunk %d: %v", id, err)
+		}
+	}
+
+	return nil
+}

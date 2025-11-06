@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,6 +18,7 @@ import (
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
 	"github.com/masato25/aika-dba/pkg/phases"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
 // APIServer API 服務器
@@ -142,7 +144,41 @@ func runPhase4(db *sql.DB, cfg *config.Config) {
 	}
 }
 
-// runMarketingQueries 執行行銷查詢測試
+// runDeleteVectorData 執行向量數據刪除
+func runDeleteVectorData(cfg *config.Config, phasesStr string) {
+	log.Printf("Starting vector data deletion for phases: %s", phasesStr)
+
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create knowledge manager: %v", err)
+	}
+	defer knowledgeMgr.Close()
+
+	// 解析要刪除的 phases
+	phaseList := strings.Split(phasesStr, ",")
+	for i, phase := range phaseList {
+		phaseList[i] = strings.TrimSpace(phase)
+	}
+
+	// 刪除每個 phase 的向量數據
+	for _, phase := range phaseList {
+		log.Printf("Deleting vector data for phase: %s", phase)
+		if err := knowledgeMgr.DeletePhaseKnowledge(phase); err != nil {
+			log.Printf("Warning: Failed to delete phase %s knowledge: %v", phase, err)
+		} else {
+			log.Printf("Successfully deleted vector data for phase: %s", phase)
+		}
+	}
+
+	// 顯示統計信息
+	stats, err := knowledgeMgr.GetKnowledgeStats()
+	if err != nil {
+		log.Printf("Warning: Failed to get knowledge stats: %v", err)
+	} else {
+		log.Printf("Vector data deletion completed. Current stats: %+v", stats)
+	}
+}
 func runMarketingQueries(db *sql.DB, cfg *config.Config, scenarioName string) {
 	runner := phases.NewMarketingQueryRunner(cfg, db)
 
@@ -161,9 +197,10 @@ func runMarketingQueries(db *sql.DB, cfg *config.Config, scenarioName string) {
 
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4, marketing")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4, marketing, delete-vector")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
 	var scenario = flag.String("scenario", "", "Marketing scenario to run (use predefined name or custom description, leave empty to run all scenarios)")
+	var phases = flag.String("phases", "phase3,phase4", "Comma-separated list of phases to delete (for delete-vector command)")
 	flag.Parse()
 
 	// 載入 .env 文件
@@ -207,7 +244,9 @@ func main() {
 		runPhase4(db, cfg)
 	case "marketing":
 		runMarketingQueries(db, cfg, *scenario)
+	case "delete-vector":
+		runDeleteVectorData(cfg, *phases)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4, marketing", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4, marketing, delete-vector", *command)
 	}
 }
