@@ -81,6 +81,28 @@
             padding: 0.5rem;
             border-radius: 0.375rem;
         }
+        .progress-item {
+            margin-bottom: 1rem;
+        }
+        .progress-item .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .log-entry {
+            margin-bottom: 0.25rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .log-timestamp {
+            color: #6c757d;
+            margin-right: 0.5rem;
+        }
+        .log-level-info { color: #0dcaf0; }
+        .log-level-debug { color: #6c757d; }
+        .log-level-warn { color: #ffc107; }
+        .log-level-error { color: #dc3545; }
     </style>
 </head>
 <body class="bg-light">
@@ -289,9 +311,24 @@
                         </div>
                     </div>
                     <div id="phase-status" class="mt-3"></div>
-                </div>
-            </div>
-        </div>
+
+                    <!-- Progress Display -->
+                    <div id="progress-container" class="mt-4" style="display: none;">
+                        <h5><i class="bi bi-bar-chart-line me-2"></i>執行進度</h5>
+                        <div id="progress-bars"></div>
+                    </div>
+
+                    <!-- Debug Logs Display -->
+                    <div id="logs-container" class="mt-4" style="display: none;">
+                        <h5><i class="bi bi-terminal me-2"></i>調試日誌</h5>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="logs-content" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.875rem;">
+                                    <div class="text-muted">等待日誌輸出...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
         <!-- Vector Database Section -->
         <div id="vector-section" class="content-section" style="display: none;">
@@ -449,7 +486,16 @@
 
         async function triggerPhase(phase) {
             const statusDiv = document.getElementById('phase-status');
+            const progressContainer = document.getElementById('progress-container');
+            const logsContainer = document.getElementById('logs-container');
+
             statusDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>執行中...</div>';
+
+            // Show progress and logs containers
+            progressContainer.style.display = 'block';
+            logsContainer.style.display = 'block';
+
+            console.log('Starting phase:', phase);
 
             try {
                 const response = await fetch('/api/phases/trigger/' + phase, {
@@ -457,13 +503,23 @@
                 });
                 const result = await response.json();
 
+                console.log('Trigger response:', response.status, result);
+
                 if (response.ok) {
                     statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>' + result.message + '</div>';
+
+                    // Start polling for progress and logs
+                    startProgressPolling(phase);
                 } else {
                     statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>錯誤: ' + result.error + '</div>';
+                    progressContainer.style.display = 'none';
+                    logsContainer.style.display = 'none';
                 }
             } catch (error) {
+                console.error('Trigger error:', error);
                 statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
+                progressContainer.style.display = 'none';
+                logsContainer.style.display = 'none';
             }
         }
 
@@ -586,6 +642,135 @@
 
         // 每分鐘更新一次時間
         setInterval(updateLastUpdate, 60000);
+
+        // Progress polling variables
+        let progressPollingInterval = null;
+        let currentPollingPhase = null;
+
+        function startProgressPolling(phase) {
+            // Clear any existing polling
+            stopProgressPolling();
+
+            currentPollingPhase = phase;
+
+            // Start polling every 2 seconds
+            progressPollingInterval = setInterval(() => {
+                updateProgress(phase);
+                updateLogs(phase);
+            }, 2000);
+
+            // Initial update
+            updateProgress(phase);
+            updateLogs(phase);
+        }
+
+        function stopProgressPolling() {
+            if (progressPollingInterval) {
+                clearInterval(progressPollingInterval);
+                progressPollingInterval = null;
+                currentPollingPhase = null;
+            }
+        }
+
+        async function updateProgress(phase) {
+            try {
+                console.log('Polling progress for phase:', phase);
+                const response = await fetch('/api/phases/progress/' + phase);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // Phase completed or not found, stop polling
+                        console.log('Phase completed or not found, stopping polling');
+                        stopProgressPolling();
+                        return;
+                    }
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                const progress = await response.json();
+                console.log('Progress data:', progress);
+                displayProgress(progress);
+            } catch (error) {
+                console.error('Progress update failed:', error);
+                // If we get errors, stop polling after a few attempts
+                if (error.message.includes('404') || error.message.includes('500')) {
+                    stopProgressPolling();
+                }
+            }
+        }
+
+        function displayProgress(progress) {
+            const progressBarsDiv = document.getElementById('progress-bars');
+
+            if (!progress || progress.status === 'completed' || progress.status === 'failed') {
+                // Phase completed, stop polling
+                stopProgressPolling();
+                return;
+            }
+
+            let html = '<div class="progress-item">';
+            html += '<div class="d-flex justify-content-between mb-1">';
+            html += '<span>' + getPhaseDisplayName(progress.phase) + '</span>';
+            html += '<span>' + Math.round(progress.progress) + '%</span>';
+            html += '</div>';
+            html += '<div class="progress" style="height: 20px;">';
+            html += '<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: ' + progress.progress + '%" aria-valuenow="' + progress.progress + '" aria-valuemin="0" aria-valuemax="100">';
+            html += progress.message || '處理中...';
+            html += '</div></div></div>';
+
+            progressBarsDiv.innerHTML = html;
+        }
+
+        async function updateLogs(phase) {
+            try {
+                console.log('Polling logs for phase:', phase);
+                const response = await fetch('/api/phases/logs/' + phase);
+                if (!response.ok) {
+                    console.log('Logs request failed:', response.status);
+                    return; // Silently fail for logs
+                }
+
+                const logs = await response.json();
+                console.log('Logs data:', logs);
+                displayLogs(logs);
+            } catch (error) {
+                console.error('Logs update failed:', error);
+            }
+        }
+
+        function displayLogs(logs) {
+            const logsContentDiv = document.getElementById('logs-content');
+
+            if (!logs || logs.length === 0) {
+                logsContentDiv.innerHTML = '<div class="text-muted">等待日誌輸出...</div>';
+                return;
+            }
+
+            let html = '';
+            logs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleTimeString('zh-TW');
+                const levelClass = 'log-level-' + log.level.toLowerCase();
+                html += '<div class="log-entry">';
+                html += '<span class="log-timestamp">[' + timestamp + ']</span>';
+                html += '<span class="' + levelClass + '">[' + log.level.toUpperCase() + ']</span> ';
+                html += '<span>' + log.message + '</span>';
+                html += '</div>';
+            });
+
+            logsContentDiv.innerHTML = html;
+
+            // Auto scroll to bottom
+            logsContentDiv.scrollTop = logsContentDiv.scrollHeight;
+        }
+
+        function getPhaseDisplayName(phase) {
+            const names = {
+                'phase1': 'Phase 1 - 數據庫架構分析',
+                'phase2_prefix': 'Phase 2 Prefix - 列級深度分析',
+                'phase2': 'Phase 2 - AI 商業邏輯分析',
+                'phase3': 'Phase 3 - 業務邏輯總結'
+            };
+            return names[phase] || phase;
+        }
     </script>
 </body>
 </html>

@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/masato25/aika-dba/pkg/analyzer"
 	"github.com/masato25/aika-dba/pkg/llm"
 	"github.com/masato25/aika-dba/pkg/phases"
+	"github.com/masato25/aika-dba/pkg/progress"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
 
@@ -25,6 +27,8 @@ type APIServer struct {
 	config      *config.Config
 	llmClient   *llm.Client
 	vectorStore *vectorstore.KnowledgeManager
+	progressMgr *progress.ProgressManager
+	analyzer    *analyzer.DatabaseAnalyzer
 }
 
 // NewAPIServer 創建 API 服務器
@@ -38,6 +42,9 @@ func NewAPIServer(db *sql.DB, dbType string, cfg *config.Config) (*APIServer, er
 		return nil, fmt.Errorf("failed to create vector store: %w", err)
 	}
 
+	// 創建數據庫分析器
+	dbAnalyzer := analyzer.NewDatabaseAnalyzer(db)
+
 	// 創建 Gin 引擎
 	router := gin.Default()
 
@@ -48,6 +55,8 @@ func NewAPIServer(db *sql.DB, dbType string, cfg *config.Config) (*APIServer, er
 		config:      cfg,
 		llmClient:   llmClient,
 		vectorStore: vectorStore,
+		progressMgr: progress.NewProgressManager(),
+		analyzer:    dbAnalyzer,
 	}
 
 	server.setupRoutes()
@@ -71,6 +80,9 @@ func (s *APIServer) setupRoutes() {
 		// Phase 相關 API
 		api.POST("/phases/trigger/:phase", s.handleTriggerPhase)
 		api.GET("/phases/status", s.handlePhaseStatus)
+		api.GET("/phases/progress/:phase", s.handlePhaseProgress)
+		api.GET("/phases/progress", s.handleAllProgress)
+		api.GET("/phases/logs/:phase", s.handlePhaseLogs)
 
 		// 向量數據庫 API
 		api.GET("/vector/stats", s.handleVectorStats)
@@ -124,28 +136,37 @@ func (s *APIServer) handleDatabaseOverview(c *gin.Context) {
 func (s *APIServer) handleTriggerPhase(c *gin.Context) {
 	phase := c.Param("phase")
 
+	// 檢查是否已經在運行
+	if progress, exists := s.progressMgr.GetProgress(phase); exists && progress.Status == "running" {
+		c.JSON(409, map[string]string{"error": "Phase " + phase + " is already running"})
+		return
+	}
+
 	// 根據 phase 執行相應的操作
-	var err error
-	switch phase {
-	case "phase1":
-		err = s.runPhase1()
-	case "phase2_prefix":
-		err = s.runPhase2Prefix()
-	case "phase2":
-		err = s.runPhase2()
-	case "phase3":
-		err = s.runPhase3()
-	default:
-		c.JSON(400, map[string]string{"error": "Unknown phase: " + phase})
-		return
-	}
+	go func() {
+		var err error
+		switch phase {
+		case "phase1":
+			err = s.runPhase1()
+		case "phase2_prefix":
+			err = s.runPhase2Prefix()
+		case "phase2":
+			err = s.runPhase2()
+		case "phase3":
+			err = s.runPhase3()
+		default:
+			s.progressMgr.FailPhase(phase, fmt.Errorf("unknown phase: %s", phase))
+			return
+		}
 
-	if err != nil {
-		c.JSON(500, map[string]string{"error": err.Error()})
-		return
-	}
+		if err != nil {
+			s.progressMgr.FailPhase(phase, err)
+		} else {
+			s.progressMgr.CompletePhase(phase)
+		}
+	}()
 
-	c.JSON(200, map[string]string{"message": "Phase " + phase + " executed successfully"})
+	c.JSON(202, map[string]string{"message": "Phase " + phase + " started successfully"})
 }
 
 // handlePhaseStatus 處理獲取 phase 狀態的請求
@@ -158,6 +179,39 @@ func (s *APIServer) handlePhaseStatus(c *gin.Context) {
 		"time":    time.Now(),
 	}
 	c.JSON(200, status)
+}
+
+// handlePhaseProgress 處理獲取指定 phase 進度的請求
+func (s *APIServer) handlePhaseProgress(c *gin.Context) {
+	phase := c.Param("phase")
+
+	progress, exists := s.progressMgr.GetProgress(phase)
+	if !exists {
+		c.JSON(404, map[string]string{"error": "Phase not found"})
+		return
+	}
+
+	c.JSON(200, progress)
+}
+
+// handleAllProgress 處理獲取所有 phase 進度的請求
+func (s *APIServer) handleAllProgress(c *gin.Context) {
+	allProgress := s.progressMgr.GetAllProgress()
+	c.JSON(200, allProgress)
+}
+
+// handlePhaseLogs 處理獲取指定 phase 日誌的請求
+func (s *APIServer) handlePhaseLogs(c *gin.Context) {
+	phase := c.Param("phase")
+
+	progress, exists := s.progressMgr.GetProgress(phase)
+	if !exists {
+		c.JSON(404, map[string]string{"error": "Phase not found"})
+		return
+	}
+
+	// 返回按時間降序排列的日誌
+	c.JSON(200, progress.Logs)
 }
 
 // handleVectorStats 處理獲取向量數據庫統計的請求
@@ -222,6 +276,27 @@ func (s *APIServer) handleVectorKnowledge(c *gin.Context) {
 	c.JSON(200, formattedResults)
 }
 
+// writeOutput 寫入輸出到文件
+func (s *APIServer) writeOutput(data interface{}, filename string) error {
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RunServer 啟動 HTTP 服務器
 func RunServer(db *sql.DB, cfg *config.Config) {
 	// 建立 API 服務器
@@ -236,21 +311,80 @@ func RunServer(db *sql.DB, cfg *config.Config) {
 
 // runPhase1 執行 Phase 1: 統計分析
 func (s *APIServer) runPhase1() error {
-	analyzer := analyzer.NewDatabaseAnalyzer(s.db)
-	runner, err := phases.NewPhase1Runner(analyzer, s.config)
+	phase := "phase1"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	// 創建 phase 日誌器
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	// 開始進度追蹤
+	tables, err := s.analyzer.GetAllTables()
 	if err != nil {
-		return fmt.Errorf("failed to create Phase 1 runner: %w", err)
+		return err
 	}
 
-	if err := runner.Run(); err != nil {
-		return fmt.Errorf("Phase 1 failed: %w", err)
+	totalTables := len(tables)
+	s.progressMgr.StartPhase(phase, totalTables)
+
+	logger.Info(fmt.Sprintf("Starting Phase 1: Statistical Analysis - Found %d tables", totalTables))
+
+	// 分析每個表格
+	tableAnalyses := make(map[string]interface{})
+	for i, tableName := range tables {
+		logger.Info(fmt.Sprintf("Analyzing table %d/%d: %s", i+1, totalTables, tableName))
+
+		// 使用分析器的 AnalyzeTable 方法
+		analysis, err := s.analyzer.AnalyzeTable(tableName, s.config.Schema.MaxSamples)
+		if err != nil {
+			logger.Warn(fmt.Sprintf("Failed to analyze table %s: %v", tableName, err))
+			continue
+		}
+
+		tableAnalyses[tableName] = analysis
+
+		// 更新進度
+		s.progressMgr.UpdateProgress(phase, i+1, fmt.Sprintf("Analyzed table: %s", tableName))
+		logger.Debug(fmt.Sprintf("Completed analysis of table: %s", tableName))
 	}
+
+	// 創建輸出
+	output := map[string]interface{}{
+		"database":      s.config.Database.DBName,
+		"database_type": s.config.Database.Type,
+		"timestamp":     time.Now(),
+		"tables_count":  len(tables),
+		"tables":        tableAnalyses,
+	}
+
+	// 寫入文件
+	if err := s.writeOutput(output, "knowledge/phase1_analysis.json"); err != nil {
+		return err
+	}
+
+	// 將知識存儲到向量數據庫
+	if err := s.vectorStore.StorePhaseKnowledge("phase1", output); err != nil {
+		logger.Warn(fmt.Sprintf("Failed to store phase1 knowledge in vector store: %v", err))
+		// 不返回錯誤，因為 JSON 文件已經寫入成功
+	} else {
+		logger.Info("Phase 1 knowledge stored in vector database")
+	}
+
+	logger.Info("Phase 1 completed. Results saved to knowledge/phase1_analysis.json")
 	return nil
 }
 
 // runPhase2Prefix 執行 Phase 2 前置處理: 欄位深度分析
 func (s *APIServer) runPhase2Prefix() error {
-	log.Println("DEBUG: Starting runPhase2Prefix function")
+	phase := "phase2_prefix"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	// 創建 phase 日誌器
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	// 開始進度追蹤 - 估計步驟數
+	s.progressMgr.StartPhase(phase, 10) // 估計 10 個步驟
+
+	logger.Info("Starting Phase 2 Prefix: Column Depth Analysis")
 
 	log.Println("DEBUG: Creating Phase 2 prefix runner...")
 	runner, err := phases.NewPhase2PrefixRunner(s.config)
@@ -259,31 +393,65 @@ func (s *APIServer) runPhase2Prefix() error {
 	}
 	log.Println("DEBUG: Phase 2 prefix runner created successfully")
 
+	s.progressMgr.UpdateProgress(phase, 1, "Phase 2 prefix runner created")
+
 	log.Println("DEBUG: Calling runner.Run()...")
 	if err := runner.Run(); err != nil {
 		return fmt.Errorf("Phase 2 prefix failed: %w", err)
 	}
 	log.Println("DEBUG: Phase 2 prefix completed successfully")
+
+	s.progressMgr.UpdateProgress(phase, 10, "Phase 2 prefix completed")
+	logger.Info("Phase 2 prefix completed successfully")
 	return nil
 }
 
 // runPhase2 執行 Phase 2: AI 分析
 func (s *APIServer) runPhase2() error {
+	phase := "phase2"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	// 創建 phase 日誌器
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	// 開始進度追蹤 - 估計步驟數
+	s.progressMgr.StartPhase(phase, 10) // 估計 10 個步驟
+
+	logger.Info("Starting Phase 2: AI Business Logic Analysis")
+
 	runner, err := phases.NewPhase2Runner(s.config, s.db)
 	if err != nil {
 		return fmt.Errorf("failed to create Phase 2 runner: %w", err)
 	}
 
+	s.progressMgr.UpdateProgress(phase, 1, "Phase 2 runner created")
+
 	if err := runner.Run(); err != nil {
 		return fmt.Errorf("Phase 2 failed: %w", err)
 	}
+
+	s.progressMgr.UpdateProgress(phase, 10, "Phase 2 completed")
+	logger.Info("Phase 2 completed successfully")
 	return nil
 }
 
 // runPhase3 執行 Phase 3: 商業邏輯描述生成
 func (s *APIServer) runPhase3() error {
+	phase := "phase3"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	// 創建 phase 日誌器
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	// 開始進度追蹤 - 估計步驟數
+	s.progressMgr.StartPhase(phase, 10) // 估計 10 個步驟
+
+	logger.Info("Starting Phase 3: Business Logic Description Generation")
+
 	// 創建 LLM 客戶端
 	llmClient := llm.NewClient(s.config)
+
+	s.progressMgr.UpdateProgress(phase, 1, "LLM client created")
 
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(s.config)
@@ -292,12 +460,19 @@ func (s *APIServer) runPhase3() error {
 	}
 	defer knowledgeMgr.Close()
 
+	s.progressMgr.UpdateProgress(phase, 2, "Knowledge manager created")
+
 	// 創建 Phase 3 執行器
 	runner := phases.NewPhase3Runner(s.config, llmClient, knowledgeMgr)
+
+	s.progressMgr.UpdateProgress(phase, 3, "Phase 3 runner created")
 
 	if err := runner.Run(context.Background()); err != nil {
 		return fmt.Errorf("Phase 3 failed: %w", err)
 	}
+
+	s.progressMgr.UpdateProgress(phase, 10, "Phase 3 completed")
+	logger.Info("Phase 3 completed successfully")
 	return nil
 }
 
