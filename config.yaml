@@ -4,17 +4,17 @@
 # 資料庫設定
 database:
   type: "postgres"          # 資料庫類型: postgres, mysql
-  host: "localhost"         # 資料庫主機 (Docker 容器映射到 localhost)
+  host: "34.81.221.137"         # 資料庫主機 (Docker 容器映射到 localhost)
   port: 5432               # 資料庫端口
-  user: "ecommerce_user"   # 資料庫用戶名
-  password: "ecommerce_pass" # 資料庫密碼
-  dbname: "ecommerce_db"   # 資料庫名稱
+  user: "readonly_bk"   # 資料庫用戶名
+  password: "help@999" # 資料庫密碼
+  dbname: "bk_crm_prod"   # 資料庫名稱
 
 # 應用程式設定
 app:
   name: "Aika DBA"          # 應用程式名稱
   version: "0.1.0"         # 版本號
-  port: 8080               # API 服務器端口
+  port: 5005               # API 服務器端口
   host: "0.0.0.0"          # API 服務器主機
 
 # Schema 收集設定
@@ -26,7 +26,7 @@ schema:
 # LLM 設定
 llm:
   provider: "local"        # LLM 提供者: openai, local
-  model: "test"  # 模型名稱 - 使用簡單名稱測試
+  model: "/Users/masato/Library/Caches/llama.cpp/Qwen_Qwen2.5-Coder-3B-Instruct-GGUF_qwen2.5-coder-3b-instruct-q4_k_m.gguf"  # 模型名稱
   api_key: ""             # API 金鑰 (建議使用環境變數 OPENAI_API_KEY)
   base_url: ""            # 自定義 API 端點 (建議使用環境變數 OPENAI_BASE_URL)
   host: "localhost"       # 本地 LLM 主機 (用於本地服務)
