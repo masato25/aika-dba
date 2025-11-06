@@ -593,6 +593,27 @@ func (s *APIServer) runPhase1Put() error {
 	for _, file := range requiredFiles {
 		if _, err := os.Stat(file); err != nil {
 			if os.IsNotExist(err) {
+				if file == "knowledge/phase1_post_analysis.json" {
+					// 自動觸發 phase1_post 以生成所需的分析文件
+					autoMsg := "Required phase1_post_analysis.json missing, auto-running Phase 1 Post"
+					s.progressMgr.AddLog(phase, "warn", autoMsg)
+					logger.Warn(autoMsg)
+					s.progressMgr.UpdateProgress(phase, 1, "Auto-running Phase 1 post-processing to build prerequisites")
+
+					if err := s.runPhase1Post(); err != nil {
+						return fmt.Errorf("phase1_put prerequisites failed: %w", err)
+					}
+
+					if _, recheckErr := os.Stat(file); recheckErr != nil {
+						if os.IsNotExist(recheckErr) {
+							return fmt.Errorf("required knowledge file still missing after Phase 1 post-processing: %s", file)
+						}
+						return fmt.Errorf("failed to access %s: %w", file, recheckErr)
+					}
+					// 重新設定進度狀態
+					s.progressMgr.UpdateProgress(phase, 1, "Phase 1 post-processing prerequisites generated")
+					continue
+				}
 				return fmt.Errorf("required knowledge file missing: %s", file)
 			}
 			return fmt.Errorf("failed to access %s: %w", file, err)

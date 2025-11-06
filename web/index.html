@@ -600,6 +600,7 @@
             progressSocket.onclose = () => {
                 console.warn('Progress WebSocket closed');
                 websocketConnected = false;
+                progressSocket = null;
                 if (activePhase) {
                     startProgressPolling(activePhase);
                 }

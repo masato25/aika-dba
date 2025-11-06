@@ -1,21 +1,8 @@
 {
   "database": "bk_crm_prod",
   "database_type": "postgres",
-  "excluded_count": 12,
-  "excluded_tables": [
-    "bk_order_contact_infos",
-    "client_redirect_urls",
-    "product_categories",
-    "member_benefits",
-    "promotions",
-    "vouchers",
-    "tier_benefits",
-    "order_products",
-    "member_logs",
-    "orders",
-    "voucher_definitions",
-    "products"
-  ],
+  "excluded_count": 0,
+  "excluded_tables": null,
   "phase1_put_applied": true,
   "tables": {
     "_prisma_migrations": {
@@ -424,6 +411,130 @@
         "row_count": 0,
         "table_size": "0 bytes",
         "total_size": "24 kB"
+      }
+    },
+    "bk_order_contact_infos": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX bk_order_contact_infos_pkey ON public.bk_order_contact_infos USING btree (id)",
+          "is_unique": true,
+          "name": "bk_order_contact_infos_pkey"
+        },
+        {
+          "columns": [
+            "deleted_at"
+          ],
+          "definition": "CREATE INDEX idx_bk_order_contact_infos_deleted_at ON public.bk_order_contact_infos USING btree (deleted_at)",
+          "is_unique": false,
+          "name": "idx_bk_order_contact_infos_deleted_at"
+        },
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_bk_order_contact_infos_order_id ON public.bk_order_contact_infos USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_bk_order_contact_infos_order_id"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('bk_order_contact_infos_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 64,
+          "scale": 0,
+          "type": "bigint"
+        },
+        {
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "deleted_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 20,
+          "name": "order_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 0,
+          "name": "contact_name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 20,
+          "name": "contact_mobile",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 200,
+          "name": "contact_addr",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "max_length": 500,
+          "name": "comment",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        },
+        {
+          "default": "'Y'::character varying",
+          "max_length": 5,
+          "name": "status",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "character varying"
+        }
+      ],
+      "stats": {
+        "index_size": "32 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "32 kB"
       }
     },
     "bk_order_coupons": {
@@ -2629,6 +2740,75 @@
         "total_size": "4315 MB"
       }
     },
+    "client_redirect_urls": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX client_redirect_urls_pkey ON public.client_redirect_urls USING btree (id)",
+          "is_unique": true,
+          "name": "client_redirect_urls_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('client_redirect_urls_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "client_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "url",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
     "clients": {
       "constraints": {
         "foreign_keys": null,
@@ -4105,6 +4285,130 @@
         "total_size": "144 kB"
       }
     },
+    "member_benefits": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "member_id"
+          ],
+          "definition": "CREATE INDEX idx_member_benefits_member_id ON public.member_benefits USING btree (member_id)",
+          "is_unique": false,
+          "name": "idx_member_benefits_member_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX member_benefits_pkey ON public.member_benefits USING btree (id)",
+          "is_unique": true,
+          "name": "member_benefits_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "user_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "member_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "benefit_id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "start_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "date"
+        },
+        {
+          "max_length": 0,
+          "name": "end_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "date"
+        },
+        {
+          "max_length": 0,
+          "name": "status",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
+      }
+    },
     "member_code_serialers": {
       "constraints": {
         "foreign_keys": null,
@@ -4418,6 +4722,108 @@
         "row_count": 1000793,
         "table_size": "238 MB",
         "total_size": "385 MB"
+      }
+    },
+    "member_logs": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "member_id",
+            "field",
+            "created_at"
+          ],
+          "definition": "CREATE INDEX idx_member_logs ON public.member_logs USING btree (member_id, field, created_at)",
+          "is_unique": false,
+          "name": "idx_member_logs"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX member_logs_pkey ON public.member_logs USING btree (id)",
+          "is_unique": true,
+          "name": "member_logs_pkey"
+        }
+      ],
+      "samples": [],
+      "schema": [
+        {
+          "default": "nextval('member_logs_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "member_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "field",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "old_value",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "new_value",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "updated_by",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "membersId",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
       }
     },
     "member_tiers": {
@@ -4887,6 +5293,536 @@
         "total_size": "682 MB"
       }
     },
+    "order_products": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "order_id"
+          ],
+          "definition": "CREATE INDEX idx_order_products_order_id ON public.order_products USING btree (order_id)",
+          "is_unique": false,
+          "name": "idx_order_products_order_id"
+        },
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX order_products_pkey ON public.order_products USING btree (id)",
+          "is_unique": true,
+          "name": "order_products_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('order_products_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "product_name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "unit_price",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "transaction_amount",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        }
+      ],
+      "stats": {
+        "index_size": "24 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "24 kB"
+      }
+    },
+    "orders": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (id)",
+          "is_unique": true,
+          "name": "orders_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "member_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "transaction_date",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "currency_code",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "channel",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "type",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "status",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "external_order_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "invoice",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "invoice_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "payment_method",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "referred_member_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "transaction_amount",
+          "nullable": false,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "transaction_discount",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "tax_amount",
+          "nullable": true,
+          "precision": 10,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "voucher_codes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "ARRAY"
+        },
+        {
+          "max_length": 0,
+          "name": "promotion_codes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "ARRAY"
+        },
+        {
+          "max_length": 0,
+          "name": "shipping_address",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "billing_address",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "source",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "store_name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "shipping_method",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "shipping_cost",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "notes",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
+    "product_categories": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX product_categories_pkey ON public.product_categories USING btree (id)",
+          "is_unique": true,
+          "name": "product_categories_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('product_categories_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_category_name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "is_actived",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
+    "products": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)",
+          "is_unique": true,
+          "name": "products_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "client_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "product_category_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "unit_price",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "quantity",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "tax",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "default": "true",
+          "max_length": 0,
+          "name": "is_actived",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "false",
+          "max_length": 0,
+          "name": "is_deleted",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
     "program_currencies": {
       "constraints": {
         "foreign_keys": null,
@@ -5288,6 +6224,312 @@
         "total_size": "48 kB"
       }
     },
+    "promotions": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX promotions_pkey ON public.promotions USING btree (id)",
+          "is_unique": true,
+          "name": "promotions_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "business_unit_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "campaign_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "current_point_count",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "display_name",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "end_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "end_date_time",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "fulfillment_action",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "action",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "image_url",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "is_actived",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "is_cloned",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "is_enrollment_required",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "is_points_with_factor",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "is_quick_promotion",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "issued_voucher_count",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "voucher_definition_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "program_currency_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "program_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "owner_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "product_category_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "type",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "maximum_reward_value",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "maximum_voucher_count",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "objective",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "point_factor",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "priority_number",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "code",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "start_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "start_date_time",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "status",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "total_reward_points",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "transaction_journal_type",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
     "schema_migrations": {
       "constraints": {
         "foreign_keys": null,
@@ -5328,6 +6570,82 @@
         "row_count": 0,
         "table_size": "0 bytes",
         "total_size": "8192 bytes"
+      }
+    },
+    "tier_benefits": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX tier_benefits_pkey ON public.tier_benefits USING btree (id)",
+          "is_unique": true,
+          "name": "tier_benefits_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "benefit_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "tier_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
       }
     },
     "tier_groups": {
@@ -6008,8 +7326,369 @@
         "table_size": "169 MB",
         "total_size": "332 MB"
       }
+    },
+    "voucher_definitions": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX voucher_definitions_pkey ON public.voucher_definitions USING btree (id)",
+          "is_unique": true,
+          "name": "voucher_definitions_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "default": "nextval('voucher_definitions_id_seq'::regclass)",
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "type",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "benefit_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "code_prefix",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "effective_date",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "expiration_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "duration",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "date"
+        },
+        {
+          "max_length": 0,
+          "name": "expiration_period",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "face_value",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "point_cost",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "image_url",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "is_actived",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "is_partial_redeemable",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "boolean"
+        },
+        {
+          "max_length": 0,
+          "name": "program_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "owner_id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "product_category_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "product_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
+    },
+    "vouchers": {
+      "constraints": {
+        "foreign_keys": null,
+        "primary_keys": null,
+        "unique_keys": null
+      },
+      "indexes": [
+        {
+          "columns": [
+            "id"
+          ],
+          "definition": "CREATE UNIQUE INDEX vouchers_pkey ON public.vouchers USING btree (id)",
+          "is_unique": true,
+          "name": "vouchers_pkey"
+        }
+      ],
+      "samples": null,
+      "schema": [
+        {
+          "max_length": 0,
+          "name": "id",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "member_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "voucher_definition_id",
+          "nullable": true,
+          "precision": 32,
+          "scale": 0,
+          "type": "integer"
+        },
+        {
+          "max_length": 0,
+          "name": "order_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "effective_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "expiration_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "face_value",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "name",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "activity_id",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "description",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "redeemed_value",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "remaining_value",
+          "nullable": true,
+          "precision": 18,
+          "scale": 2,
+          "type": "numeric"
+        },
+        {
+          "max_length": 0,
+          "name": "status",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "max_length": 0,
+          "name": "redemption_date",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "max_length": 0,
+          "name": "code",
+          "nullable": true,
+          "precision": 0,
+          "scale": 0,
+          "type": "text"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "created_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        },
+        {
+          "default": "CURRENT_TIMESTAMP",
+          "max_length": 0,
+          "name": "updated_at",
+          "nullable": false,
+          "precision": 0,
+          "scale": 0,
+          "type": "timestamp with time zone"
+        }
+      ],
+      "stats": {
+        "index_size": "16 kB",
+        "row_count": 0,
+        "table_size": "0 bytes",
+        "total_size": "16 kB"
+      }
     }
   },
-  "tables_count": 32,
-  "timestamp": "2025-11-06T14:05:31.800705+08:00"
+  "tables_count": 44,
+  "timestamp": "2025-11-06T17:03:08.216254+08:00"
 }
