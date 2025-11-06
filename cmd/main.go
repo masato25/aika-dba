@@ -150,6 +150,24 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 	}
 }
 
+// runPhase2Prefix 執行 Phase 2 前置處理: 欄位深度分析
+func runPhase2Prefix(cfg *config.Config) {
+	log.Println("DEBUG: Starting runPhase2Prefix function")
+
+	log.Println("DEBUG: Creating Phase 2 prefix runner...")
+	runner, err := phases.NewPhase2PrefixRunner(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 2 prefix runner: %v", err)
+	}
+	log.Println("DEBUG: Phase 2 prefix runner created successfully")
+
+	log.Println("DEBUG: Calling runner.Run()...")
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 2 prefix failed: %v", err)
+	}
+	log.Println("DEBUG: Phase 2 prefix completed successfully")
+}
+
 // runPhase3 執行 Phase 3: 商業邏輯描述生成
 func runPhase3(cfg *config.Config) {
 	// 創建 LLM 客戶端
@@ -265,7 +283,7 @@ func runDeleteVectorData(cfg *config.Config, phasesStr string) {
 
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase1_post, phase1_put, phase2, phase3, marketing, delete-vector")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase1_post, phase1_put, phase2, phase2_prefix, phase3, marketing, delete-vector")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
 	var phases = flag.String("phases", "phase3", "Comma-separated list of phases to delete (for delete-vector command)")
 	var query = flag.String("query", "", "Natural language query for marketing command")
@@ -278,16 +296,21 @@ func main() {
 	}
 
 	// 建立資料庫連接
+	log.Println("DEBUG: Opening database connection...")
 	db, err := sql.Open(cfg.Database.Type, cfg.GetDatabaseDSN())
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
+	log.Println("DEBUG: Database connection opened")
 
 	// 測試資料庫連接
+	log.Println("DEBUG: Testing database connection with Ping()...")
 	if err := db.Ping(); err != nil {
 		log.Printf("Warning: Failed to ping database: %v", err)
 		log.Println("Continuing with limited functionality...")
+	} else {
+		log.Println("DEBUG: Database ping successful")
 	}
 
 	log.Printf("Connected to %s database at %s:%d", cfg.Database.Type, cfg.Database.Host, cfg.Database.Port)
@@ -304,6 +327,8 @@ func main() {
 		runPhase1Put(cfg)
 	case "phase2":
 		runPhase2(db, cfg)
+	case "phase2_prefix":
+		runPhase2Prefix(cfg)
 	case "phase3":
 		runPhase3(cfg)
 	case "marketing":
@@ -311,6 +336,6 @@ func main() {
 	case "delete-vector":
 		runDeleteVectorData(cfg, *phases)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase1_post, phase1_put, phase2, phase3, marketing, delete-vector", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase1_post, phase1_put, phase2, phase2_prefix, phase3, marketing, delete-vector", *command)
 	}
 }
