@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -17,6 +18,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
+	"github.com/masato25/aika-dba/pkg/llm"
 	"github.com/masato25/aika-dba/pkg/phases"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
 )
@@ -126,21 +128,80 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 	}
 }
 
-// runPhase3 執行 Phase 3: 自動生成維度規則
+// runPhase3 執行 Phase 3: 商業邏輯描述生成
 func runPhase3(cfg *config.Config) {
-	runner := phases.NewPhase3Runner(cfg)
+	// 創建 LLM 客戶端
+	llmClient := llm.NewClient(cfg)
 
-	if err := runner.Run(); err != nil {
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create knowledge manager: %v", err)
+	}
+	defer knowledgeMgr.Close()
+
+	// 創建 Phase 3 執行器
+	runner := phases.NewPhase3Runner(cfg, llmClient, knowledgeMgr)
+
+	if err := runner.Run(context.Background()); err != nil {
 		log.Fatalf("Phase 3 failed: %v", err)
 	}
 }
 
-// runPhase4 執行 Phase 4: 使用 Lua 規則引擎進行維度建模
-func runPhase4(db *sql.DB, cfg *config.Config) {
-	runner := phases.NewPhase4Runner(cfg, db)
+// runMarketingQuery 執行營銷查詢
+func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
+	if query == "" {
+		log.Fatalf("Query parameter is required for marketing command. Use -query flag.")
+	}
 
-	if err := runner.Run(); err != nil {
-		log.Fatalf("Phase 4 failed: %v", err)
+	log.Printf("Executing marketing query: %s", query)
+
+	runner := phases.NewMarketingQueryRunner(cfg, db)
+
+	result, err := runner.ExecuteMarketingQuery(query)
+	if err != nil {
+		log.Fatalf("Marketing query failed: %v", err)
+	}
+
+	// 輸出結果
+	fmt.Println("\n=== Marketing Query Results ===")
+	fmt.Printf("Query: %s\n", result.Query)
+	fmt.Printf("Timestamp: %s\n", result.Timestamp.Format("2006-01-02 15:04:05"))
+
+	if result.Error != "" {
+		fmt.Printf("Error: %s\n", result.Error)
+		return
+	}
+
+	fmt.Printf("SQL Query: %s\n", result.SQLQuery)
+	fmt.Printf("Explanation: %s\n", result.Explanation)
+	fmt.Printf("Results: %d rows\n", len(result.Results))
+
+	if len(result.Results) > 0 {
+		fmt.Println("\nSample Results:")
+		// 顯示前 5 行結果
+		for i, row := range result.Results {
+			if i >= 5 {
+				break
+			}
+			fmt.Printf("Row %d: ", i+1)
+			for key, value := range row {
+				fmt.Printf("%s=%v ", key, value)
+			}
+			fmt.Println()
+		}
+	}
+
+	if result.BusinessInsights != "" {
+		fmt.Println("\nBusiness Insights:")
+		fmt.Println(result.BusinessInsights)
+	}
+
+	// 保存查詢結果
+	if err := runner.SaveQueryResult(result); err != nil {
+		log.Printf("Warning: Failed to save query result: %v", err)
+	} else {
+		log.Println("Query result saved to vector store")
 	}
 }
 
@@ -179,28 +240,13 @@ func runDeleteVectorData(cfg *config.Config, phasesStr string) {
 		log.Printf("Vector data deletion completed. Current stats: %+v", stats)
 	}
 }
-func runMarketingQueries(db *sql.DB, cfg *config.Config, scenarioName string) {
-	runner := phases.NewMarketingQueryRunner(cfg, db)
-
-	if scenarioName != "" {
-		// 執行單一場景
-		if err := runner.RunScenario(scenarioName); err != nil {
-			log.Fatalf("Marketing query for scenario '%s' failed: %v", scenarioName, err)
-		}
-	} else {
-		// 執行所有場景測試
-		if err := runner.Run(); err != nil {
-			log.Fatalf("Marketing queries test failed: %v", err)
-		}
-	}
-}
 
 func main() {
 	// 命令行參數
-	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, phase4, marketing, delete-vector")
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase3, marketing, delete-vector")
 	var configPath = flag.String("config", "config.yaml", "Path to config file")
-	var scenario = flag.String("scenario", "", "Marketing scenario to run (use predefined name or custom description, leave empty to run all scenarios)")
-	var phases = flag.String("phases", "phase3,phase4", "Comma-separated list of phases to delete (for delete-vector command)")
+	var phases = flag.String("phases", "phase3", "Comma-separated list of phases to delete (for delete-vector command)")
+	var query = flag.String("query", "", "Natural language query for marketing command")
 	flag.Parse()
 
 	// 載入 .env 文件
@@ -240,13 +286,11 @@ func main() {
 		runPhase2(db, cfg)
 	case "phase3":
 		runPhase3(cfg)
-	case "phase4":
-		runPhase4(db, cfg)
 	case "marketing":
-		runMarketingQueries(db, cfg, *scenario)
+		runMarketingQuery(db, cfg, *query)
 	case "delete-vector":
 		runDeleteVectorData(cfg, *phases)
 	default:
-		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, phase4, marketing, delete-vector", *command)
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase3, marketing, delete-vector", *command)
 	}
 }

@@ -16,12 +16,9 @@ import (
 
 // LLMAnalysisResult LLM 分析結果
 type LLMAnalysisResult struct {
-	TableName       string    `json:"table_name"`
-	Analysis        string    `json:"analysis"`
-	Recommendations []string  `json:"recommendations"`
-	Issues          []string  `json:"issues"`
-	Insights        []string  `json:"insights"`
-	Timestamp       time.Time `json:"timestamp"`
+	TableName string    `json:"table_name"`
+	Analysis  string    `json:"analysis"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 // TableAnalysisTask 表格分析任務
@@ -245,12 +242,9 @@ func (o *TableAnalysisOrchestrator) AnalyzeTable(ctx context.Context, task *Tabl
 
 	// 解析 LLM 回應
 	result := &LLMAnalysisResult{
-		TableName:       task.TableName,
-		Analysis:        llmResponse.Analysis,
-		Recommendations: llmResponse.Recommendations,
-		Issues:          llmResponse.Issues,
-		Insights:        llmResponse.Insights,
-		Timestamp:       time.Now(),
+		TableName: task.TableName,
+		Analysis:  llmResponse.Analysis,
+		Timestamp: time.Now(),
 	}
 
 	return result, nil
@@ -275,12 +269,9 @@ func (o *TableAnalysisOrchestrator) analyzeTableWithFileReader(ctx context.Conte
 
 	// 解析 LLM 回應
 	result := &LLMAnalysisResult{
-		TableName:       task.TableName,
-		Analysis:        llmResponse.Analysis,
-		Recommendations: llmResponse.Recommendations,
-		Issues:          llmResponse.Issues,
-		Insights:        llmResponse.Insights,
-		Timestamp:       time.Now(),
+		TableName: task.TableName,
+		Analysis:  llmResponse.Analysis,
+		Timestamp: time.Now(),
 	}
 
 	return result, nil
@@ -413,9 +404,9 @@ func (o *TableAnalysisOrchestrator) buildAnalysisPrompt(summary map[string]inter
 	prompt.WriteString("\n請基於以上資訊，描述這個表格的商業邏輯用途：\n")
 	prompt.WriteString("1. 這個表格在整個系統中的角色和功能是什麼？\n")
 	prompt.WriteString("2. 根據欄位定義和樣本數據，這個表格存儲的是什麼類型的業務數據？\n")
-	prompt.WriteString("3. 這個表格與其他表格的業務關係是什麼？（例如：客戶表、訂單表、產品表等）\n")
+	prompt.WriteString("3. 這個表格與其他表格的業務關係是什麼？\n")
 	prompt.WriteString("4. 從樣本數據可以看出什麼業務模式或用戶行為？\n")
-	prompt.WriteString("5. 這個表格支持哪些業務流程？（例如：用戶註冊、購物、下單、支付等）\n")
+	prompt.WriteString("5. 這個表格支持哪些業務流程？\n")
 	prompt.WriteString("6. 根據約束和索引設計，可以推斷出這個表格的主要查詢場景是什麼？\n")
 
 	prompt.WriteString("\n請用自然、易懂的語言描述這個表格的商業用途，不要過度關注技術細節。")
@@ -464,10 +455,7 @@ type LLMClient struct {
 
 // LLMResponse LLM 回應
 type LLMResponse struct {
-	Analysis        string   `json:"analysis"`
-	Recommendations []string `json:"recommendations"`
-	Issues          []string `json:"issues"`
-	Insights        []string `json:"insights"`
+	Analysis string `json:"analysis"`
 }
 
 // NewLLMClient 創建 LLM 客戶端
@@ -490,7 +478,7 @@ func (c *LLMClient) AnalyzeTable(ctx context.Context, tableName, prompt string) 
 		"messages": []map[string]interface{}{
 			{
 				"role":    "system",
-				"content": "你是一個資料庫分析專家。請分析給定的表格結構，提供專業的見解和建議。",
+				"content": "你是一個資料庫及數據分析專家。請分析給定的表格結構，提供專業的見解和建議。",
 			},
 			{
 				"role":    "user",
@@ -580,34 +568,7 @@ func (c *LLMClient) parseResponse(response map[string]interface{}) (*LLMResponse
 func (c *LLMClient) parseContent(content string) (*LLMResponse, error) {
 	// 簡單的解析邏輯 - 在實際實現中可以更複雜
 	response := &LLMResponse{
-		Analysis:        content,
-		Recommendations: []string{},
-		Issues:          []string{},
-		Insights:        []string{},
-	}
-
-	// 嘗試提取結構化信息
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "建議：") || strings.HasPrefix(line, "推薦：") {
-			response.Recommendations = append(response.Recommendations, strings.TrimPrefix(line, "建議："))
-		} else if strings.HasPrefix(line, "問題：") || strings.HasPrefix(line, "Issue:") {
-			response.Issues = append(response.Issues, strings.TrimPrefix(strings.TrimPrefix(line, "問題："), "Issue:"))
-		} else if strings.HasPrefix(line, "見解：") || strings.HasPrefix(line, "洞察：") {
-			response.Insights = append(response.Insights, strings.TrimPrefix(line, "見解："))
-		}
-	}
-
-	// 如果沒有提取到結構化信息，使用默認值
-	if len(response.Recommendations) == 0 {
-		response.Recommendations = []string{"建議添加適當的索引來提升查詢性能"}
-	}
-	if len(response.Issues) == 0 {
-		response.Issues = []string{"需要進一步分析以識別潛在問題"}
-	}
-	if len(response.Insights) == 0 {
-		response.Insights = []string{"表格結構基本合理"}
+		Analysis: content,
 	}
 
 	return response, nil
@@ -619,18 +580,40 @@ func (c *LLMClient) fallbackResponse(tableName string) (*LLMResponse, error) {
 
 	return &LLMResponse{
 		Analysis: fmt.Sprintf("表格 %s 的結構分析（後備模式）", tableName),
-		Recommendations: []string{
-			"建議添加適當的索引來提升查詢性能",
-			"考慮添加數據驗證約束",
-		},
-		Issues: []string{
-			"LLM 服務不可用，無法進行深入分析",
-		},
-		Insights: []string{
-			"表格設計基本合理",
-			"數據完整性良好",
-		},
 	}, nil
+}
+
+// CallLLM 通用 LLM 調用方法
+func (c *LLMClient) CallLLM(prompt string) (string, error) {
+	ctx := context.Background()
+	log.Printf("Sending general LLM request")
+
+	// 構建請求
+	requestBody := map[string]interface{}{
+		"model": c.config.LLM.Model,
+		"messages": []map[string]interface{}{
+			{
+				"role":    "user",
+				"content": prompt,
+			},
+		},
+		"temperature": 0.7,
+		"max_tokens":  2000,
+	}
+
+	// 發送請求到 LLM
+	response, err := c.sendRequest(ctx, requestBody)
+	if err != nil {
+		return "", fmt.Errorf("LLM request failed: %v", err)
+	}
+
+	// 解析回應
+	llmResponse, err := c.parseResponse(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse LLM response: %v", err)
+	}
+
+	return llmResponse.Analysis, nil
 }
 
 // MCPServer MCP 服務器接口

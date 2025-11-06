@@ -30,7 +30,6 @@ func (kc *KnowledgeChunker) ChunkKnowledgeBase(knowledgeDir string) ([]Knowledge
 	files := []string{
 		"phase1_analysis.json",
 		"phase2_analysis.json",
-		"phase4_dimensions.json",
 		"pre_phase3_summary.json",
 	}
 

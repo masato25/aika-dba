@@ -244,8 +244,7 @@ func (km *KnowledgeManager) getPhaseDescription(phase string) string {
 	descriptions := map[string]string{
 		"phase1": "Database statistical analysis with table schemas, constraints, and sample data",
 		"phase2": "AI-powered business logic analysis with LLM insights and recommendations",
-		"phase3": "Data preprocessing and transformation preparation",
-		"phase4": "Dimensional modeling with star schema design and ETL planning",
+		"phase3": "Business logic analysis and natural language description generation",
 	}
 	return descriptions[phase]
 }

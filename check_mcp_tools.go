@@ -19,7 +19,6 @@ func main() {
 		fmt.Println("- get_database_schema_analysis (Phase 1)")
 		fmt.Println("- get_business_logic_analysis (Phase 2)")
 		fmt.Println("- get_comprehensive_business_overview (Phase 3)")
-		fmt.Println("- get_dimensional_analysis (Phase 4)")
 		fmt.Println("- get_knowledge_stats")
 		return
 	}
@@ -44,8 +43,7 @@ func main() {
 				if toolMap, ok := tool.(map[string]interface{}); ok {
 					name := toolMap["name"].(string)
 					if name == "get_database_schema_analysis" || name == "get_business_logic_analysis" ||
-						name == "get_comprehensive_business_overview" || name == "get_dimensional_analysis" ||
-						name == "get_knowledge_stats" {
+						name == "get_comprehensive_business_overview" || name == "get_knowledge_stats" {
 						fmt.Printf("- %s\n", name)
 					}
 				}

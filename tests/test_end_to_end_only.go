@@ -61,15 +61,8 @@ func main() {
 		log.Fatalf("Phase 3 failed: %v", err)
 	}
 
-	// Phase 4: Lua 規則引擎維度建模
-	fmt.Println("\n--- Phase 4: Lua Rule Engine Dimension Modeling ---")
-	phase4Runner := phases.NewPhase4Runner(cfg, db)
-	if err := phase4Runner.Run(); err != nil {
-		log.Fatalf("Phase 4 failed: %v", err)
-	}
-
 	fmt.Println("\n=== All Phases Completed Successfully! ===")
 	fmt.Println("Vector-enhanced knowledge flow:")
-	fmt.Println("Phase 1 → Vector Store → Phase 2 → Vector Store → Phase 3 → Vector Store → Phase 4")
+	fmt.Println("Phase 1 → Vector Store → Phase 2 → Vector Store → Phase 3 → Vector Store")
 	fmt.Println("Check knowledge/ directory for generated files and vector database for stored knowledge")
 }

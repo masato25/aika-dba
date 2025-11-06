@@ -153,7 +153,6 @@ func (ki *KnowledgeIndexer) UpdateIndex(knowledgeDir string) error {
 	files := []string{
 		filepath.Join(knowledgeDir, "phase1_analysis.json"),
 		filepath.Join(knowledgeDir, "phase2_analysis.json"),
-		filepath.Join(knowledgeDir, "phase4_dimensions.json"),
 		filepath.Join(knowledgeDir, "pre_phase3_summary.json"),
 	}
 

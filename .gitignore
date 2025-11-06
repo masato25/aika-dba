@@ -8,5 +8,8 @@ data/
 # Generated knowledge files
 knowledge/
 
+# Configuration files (contains sensitive data)
+config.yaml
+
 # Test binaries
 *_test

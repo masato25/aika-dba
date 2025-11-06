@@ -179,33 +179,6 @@ func (p *Phase4Runner) retrievePhase2Knowledge() (map[string]*LLMAnalysisResult,
 						llmResult.Analysis = analysis
 					}
 
-					if recommendations, ok := resultMap["recommendations"].([]interface{}); ok {
-						llmResult.Recommendations = make([]string, len(recommendations))
-						for i, rec := range recommendations {
-							if recStr, ok := rec.(string); ok {
-								llmResult.Recommendations[i] = recStr
-							}
-						}
-					}
-
-					if issues, ok := resultMap["issues"].([]interface{}); ok {
-						llmResult.Issues = make([]string, len(issues))
-						for i, issue := range issues {
-							if issueStr, ok := issue.(string); ok {
-								llmResult.Issues[i] = issueStr
-							}
-						}
-					}
-
-					if insights, ok := resultMap["insights"].([]interface{}); ok {
-						llmResult.Insights = make([]string, len(insights))
-						for i, insight := range insights {
-							if insightStr, ok := insight.(string); ok {
-								llmResult.Insights[i] = insightStr
-							}
-						}
-					}
-
 					if timestamp, ok := resultMap["timestamp"].(string); ok {
 						if t, err := time.Parse(time.RFC3339, timestamp); err == nil {
 							llmResult.Timestamp = t

@@ -167,35 +167,12 @@ func (p *Phase2Runner) saveResults() error {
 // generateSummary 生成總結
 func (p *Phase2Runner) generateSummary(results map[string]*LLMAnalysisResult) map[string]interface{} {
 	totalTables := len(results)
-	totalRecommendations := 0
-	totalIssues := 0
-	totalInsights := 0
-
-	for _, result := range results {
-		totalRecommendations += len(result.Recommendations)
-		totalIssues += len(result.Issues)
-		totalInsights += len(result.Insights)
-	}
-
-	// 避免除零錯誤
-	avgRecommendations := 0.0
-	avgIssues := 0.0
-	avgInsights := 0.0
-
-	if totalTables > 0 {
-		avgRecommendations = float64(totalRecommendations) / float64(totalTables)
-		avgIssues = float64(totalIssues) / float64(totalTables)
-		avgInsights = float64(totalInsights) / float64(totalTables)
-	}
 
 	return map[string]interface{}{
-		"total_tables_analyzed":             totalTables,
-		"total_recommendations":             totalRecommendations,
-		"total_issues_found":                totalIssues,
-		"total_insights":                    totalInsights,
-		"average_recommendations_per_table": avgRecommendations,
-		"average_issues_per_table":          avgIssues,
-		"average_insights_per_table":        avgInsights,
+		"total_tables_analyzed": totalTables,
+		"analysis_timestamp":    time.Now(),
+		"phase":                 "phase2",
+		"description":           "AI-powered database business logic analysis",
 	}
 }
 
