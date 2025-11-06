@@ -12,4 +12,4 @@ knowledge/
 config.yaml
 
 # Test binaries
-*_test
+*_test*.txt

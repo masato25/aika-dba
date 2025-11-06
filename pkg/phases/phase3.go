@@ -132,60 +132,56 @@ func (p *Phase3Runner) generateBusinessLogicDescription(ctx context.Context, pha
 	return result, nil
 }
 
-// prepareAnalysisText converts the phase 2 analysis results into a readable text format
+// prepareAnalysisText converts the phase 2 analysis results into a concise text format for LLM
 func (p *Phase3Runner) prepareAnalysisText(phase2Data *Phase2AnalysisResult) string {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Database: %s (%s)\n", phase2Data.Database, phase2Data.DatabaseType))
 	sb.WriteString(fmt.Sprintf("Total Tables Analyzed: %d\n\n", phase2Data.Summary.TotalTablesAnalyzed))
 
-	sb.WriteString("Table Analysis Results:\n")
-	sb.WriteString("====================\n\n")
+	sb.WriteString("Table Summary:\n")
+	sb.WriteString("=============\n\n")
 
+	// Create a concise summary for each table instead of full analysis
 	for tableName, analysis := range phase2Data.AnalysisResults {
-		sb.WriteString(fmt.Sprintf("Table: %s\n", tableName))
-		sb.WriteString(fmt.Sprintf("Analysis: %s\n\n", analysis.Analysis))
+		// Extract key points from the analysis (first 200 characters as summary)
+		summary := analysis.Analysis
+		if len(summary) > 200 {
+			// Find a good break point (sentence end)
+			if idx := strings.LastIndex(summary[:200], "."); idx > 50 {
+				summary = summary[:idx+1]
+			} else {
+				summary = summary[:200] + "..."
+			}
+		}
+
+		sb.WriteString(fmt.Sprintf("• %s: %s\n", tableName, summary))
+	}
+
+	sb.WriteString("\nTable List:\n")
+	sb.WriteString("===========\n")
+	for tableName := range phase2Data.AnalysisResults {
+		sb.WriteString(fmt.Sprintf("• %s\n", tableName))
 	}
 
 	return sb.String()
 }
 
-// createBusinessLogicPrompt creates the prompt for LLM to generate business logic description
+// createBusinessLogicPrompt creates a concise prompt for LLM to generate business logic description
 func (p *Phase3Runner) createBusinessLogicPrompt(analysisText string) string {
-	return fmt.Sprintf(`Based on the following database table analysis results, please provide a comprehensive business logic description for the entire database system.
+	return fmt.Sprintf(`Analyze this database and provide a business logic summary.
 
-Analysis Data:
+Database Info:
 %s
 
-Please analyze this database and provide:
-
-1. **Overall Business Domain**: What type of business or system does this database support?
-
-2. **Key Business Entities**: Identify the main business entities and their relationships.
-
-3. **Business Processes**: Describe the key business processes supported by this system.
-
-4. **Data Flow Patterns**: Explain how data flows through the system.
-
-5. **Table Categories**: Group the tables into logical categories (e.g., User Management, Order Processing, Product Management, etc.).
-
-6. **Business Rules and Logic**: Identify any business rules or logic that can be inferred from the table structures and relationships.
-
-7. **Recommendations**: Provide recommendations for system improvements or optimizations.
-
-Format your response as a JSON object with the following structure:
+Provide a JSON response with:
 {
-  "business_logic_summary": "A comprehensive summary of the database's business logic",
-  "table_categories": {
-    "Category1": ["table1", "table2"],
-    "Category2": ["table3", "table4"]
-  },
-  "key_business_processes": ["Process 1", "Process 2", "Process 3"],
+  "business_logic_summary": "Brief description of the business domain",
+  "table_categories": {"Category1": ["table1", "table2"], "Category2": ["table3"]},
+  "key_business_processes": ["Process 1", "Process 2"],
   "data_flow_patterns": ["Pattern 1", "Pattern 2"],
   "recommendations": ["Recommendation 1", "Recommendation 2"]
-}
-
-Ensure the response is valid JSON.`, analysisText)
+}`, analysisText)
 }
 
 // parseLLMResponse parses the LLM response into a Phase3AnalysisResult
