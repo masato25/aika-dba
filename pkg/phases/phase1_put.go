@@ -69,6 +69,10 @@ func (p *Phase1PutRunner) Run() error {
 	}
 
 	log.Printf("Phase 1 Put completed. Excluded %d tables, kept %d tables", len(excludedTables), len(filteredData["tables"].(map[string]interface{})))
+	
+	if len(excludedTables) > 0 {
+		log.Printf("Excluded tables: %v", excludedTables)
+	}
 
 	return nil
 }
