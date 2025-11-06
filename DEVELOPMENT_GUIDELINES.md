@@ -23,17 +23,49 @@
   - Compatibility with project requirements
   - License compatibility
 
-### 4. Testing and Documentation for Major Changes
-- Implement basic unit tests for new features and significant modifications
-- Write integration tests for complex interactions
-- Maintain up-to-date documentation for:
-  - API changes
-  - New features
-  - Configuration options
-  - Usage examples
-- Use automated testing tools and CI/CD pipelines for continuous validation
+### 5. Security and Sensitive Data Protection
+- **Never commit sensitive information** to version control:
+  - Database credentials (usernames, passwords, connection strings)
+  - API keys and tokens
+  - Private keys and certificates
+  - Personal identifiable information (PII)
+  - Internal server IPs, hostnames, or ports
+- **Use environment variables** for sensitive configuration:
+  - Database connection details
+  - API keys and secrets
+  - Service endpoints and ports
+- **Implement proper .gitignore rules**:
+  - Configuration files containing sensitive data
+  - Local development files
+  - Generated artifacts with sensitive information
+- **Use configuration templates**:
+  - Provide `config.example.yaml` with placeholder values
+  - Document required environment variables
+  - Include setup instructions for new developers
+- **Regular security audits**:
+  - Review git history for accidentally committed secrets
+  - Use tools like `git-secrets` or `truffleHog` for automated scanning
+  - Rotate credentials regularly
+- **Access control and permissions**:
+  - Use read-only database connections for analysis
+  - Implement proper authentication for APIs
+  - Limit data sampling to prevent information leakage
 
 ## Implementation Guidelines
+
+### Security Implementation
+- **Input validation and sanitization**:
+  - Validate all user inputs
+  - Sanitize database queries to prevent SQL injection
+  - Use parameterized queries
+- **Error handling**:
+  - Don't expose sensitive information in error messages
+  - Log security events appropriately
+  - Implement proper exception handling
+- **Data protection**:
+  - Encrypt sensitive data at rest and in transit
+  - Implement proper session management
+  - Use HTTPS for all external communications
 
 ### Code Quality
 - Follow Go best practices and conventions
