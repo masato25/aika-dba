@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aika DBA - 數據庫分析工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+            width: 1rem;
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+        .phase-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .phase-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .status-running { color: #ffc107; }
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .mobile-menu-btn {
+                display: block !important;
+            }
+        }
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav class="sidebar position-fixed" id="sidebar">
+        <div class="p-3">
+            <h4 class="mb-4">
+                <i class="bi bi-database"></i>
+                Aika DBA
+            </h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                        <i class="bi bi-house-door"></i>
+                        儀表板
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#phases" onclick="showSection('phases')">
+                        <i class="bi bi-play-circle"></i>
+                        Phase 執行
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#vector" onclick="showSection('vector')">
+                        <i class="bi bi-brain"></i>
+                        向量數據庫
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#search" onclick="showSection('search')">
+                        <i class="bi bi-search"></i>
+                        知識搜索
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#status" onclick="showSection('status')">
+                        <i class="bi bi-info-circle"></i>
+                        系統狀態
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="content-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-house-door me-2"></i>儀表板</h2>
+                <small class="text-muted">數據庫分析工具</small>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-database display-4 mb-2"></i>
+                            <h5>數據庫連接</h5>
+                            <span class="badge bg-success">正常</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-cpu display-4 mb-2"></i>
+                            <h5>系統狀態</h5>
+                            <span class="badge bg-success">運行中</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-vector-pen display-4 mb-2"></i>
+                            <h5>向量存儲</h5>
+                            <span class="badge bg-info">就緒</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="bi bi-robot display-4 mb-2"></i>
+                            <h5>AI 分析</h5>
+                            <span class="badge bg-warning">可用</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>快速操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-primary w-100" onclick="showSection('phases')">
+                                <i class="bi bi-play-circle me-2"></i>
+                                執行 Phase
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-info w-100" onclick="showSection('vector')">
+                                <i class="bi bi-brain me-2"></i>
+                                查看向量
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-success w-100" onclick="showSection('search')">
+                                <i class="bi bi-search me-2"></i>
+                                搜索知識
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-warning w-100" onclick="showSection('status')">
+                                <i class="bi bi-info-circle me-2"></i>
+                                系統狀態
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phases Section -->
+        <div id="phases-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-play-circle me-2"></i>Phase 執行</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 數據庫分析階段</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card phase-card border-primary">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-diagram-3 display-4 text-primary"></i>
+                                    </div>
+                                    <h6 class="card-title">Phase 1</h6>
+                                    <p class="card-text small text-muted">數據庫架構分析</p>
+                                    <button class="btn btn-primary" onclick="triggerPhase('phase1')">
+                                        <i class="bi bi-play me-1"></i>執行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card phase-card border-warning">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-search display-4 text-warning"></i>
+                                    </div>
+                                    <h6 class="card-title">Phase 2 Prefix</h6>
+                                    <p class="card-text small text-muted">列級深度分析</p>
+                                    <button class="btn btn-warning" onclick="triggerPhase('phase2_prefix')">
+                                        <i class="bi bi-play me-1"></i>執行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card phase-card border-success">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-robot display-4 text-success"></i>
+                                    </div>
+                                    <h6 class="card-title">Phase 2</h6>
+                                    <p class="card-text small text-muted">AI 商業邏輯分析</p>
+                                    <button class="btn btn-success" onclick="triggerPhase('phase2')">
+                                        <i class="bi bi-play me-1"></i>執行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card phase-card border-info">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-bar-chart display-4 text-info"></i>
+                                    </div>
+                                    <h6 class="card-title">Phase 3</h6>
+                                    <p class="card-text small text-muted">業務邏輯總結</p>
+                                    <button class="btn btn-info" onclick="triggerPhase('phase3')">
+                                        <i class="bi bi-play me-1"></i>執行
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="phase-status" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vector Database Section -->
+        <div id="vector-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-brain me-2"></i>向量數據庫</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>統計信息</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-outline-primary mb-3" onclick="loadVectorStats()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>載入統計信息
+                    </button>
+                    <div id="vector-stats"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-search me-2"></i>知識查詢</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="phase-select" class="form-label">選擇階段</label>
+                            <select class="form-select" id="phase-select">
+                                <option value="phase1">Phase 1 - 架構分析</option>
+                                <option value="phase2">Phase 2 - AI 分析</option>
+                                <option value="phase3">Phase 3 - 業務總結</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" onclick="loadPhaseKnowledge()">
+                                <i class="bi bi-search me-2"></i>載入知識
+                            </button>
+                        </div>
+                    </div>
+                    <div id="phase-knowledge" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div id="search-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-search me-2"></i>知識搜索</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-chat-quote me-2"></i>跨階段知識搜索</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="search-query" placeholder="輸入搜索關鍵詞...">
+                        <button class="btn btn-primary" onclick="searchKnowledge()">
+                            <i class="bi bi-search me-2"></i>搜索
+                        </button>
+                    </div>
+                    <div id="search-results"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div id="status-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-info-circle me-2"></i>系統狀態</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-activity me-2"></i>服務器狀態</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <span class="badge bg-success me-2">運行中</span>
+                                HTTP 服務器 (端口 5005)
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-success me-2">連接正常</span>
+                                PostgreSQL 數據庫
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-success me-2">就緒</span>
+                                向量存儲系統
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-clock me-2"></i>最後更新</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="last-update">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + '-section');
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+
+            // Update active nav link
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Find and activate the corresponding nav link
+            const activeLink = document.querySelector('[href="#' + sectionName + '"]');
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('show');
+            }
+        }
+
+        async function triggerPhase(phase) {
+            const statusDiv = document.getElementById('phase-status');
+            statusDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>執行中...</div>';
+
+            try {
+                const response = await fetch('/api/phases/trigger/' + phase, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>' + result.message + '</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>錯誤: ' + result.error + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
+            }
+        }
+
+        async function loadVectorStats() {
+            const statsDiv = document.getElementById('vector-stats');
+            statsDiv.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>載入中...</div>';
+
+            try {
+                const response = await fetch('/api/vector/stats');
+                const stats = await response.json();
+
+                let html = '<div class="row">';
+                for (const [phase, count] of Object.entries(stats)) {
+                    const phaseNames = {
+                        'phase1': '架構分析',
+                        'phase2': 'AI 分析',
+                        'phase3': '業務總結'
+                    };
+                    const displayName = phaseNames[phase] || phase;
+                    html += '<div class="col-md-4 mb-3">';
+                    html += '<div class="card h-100">';
+                    html += '<div class="card-body text-center">';
+                    html += '<i class="bi bi-database display-4 text-primary mb-2"></i>';
+                    html += '<h6>' + displayName + '</h6>';
+                    html += '<h4 class="text-primary">' + count + '</h4>';
+                    html += '<small class="text-muted">知識條目</small>';
+                    html += '</div></div></div>';
+                }
+                html += '</div>';
+
+                statsDiv.innerHTML = html;
+            } catch (error) {
+                statsDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>載入失敗: ' + error.message + '</div>';
+            }
+        }
+
+        async function loadPhaseKnowledge() {
+            const phase = document.getElementById('phase-select').value;
+            const knowledgeDiv = document.getElementById('phase-knowledge');
+            knowledgeDiv.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>載入中...</div>';
+
+            try {
+                const response = await fetch('/api/vector/knowledge/' + phase);
+                const knowledge = await response.json();
+
+                if (knowledge.length === 0) {
+                    knowledgeDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>該階段沒有知識內容</div>';
+                    return;
+                }
+
+                let html = '<div class="accordion" id="knowledgeAccordion">';
+                knowledge.forEach((item, index) => {
+                    const preview = item.content.length > 100 ? item.content.substring(0, 100) + '...' : item.content;
+                    html += '<div class="accordion-item">';
+                    html += '<h2 class="accordion-header" id="heading' + index + '">';
+                    html += '<button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse' + index + '">';
+                    html += '<i class="bi bi-file-text me-2"></i>' + preview;
+                    html += '</button></h2>';
+                    html += '<div id="collapse' + index + '" class="accordion-collapse collapse" data-bs-parent="#knowledgeAccordion">';
+                    html += '<div class="accordion-body"><pre class="mb-0">' + item.content + '</pre></div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+
+                knowledgeDiv.innerHTML = html;
+            } catch (error) {
+                knowledgeDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>載入失敗: ' + error.message + '</div>';
+            }
+        }
+
+        async function searchKnowledge() {
+            const query = document.getElementById('search-query').value.trim();
+            if (!query) {
+                alert('請輸入搜索關鍵詞');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>搜索中...</div>';
+
+            try {
+                const response = await fetch('/api/vector/search?q=' + encodeURIComponent(query));
+                const results = await response.json();
+
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>沒有找到相關結果</div>';
+                    return;
+                }
+
+                let html = '<div class="list-group">';
+                results.forEach((result, index) => {
+                    html += '<div class="list-group-item">';
+                    html += '<div class="d-flex w-100 justify-content-between">';
+                    html += '<h6 class="mb-1"><i class="bi bi-search me-2"></i>搜索結果 ' + (index + 1) + '</h6>';
+                    html += '<small class="text-muted">相似度: ' + (result.score * 100).toFixed(1) + '%</small>';
+                    html += '</div>';
+                    html += '<pre class="mb-1 mt-2">' + result.content + '</pre>';
+                    html += '</div>';
+                });
+                html += '</div>';
+
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>搜索失敗: ' + error.message + '</div>';
+            }
+        }
+
+        // 頁面載入時初始化
+        window.onload = function() {
+            loadVectorStats();
+            updateLastUpdate();
+        };
+
+        // 更新最後更新時間
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('last-update').innerHTML =
+                '<i class="bi bi-clock me-2"></i>' + now.toLocaleString('zh-TW');
+        }
+
+        // 每分鐘更新一次時間
+        setInterval(updateLastUpdate, 60000);
+    </script>
+</body>
+</html>

@@ -3,102 +3,25 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
 	"github.com/masato25/aika-dba/pkg/llm"
 	"github.com/masato25/aika-dba/pkg/phases"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
+	"github.com/masato25/aika-dba/pkg/web"
 )
-
-// APIServer API 服務器
-type APIServer struct {
-	router *mux.Router
-}
-
-// NewAPIServer 創建 API 服務器
-func NewAPIServer(db *sql.DB, dbType string) (*APIServer, error) {
-	server := &APIServer{
-		router: mux.NewRouter(),
-	}
-
-	server.setupRoutes()
-	return server, nil
-}
-
-// setupRoutes 設定路由
-func (s *APIServer) setupRoutes() {
-	// 健康檢查
-	s.router.HandleFunc("/health", s.handleHealth).Methods("GET")
-
-	// 資料庫總覽 - 簡化版本
-	s.router.HandleFunc("/api/database/overview", s.handleDatabaseOverview).Methods("GET")
-}
-
-// handleHealth 健康檢查
-func (s *APIServer) handleHealth(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{
-		"status": "healthy",
-		"time":   time.Now(),
-	}
-	s.writeJSON(w, response)
-}
-
-// handleDatabaseOverview 資料庫總覽 - 簡化版本
-func (s *APIServer) handleDatabaseOverview(w http.ResponseWriter, r *http.Request) {
-	response := map[string]interface{}{
-		"message": "Database analysis functionality is not yet implemented",
-		"status":  "coming_soon",
-		"time":    time.Now(),
-	}
-	s.writeJSON(w, response)
-}
-
-// Start 啟動服務器
-func (s *APIServer) Start(port int) error {
-	addr := fmt.Sprintf(":%d", port)
-	return http.ListenAndServe(addr, s.router)
-}
-
-// writeJSON 寫入 JSON 回應
-func (s *APIServer) writeJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
-}
-
-// writeToFile 將數據寫入文件
-func writeToFile(filename string, data []byte) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.Write(data)
-	return err
-}
 
 // runServer 啟動 HTTP 服務器
 func runServer(db *sql.DB, cfg *config.Config) {
-	// 建立 API 服務器
-	server, err := NewAPIServer(db, cfg.Database.Type)
-	if err != nil {
-		log.Fatalf("Failed to create API server: %v", err)
-	}
-
-	// 啟動服務器
-	log.Fatal(server.Start(cfg.App.Port))
+	web.RunServer(db, cfg)
 }
 
 // runPhase1 執行 Phase 1: 統計分析

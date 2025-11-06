@@ -1,0 +1,86 @@
+/* Aika DBA Custom Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.phase-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.phase-card:hover {
+    transform: translateY(-3px) scale(1.02);
+}
+
+.btn {
+    border-radius: 25px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.accordion-button {
+    font-weight: 600;
+}
+
+.text-primary {
+    color: #667eea !important;
+}
+
+.bg-light {
+    background: rgba(255,255,255,0.95) !important;
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 1.5s infinite;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-success { background-color: #28a745; }
+.status-warning { background-color: #ffc107; }
+.status-error { background-color: #dc3545; }
+.status-info { background-color: #17a2b8; }
