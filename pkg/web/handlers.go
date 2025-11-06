@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -89,6 +91,10 @@ func (s *APIServer) setupRoutes() {
 		api.GET("/vector/search", s.handleVectorSearch)
 		api.GET("/vector/knowledge/:phase", s.handleVectorKnowledge)
 
+		// 知識文件瀏覽
+		api.GET("/knowledge/files", s.handleKnowledgeFiles)
+		api.GET("/knowledge/files/:name", s.handleKnowledgeFile)
+
 		// 資料庫總覽
 		api.GET("/database/overview", s.handleDatabaseOverview)
 	}
@@ -148,6 +154,10 @@ func (s *APIServer) handleTriggerPhase(c *gin.Context) {
 		switch phase {
 		case "phase1":
 			err = s.runPhase1()
+		case "phase1_post":
+			err = s.runPhase1Post()
+		case "phase1_put":
+			err = s.runPhase1Put()
 		case "phase2_prefix":
 			err = s.runPhase2Prefix()
 		case "phase2":
@@ -276,6 +286,123 @@ func (s *APIServer) handleVectorKnowledge(c *gin.Context) {
 	c.JSON(200, formattedResults)
 }
 
+// handleKnowledgeFiles 列出知識文件
+func (s *APIServer) handleKnowledgeFiles(c *gin.Context) {
+	const knowledgeDir = "knowledge"
+
+	entries, err := os.ReadDir(knowledgeDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(200, []interface{}{})
+			return
+		}
+		c.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	type fileInfo struct {
+		Name     string    `json:"name"`
+		Size     int64     `json:"size_bytes"`
+		ModTime  time.Time `json:"mod_time"`
+		FullName string    `json:"-"`
+	}
+
+	files := make([]fileInfo, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			log.Printf("Warning: failed to read knowledge file info %s: %v", entry.Name(), err)
+			continue
+		}
+
+		files = append(files, fileInfo{
+			Name:    entry.Name(),
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
+		})
+	}
+
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].ModTime.After(files[j].ModTime)
+	})
+
+	c.JSON(200, files)
+}
+
+// handleKnowledgeFile 讀取特定知識文件內容
+func (s *APIServer) handleKnowledgeFile(c *gin.Context) {
+	name := c.Param("name")
+	if name == "" {
+		c.JSON(400, map[string]string{"error": "File name is required"})
+		return
+	}
+
+	name = filepath.Base(name)
+	if strings.Contains(name, "..") || strings.ContainsAny(name, `/\`) {
+		c.JSON(400, map[string]string{"error": "Invalid file name"})
+		return
+	}
+
+	knowledgeDir := "knowledge"
+	baseDir, err := filepath.Abs(knowledgeDir)
+	if err != nil {
+		c.JSON(500, map[string]string{"error": "Failed to resolve knowledge directory"})
+		return
+	}
+
+	filePath := filepath.Join(knowledgeDir, name)
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		c.JSON(500, map[string]string{"error": "Failed to resolve file path"})
+		return
+	}
+
+	if !strings.HasPrefix(absPath, baseDir) {
+		c.JSON(400, map[string]string{"error": "Invalid file path"})
+		return
+	}
+
+	data, err := os.ReadFile(absPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(404, map[string]string{"error": "File not found"})
+			return
+		}
+		c.JSON(500, map[string]string{"error": err.Error()})
+		return
+	}
+
+	response := map[string]interface{}{
+		"name":       name,
+		"size_bytes": len(data),
+		"path":       name,
+	}
+
+	if info, err := os.Stat(absPath); err == nil {
+		response["mod_time"] = info.ModTime()
+	}
+
+	var parsed interface{}
+	if strings.HasSuffix(strings.ToLower(name), ".json") {
+		if err := json.Unmarshal(data, &parsed); err == nil {
+			response["type"] = "json"
+			response["content"] = parsed
+		} else {
+			response["type"] = "text"
+			response["content"] = string(data)
+			response["parse_error"] = fmt.Sprintf("failed to parse JSON: %v", err)
+		}
+	} else {
+		response["type"] = "text"
+		response["content"] = string(data)
+	}
+
+	c.JSON(200, response)
+}
+
 // writeOutput 寫入輸出到文件
 func (s *APIServer) writeOutput(data interface{}, filename string) error {
 	jsonData, err := json.MarshalIndent(data, "", "  ")
@@ -370,6 +497,92 @@ func (s *APIServer) runPhase1() error {
 	}
 
 	logger.Info("Phase 1 completed. Results saved to knowledge/phase1_analysis.json")
+	return nil
+}
+
+// runPhase1Post 執行 Phase 1 後置處理
+func (s *APIServer) runPhase1Post() error {
+	phase := "phase1_post"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	s.progressMgr.StartPhase(phase, 4)
+	statusMessage := "Checking existing post-processing responses"
+	s.progressMgr.UpdateProgress(phase, 1, statusMessage)
+	s.progressMgr.AddLog(phase, "info", "Starting Phase 1 post-processing workflow")
+	logger.Info("Starting Phase 1 Post-Processing")
+
+	responseFile := "knowledge/phase1_post_responses.json"
+	if _, err := os.Stat(responseFile); err == nil {
+		s.progressMgr.UpdateProgress(phase, 2, "Applying user responses to post-processing workflow")
+		s.progressMgr.AddLog(phase, "info", "Found phase1_post_responses.json, applying decisions")
+	} else if os.IsNotExist(err) {
+		s.progressMgr.UpdateProgress(phase, 2, "Generating review questions for Phase 1 results")
+		s.progressMgr.AddLog(phase, "info", "No user responses found, generating questions for review")
+	} else {
+		s.progressMgr.AddLog(phase, "warn", fmt.Sprintf("Unable to check response file: %v", err))
+	}
+
+	s.progressMgr.UpdateProgress(phase, 3, "Running Phase 1 post-processing")
+
+	runner, err := phases.NewPhase1PostRunner(s.config)
+	if err != nil {
+		return fmt.Errorf("failed to create Phase 1 post runner: %w", err)
+	}
+
+	if err := runner.Run(); err != nil {
+		return fmt.Errorf("Phase 1 post-processing failed: %w", err)
+	}
+
+	s.progressMgr.UpdateProgress(phase, 4, "Phase 1 post-processing completed")
+	s.progressMgr.AddLog(phase, "info", "Phase 1 post-processing completed successfully")
+	logger.Info("Phase 1 post-processing completed successfully")
+	return nil
+}
+
+// runPhase1Put 執行 Phase 1 Put
+func (s *APIServer) runPhase1Put() error {
+	phase := "phase1_put"
+	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
+
+	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
+
+	s.progressMgr.StartPhase(phase, 4)
+	s.progressMgr.UpdateProgress(phase, 1, "Validating prerequisites for Phase 1 put")
+	s.progressMgr.AddLog(phase, "info", "Starting Phase 1 put workflow")
+	logger.Info("Starting Phase 1 Put: updating Phase 1 analysis with post decisions")
+
+	requiredFiles := []string{
+		"knowledge/phase1_analysis.json",
+		"knowledge/phase1_post_analysis.json",
+	}
+
+	for _, file := range requiredFiles {
+		if _, err := os.Stat(file); err != nil {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("required knowledge file missing: %s", file)
+			}
+			return fmt.Errorf("failed to access %s: %w", file, err)
+		}
+	}
+
+	s.progressMgr.UpdateProgress(phase, 2, "Preparing Phase 1 put runner")
+
+	runner, err := phases.NewPhase1PutRunner(s.config)
+	if err != nil {
+		return fmt.Errorf("failed to create Phase 1 put runner: %w", err)
+	}
+
+	s.progressMgr.UpdateProgress(phase, 3, "Applying post-processing decisions to Phase 1 analysis")
+
+	if err := runner.Run(); err != nil {
+		return fmt.Errorf("Phase 1 put failed: %w", err)
+	}
+
+	s.progressMgr.UpdateProgress(phase, 4, "Phase 1 put completed successfully")
+	s.progressMgr.AddLog(phase, "info", "Phase 1 analysis updated with Phase 1 post decisions")
+	logger.Info("Phase 1 Put completed successfully")
 	return nil
 }
 
