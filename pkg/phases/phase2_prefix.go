@@ -1129,6 +1129,11 @@ func (p *Phase2PrefixRunner) writeOutput(data interface{}, filename string) erro
 	return nil
 }
 
+// containsString 檢查字符串是否包含子字符串（不區分大小寫）
+func containsString(s, substr string) bool {
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
+
 // containsStringInSlice 檢查字符串是否在切片中
 func containsStringInSlice(slice []string, item string) bool {
 	for _, s := range slice {

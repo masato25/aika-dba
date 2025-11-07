@@ -1,0 +1,330 @@
+package main
+
+import (
+	"database/sql"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
+	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/llm"
+	"github.com/masato/Dev/app/go/aika-dba/pkg/preparer"
+	"github.com/masato/Dev/app/go/aika-dba/pkg/query"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
+)
+
+func main() {
+	var command = flag.String("command", "", "Command to run: prepare, query")
+	var question = flag.String("question", "", "Question for query command")
+	flag.Parse()
+
+	// 載入配置
+	cfg, err := config.LoadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// 連接到資料庫
+	db, err := connectDatabase(cfg)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// 創建知識管理器
+	km, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create knowledge manager: %v", err)
+	}
+	defer km.Close()
+
+	// 創建 LLM 客戶端
+	llmClient := llm.NewClient(cfg)
+
+	// 創建日誌器
+	logger := log.New(os.Stdout, "[AikaDBA] ", log.LstdFlags)
+
+	switch *command {
+	case "prepare":
+		runPrepare(db, km, logger)
+	case "query":
+		if *question == "" {
+			log.Fatal("Question is required for query command")
+		}
+		runQuery(km, llmClient, *question, logger)
+	default:
+		fmt.Println("Usage:")
+		fmt.Println("  -command prepare                    # Prepare knowledge base")
+		fmt.Println("  -command query -question 'your question'  # Query knowledge base")
+		os.Exit(1)
+	}
+}
+
+func connectDatabase(cfg *config.Config) (*sql.DB, error) {
+	var dsn string
+	switch cfg.Database.Type {
+	case "postgres":
+		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName)
+	case "mysql":
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+			cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName)
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", cfg.Database.Type)
+	}
+
+	db, err := sql.Open(cfg.Database.Type, dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func runPrepare(db *sql.DB, km *vectorstore.KnowledgeManager, logger *log.Logger) {
+	logger.Println("Starting knowledge base preparation...")
+
+	preparer := preparer.NewKnowledgePreparer(db, km, logger)
+	if err := preparer.PrepareKnowledge(); err != nil {
+		log.Fatalf("Knowledge preparation failed: %v", err)
+	}
+
+	logger.Println("Knowledge base preparation completed successfully")
+}
+
+func runQuery(km *vectorstore.KnowledgeManager, llmClient *llm.Client, question string, logger *log.Logger) {
+	logger.Printf("Processing query: %s", question)
+
+	queryInterface := query.NewQueryInterface(km, llmClient, logger)
+	answer, err := queryInterface.Query(question)
+	if err != nil {
+		log.Fatalf("Query failed: %v", err)
+	}
+
+	fmt.Println("\nAnswer:")
+	fmt.Println(answer)
+}
+
+// runServer 啟動 HTTP 服務器
+func runServer(db *sql.DB, cfg *config.Config) {
+	web.RunServer(db, cfg)
+}
+
+// runPhase1 執行 Phase 1: 統計分析
+func runPhase1(db *sql.DB, cfg *config.Config) {
+	analyzer := analyzer.NewDatabaseAnalyzer(db)
+	runner, err := phases.NewPhase1Runner(analyzer, cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 1 runner: %v", err)
+	}
+
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 1 failed: %v", err)
+	}
+}
+
+// runPhase2 執行 Phase 2: AI 分析
+func runPhase2(db *sql.DB, cfg *config.Config) {
+	runner, err := phases.NewPhase2Runner(cfg, db)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 2 runner: %v", err)
+	}
+
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 2 failed: %v", err)
+	}
+}
+
+// runPhase2Prefix 執行 Phase 2 前置處理: 欄位深度分析
+func runPhase2Prefix(cfg *config.Config) {
+	log.Println("DEBUG: Starting runPhase2Prefix function")
+
+	log.Println("DEBUG: Creating Phase 2 prefix runner...")
+	runner, err := phases.NewPhase2PrefixRunner(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create Phase 2 prefix runner: %v", err)
+	}
+	log.Println("DEBUG: Phase 2 prefix runner created successfully")
+
+	log.Println("DEBUG: Calling runner.Run()...")
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 2 prefix failed: %v", err)
+	}
+	log.Println("DEBUG: Phase 2 prefix completed successfully")
+}
+
+// runPhase3 執行 Phase 3: 商業邏輯描述生成
+func runPhase3(cfg *config.Config) {
+	// 創建 LLM 客戶端
+	llmClient := llm.NewClient(cfg)
+
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create knowledge manager: %v", err)
+	}
+	defer knowledgeMgr.Close()
+
+	// 創建 Phase 3 執行器
+	runner := phases.NewPhase3Runner(cfg, llmClient, knowledgeMgr)
+
+	if err := runner.Run(context.Background()); err != nil {
+		log.Fatalf("Phase 3 failed: %v", err)
+	}
+}
+
+// runMarketingQuery 執行營銷查詢
+func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
+	if query == "" {
+		log.Fatalf("Query parameter is required for marketing command. Use -query flag.")
+	}
+
+	log.Printf("Executing marketing query: %s", query)
+
+	runner := phases.NewMarketingQueryRunner(cfg, db)
+
+	result, err := runner.ExecuteMarketingQuery(query)
+	if err != nil {
+		log.Fatalf("Marketing query failed: %v", err)
+	}
+
+	// 輸出結果
+	fmt.Println("\n=== Marketing Query Results ===")
+	fmt.Printf("Query: %s\n", result.Query)
+	fmt.Printf("Timestamp: %s\n", result.Timestamp.Format("2006-01-02 15:04:05"))
+
+	if result.Error != "" {
+		fmt.Printf("Error: %s\n", result.Error)
+		return
+	}
+
+	fmt.Printf("SQL Query: %s\n", result.SQLQuery)
+	fmt.Printf("Explanation: %s\n", result.Explanation)
+	fmt.Printf("Results: %d rows\n", len(result.Results))
+
+	if len(result.Results) > 0 {
+		fmt.Println("\nSample Results:")
+		// 顯示前 5 行結果
+		for i, row := range result.Results {
+			if i >= 5 {
+				break
+			}
+			fmt.Printf("Row %d: ", i+1)
+			for key, value := range row {
+				fmt.Printf("%s=%v ", key, value)
+			}
+			fmt.Println()
+		}
+	}
+
+	if result.BusinessInsights != "" {
+		fmt.Println("\nBusiness Insights:")
+		fmt.Println(result.BusinessInsights)
+	}
+
+	// 保存查詢結果
+	if err := runner.SaveQueryResult(result); err != nil {
+		log.Printf("Warning: Failed to save query result: %v", err)
+	} else {
+		log.Println("Query result saved to vector store")
+	}
+}
+
+// runDeleteVectorData 執行向量數據刪除
+func runDeleteVectorData(cfg *config.Config, phasesStr string) {
+	log.Printf("Starting vector data deletion for phases: %s", phasesStr)
+
+	// 創建知識管理器
+	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
+	if err != nil {
+		log.Fatalf("Failed to create knowledge manager: %v", err)
+	}
+	defer knowledgeMgr.Close()
+
+	// 解析要刪除的 phases
+	phaseList := strings.Split(phasesStr, ",")
+	for i, phase := range phaseList {
+		phaseList[i] = strings.TrimSpace(phase)
+	}
+
+	// 刪除每個 phase 的向量數據
+	for _, phase := range phaseList {
+		log.Printf("Deleting vector data for phase: %s", phase)
+		if err := knowledgeMgr.DeletePhaseKnowledge(phase); err != nil {
+			log.Printf("Warning: Failed to delete phase %s knowledge: %v", phase, err)
+		} else {
+			log.Printf("Successfully deleted vector data for phase: %s", phase)
+		}
+	}
+
+	// 顯示統計信息
+	stats, err := knowledgeMgr.GetKnowledgeStats()
+	if err != nil {
+		log.Printf("Warning: Failed to get knowledge stats: %v", err)
+	} else {
+		log.Printf("Vector data deletion completed. Current stats: %+v", stats)
+	}
+}
+
+func main() {
+	// 命令行參數
+	var command = flag.String("command", "server", "Command to run: server, phase1, phase2, phase2_prefix, phase3, marketing, delete-vector")
+	var configPath = flag.String("config", "config.yaml", "Path to config file")
+	var phases = flag.String("phases", "phase3", "Comma-separated list of phases to delete (for delete-vector command)")
+	var query = flag.String("query", "", "Natural language query for marketing command")
+	flag.Parse()
+
+	// 載入配置
+	cfg, err := config.LoadConfig(*configPath)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// 建立資料庫連接
+	log.Println("DEBUG: Opening database connection...")
+	db, err := sql.Open(cfg.Database.Type, cfg.GetDatabaseDSN())
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+	log.Println("DEBUG: Database connection opened")
+
+	// 測試資料庫連接
+	log.Println("DEBUG: Testing database connection with Ping()...")
+	if err := db.Ping(); err != nil {
+		log.Printf("Warning: Failed to ping database: %v", err)
+		log.Println("Continuing with limited functionality...")
+	} else {
+		log.Println("DEBUG: Database ping successful")
+	}
+
+	log.Printf("Connected to %s database at %s:%d", cfg.Database.Type, cfg.Database.Host, cfg.Database.Port)
+
+	// 根據命令執行不同的操作
+	switch *command {
+	case "server":
+		runServer(db, cfg)
+	case "phase1":
+		runPhase1(db, cfg)
+	case "phase2":
+		runPhase2(db, cfg)
+	case "phase2_prefix":
+		runPhase2Prefix(cfg)
+	case "phase3":
+		runPhase3(cfg)
+	case "marketing":
+		runMarketingQuery(db, cfg, *query)
+	case "delete-vector":
+		runDeleteVectorData(cfg, *phases)
+	default:
+		log.Fatalf("Unknown command: %s. Available commands: server, phase1, phase2, phase2_prefix, phase3, marketing, delete-vector", *command)
+	}
+}

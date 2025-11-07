@@ -158,10 +158,6 @@ func (s *APIServer) handleTriggerPhase(c *gin.Context) {
 		switch phase {
 		case "phase1":
 			err = s.runPhase1()
-		case "phase1_post":
-			err = s.runPhase1Post()
-		case "phase1_put":
-			err = s.runPhase1Put()
 		case "phase2_prefix":
 			err = s.runPhase2Prefix()
 		case "phase2":
@@ -529,113 +525,6 @@ func (s *APIServer) runPhase1() error {
 	}
 
 	logger.Info("Phase 1 completed. Results saved to knowledge/phase1_analysis.json")
-	return nil
-}
-
-// runPhase1Post 執行 Phase 1 後置處理
-func (s *APIServer) runPhase1Post() error {
-	phase := "phase1_post"
-	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
-
-	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
-
-	s.progressMgr.StartPhase(phase, 4)
-	statusMessage := "Checking existing post-processing responses"
-	s.progressMgr.UpdateProgress(phase, 1, statusMessage)
-	s.progressMgr.AddLog(phase, "info", "Starting Phase 1 post-processing workflow")
-	logger.Info("Starting Phase 1 Post-Processing")
-
-	responseFile := "knowledge/phase1_post_responses.json"
-	if _, err := os.Stat(responseFile); err == nil {
-		s.progressMgr.UpdateProgress(phase, 2, "Applying user responses to post-processing workflow")
-		s.progressMgr.AddLog(phase, "info", "Found phase1_post_responses.json, applying decisions")
-	} else if os.IsNotExist(err) {
-		s.progressMgr.UpdateProgress(phase, 2, "Generating review questions for Phase 1 results")
-		s.progressMgr.AddLog(phase, "info", "No user responses found, generating questions for review")
-	} else {
-		s.progressMgr.AddLog(phase, "warn", fmt.Sprintf("Unable to check response file: %v", err))
-	}
-
-	s.progressMgr.UpdateProgress(phase, 3, "Running Phase 1 post-processing")
-
-	runner, err := phases.NewPhase1PostRunner(s.config)
-	if err != nil {
-		return fmt.Errorf("failed to create Phase 1 post runner: %w", err)
-	}
-
-	if err := runner.Run(); err != nil {
-		return fmt.Errorf("Phase 1 post-processing failed: %w", err)
-	}
-
-	s.progressMgr.UpdateProgress(phase, 4, "Phase 1 post-processing completed")
-	s.progressMgr.AddLog(phase, "info", "Phase 1 post-processing completed successfully")
-	logger.Info("Phase 1 post-processing completed successfully")
-	return nil
-}
-
-// runPhase1Put 執行 Phase 1 Put
-func (s *APIServer) runPhase1Put() error {
-	phase := "phase1_put"
-	debugEnabled := strings.ToLower(s.config.Logging.Level) == "debug"
-
-	logger := progress.NewPhaseLogger(phase, s.progressMgr, debugEnabled)
-
-	s.progressMgr.StartPhase(phase, 4)
-	s.progressMgr.UpdateProgress(phase, 1, "Validating prerequisites for Phase 1 put")
-	s.progressMgr.AddLog(phase, "info", "Starting Phase 1 put workflow")
-	logger.Info("Starting Phase 1 Put: updating Phase 1 analysis with post decisions")
-
-	requiredFiles := []string{
-		"knowledge/phase1_analysis.json",
-		"knowledge/phase1_post_analysis.json",
-	}
-
-	for _, file := range requiredFiles {
-		if _, err := os.Stat(file); err != nil {
-			if os.IsNotExist(err) {
-				if file == "knowledge/phase1_post_analysis.json" {
-					// 自動觸發 phase1_post 以生成所需的分析文件
-					autoMsg := "Required phase1_post_analysis.json missing, auto-running Phase 1 Post"
-					s.progressMgr.AddLog(phase, "warn", autoMsg)
-					logger.Warn(autoMsg)
-					s.progressMgr.UpdateProgress(phase, 1, "Auto-running Phase 1 post-processing to build prerequisites")
-
-					if err := s.runPhase1Post(); err != nil {
-						return fmt.Errorf("phase1_put prerequisites failed: %w", err)
-					}
-
-					if _, recheckErr := os.Stat(file); recheckErr != nil {
-						if os.IsNotExist(recheckErr) {
-							return fmt.Errorf("required knowledge file still missing after Phase 1 post-processing: %s", file)
-						}
-						return fmt.Errorf("failed to access %s: %w", file, recheckErr)
-					}
-					// 重新設定進度狀態
-					s.progressMgr.UpdateProgress(phase, 1, "Phase 1 post-processing prerequisites generated")
-					continue
-				}
-				return fmt.Errorf("required knowledge file missing: %s", file)
-			}
-			return fmt.Errorf("failed to access %s: %w", file, err)
-		}
-	}
-
-	s.progressMgr.UpdateProgress(phase, 2, "Preparing Phase 1 put runner")
-
-	runner, err := phases.NewPhase1PutRunner(s.config)
-	if err != nil {
-		return fmt.Errorf("failed to create Phase 1 put runner: %w", err)
-	}
-
-	s.progressMgr.UpdateProgress(phase, 3, "Applying post-processing decisions to Phase 1 analysis")
-
-	if err := runner.Run(); err != nil {
-		return fmt.Errorf("Phase 1 put failed: %w", err)
-	}
-
-	s.progressMgr.UpdateProgress(phase, 4, "Phase 1 put completed successfully")
-	s.progressMgr.AddLog(phase, "info", "Phase 1 analysis updated with Phase 1 post decisions")
-	logger.Info("Phase 1 Put completed successfully")
 	return nil
 }
 

@@ -47,6 +47,8 @@ func (p *Phase1Runner) Run() error {
 
 	// 分析每個表格
 	tableAnalyses := make(map[string]interface{})
+	ignoredTables := make([]string, 0)
+
 	for _, tableName := range tables {
 		log.Printf("Analyzing table: %s", tableName)
 
@@ -57,16 +59,26 @@ func (p *Phase1Runner) Run() error {
 			continue
 		}
 
+		// 檢查是否為空表格
+		if p.isEmptyTable(analysis) {
+			log.Printf("Table %s is empty (0 records), marking as default ignored", tableName)
+			ignoredTables = append(ignoredTables, tableName)
+			continue // 不將空表格加入分析結果
+		}
+
 		tableAnalyses[tableName] = analysis
 	}
 
 	// 創建輸出
 	output := map[string]interface{}{
-		"database":      p.config.Database.DBName,
-		"database_type": p.config.Database.Type,
-		"timestamp":     time.Now(),
-		"tables_count":  len(tables),
-		"tables":        tableAnalyses,
+		"database":       p.config.Database.DBName,
+		"database_type":  p.config.Database.Type,
+		"timestamp":      time.Now(),
+		"tables_count":   len(tables),
+		"analyzed_count": len(tableAnalyses),
+		"ignored_count":  len(ignoredTables),
+		"tables":         tableAnalyses,
+		"ignored_tables": ignoredTables,
 	}
 
 	// 寫入文件
@@ -74,7 +86,7 @@ func (p *Phase1Runner) Run() error {
 		return err
 	}
 
-	// 將知識存儲到向量數據庫
+	// 將知識存儲到向量數據庫（只包含非忽略的表格）
 	if err := p.knowledgeMgr.StorePhaseKnowledge("phase1", output); err != nil {
 		log.Printf("Warning: Failed to store phase1 knowledge in vector store: %v", err)
 		// 不返回錯誤，因為 JSON 文件已經寫入成功
@@ -83,6 +95,24 @@ func (p *Phase1Runner) Run() error {
 	}
 
 	return nil
+}
+
+// isEmptyTable 檢查表格是否為空（沒有任何記錄）
+func (p *Phase1Runner) isEmptyTable(analysis map[string]interface{}) bool {
+	// 從分析結果中檢查 row_count
+	if stats, ok := analysis["stats"].(map[string]interface{}); ok {
+		if rowCount, ok := stats["row_count"]; ok {
+			switch v := rowCount.(type) {
+			case float64:
+				return v == 0
+			case int:
+				return v == 0
+			case int64:
+				return v == 0
+			}
+		}
+	}
+	return false
 }
 
 // writeOutput 寫入輸出到文件
@@ -104,7 +134,10 @@ func (p *Phase1Runner) writeOutput(data interface{}, filename string) error {
 	}
 
 	log.Printf("Phase 1 analysis completed. Results saved to %s", filename)
-	log.Printf("Analyzed %d tables with schema and sample data", len(data.(map[string]interface{})["tables"].(map[string]interface{})))
+	log.Printf("Total tables: %d, Analyzed: %d, Ignored (empty): %d",
+		len(data.(map[string]interface{})["tables"].(map[string]interface{}))+len(data.(map[string]interface{})["ignored_tables"].([]string)),
+		len(data.(map[string]interface{})["tables"].(map[string]interface{})),
+		len(data.(map[string]interface{})["ignored_tables"].([]string)))
 
 	return nil
 }
