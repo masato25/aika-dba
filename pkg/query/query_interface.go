@@ -35,8 +35,28 @@ func (qi *QueryInterface) buildContext(results []vectorstore.KnowledgeResult) st
 	var ctx strings.Builder
 	ctx.WriteString("資料庫知識:\n")
 
+	// 限制上下文長度，避免超過 LLM 限制
+	maxLength := 2000 // 限制上下文總長度
+	currentLength := 0
+
 	for i, result := range results {
-		ctx.WriteString(fmt.Sprintf("知識塊 %d:\n%s\n\n", i+1, result.Content))
+		content := result.Content
+		if currentLength+len(content) > maxLength {
+			// 如果添加這個內容會超過限制，截斷它
+			remaining := maxLength - currentLength
+			if remaining > 100 { // 至少保留 100 字符
+				content = content[:remaining-3] + "..."
+			} else {
+				break
+			}
+		}
+
+		ctx.WriteString(fmt.Sprintf("知識塊 %d:\n%s\n\n", i+1, content))
+		currentLength += len(content)
+
+		if currentLength >= maxLength {
+			break
+		}
 	}
 
 	return ctx.String()
@@ -44,14 +64,12 @@ func (qi *QueryInterface) buildContext(results []vectorstore.KnowledgeResult) st
 
 // buildPrompt 構建 LLM 提示
 func (qi *QueryInterface) buildPrompt(question, context string) string {
-	template := "Based on the following database knowledge, answer the user's question.\n\n" +
-		"%s\n\n" +
-		"Question: %s\n\n" +
-		"If you need to get actual data from the database, provide an SQL query statement (enclosed in ```sql).\n" +
-		"Otherwise, answer directly. If you need more information, ask the user.\n\n" +
-		"Response format:\n" +
-		"- If SQL needed: Explain what data you need, then provide the SQL\n" +
-		"- If not needed: Answer directly"
+	template := "基於以下資料庫知識回答用戶問題:\n\n%s\n\n問題: %s\n\n" +
+		"如果需要從資料庫獲取實際數據，請提供 SQL 查詢語句（用 ```sql 包圍）。\n" +
+		"否則直接回答。如果需要更多資訊，請詢問用戶。\n\n" +
+		"回應格式:\n" +
+		"- 需要 SQL 時: 解釋需要什麼數據，然後提供 SQL\n" +
+		"- 不需要時: 直接回答"
 	return fmt.Sprintf(template, context, question)
 }
 
@@ -60,7 +78,7 @@ func (qi *QueryInterface) Query(question string) (string, error) {
 	qi.logger.Printf("處理查詢: %s", question)
 
 	// 檢索相關知識
-	results, err := qi.km.RetrievePhaseKnowledge("database_knowledge", question, 5)
+	results, err := qi.km.RetrievePhaseKnowledge("database_knowledge", question, 3)
 	if err != nil {
 		return "", fmt.Errorf("檢索知識失敗: %v", err)
 	}

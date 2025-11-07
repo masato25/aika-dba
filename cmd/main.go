@@ -15,6 +15,7 @@ import (
 	"github.com/masato25/aika-dba/pkg/preparer"
 	"github.com/masato25/aika-dba/pkg/query"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
+	"github.com/masato25/aika-dba/web"
 )
 
 func main() {
@@ -56,10 +57,13 @@ func main() {
 			log.Fatal("Question is required for query command")
 		}
 		runQuery(km, llmClient, db, *question, logger)
+	case "web":
+		runWeb(db, cfg)
 	default:
 		fmt.Println("Usage:")
 		fmt.Println("  -command prepare                    # Prepare knowledge base")
 		fmt.Println("  -command query -question 'your question'  # Query knowledge base")
+		fmt.Println("  -command web                        # Start web interface")
 		os.Exit(1)
 	}
 }
@@ -111,4 +115,11 @@ func runQuery(km *vectorstore.KnowledgeManager, llmClient *llm.Client, db *sql.D
 
 	fmt.Println("\nAnswer:")
 	fmt.Println(answer)
+}
+
+func runWeb(db *sql.DB, cfg *config.Config) {
+	logger := log.New(os.Stdout, "[Web] ", log.LstdFlags)
+	logger.Println("Starting web interface...")
+
+	web.RunServer(db, cfg)
 }

@@ -53,6 +53,8 @@ type LLMConfig struct {
 	Host           string `yaml:"host"` // 本地 LLM 主機
 	Port           int    `yaml:"port"` // 本地 LLM 端口
 	TimeoutSeconds int    `yaml:"timeout_seconds"`
+	ContextSize    int    `yaml:"context_size"` // 上下文大小 (tokens)
+	MaxTokens      int    `yaml:"max_tokens"`   // 最大響應 tokens
 }
 
 // VectorStoreConfig 向量存儲配置
@@ -153,6 +155,16 @@ func overrideWithEnv(config Config) Config {
 	if llmPort := os.Getenv("LLM_PORT"); llmPort != "" {
 		if port, err := strconv.Atoi(llmPort); err == nil {
 			config.LLM.Port = port
+		}
+	}
+	if contextSize := os.Getenv("LLM_CONTEXT_SIZE"); contextSize != "" {
+		if size, err := strconv.Atoi(contextSize); err == nil {
+			config.LLM.ContextSize = size
+		}
+	}
+	if maxTokens := os.Getenv("LLM_MAX_TOKENS"); maxTokens != "" {
+		if tokens, err := strconv.Atoi(maxTokens); err == nil {
+			config.LLM.MaxTokens = tokens
 		}
 	}
 

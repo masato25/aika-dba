@@ -126,6 +126,18 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="#prepare" onclick="showSection('prepare')">
+                        <i class="bi bi-database-add"></i>
+                        知識庫準備
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#query" onclick="showSection('query')">
+                        <i class="bi bi-chat-dots"></i>
+                        自然語言查詢
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="#phases" onclick="showSection('phases')">
                         <i class="bi bi-play-circle"></i>
                         Phase 執行
@@ -216,29 +228,111 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 mb-3">
-                            <button class="btn btn-primary w-100" onclick="showSection('phases')">
+                            <button class="btn btn-primary w-100" onclick="showSection('prepare')">
+                                <i class="bi bi-database-add me-2"></i>
+                                準備知識庫
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-success w-100" onclick="showSection('query')">
+                                <i class="bi bi-chat-dots me-2"></i>
+                                自然語言查詢
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-info w-100" onclick="showSection('phases')">
                                 <i class="bi bi-play-circle me-2"></i>
                                 執行 Phase
                             </button>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <button class="btn btn-info w-100" onclick="showSection('vector')">
+                            <button class="btn btn-warning w-100" onclick="showSection('vector')">
                                 <i class="bi bi-brain me-2"></i>
                                 查看向量
                             </button>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-success w-100" onclick="showSection('search')">
-                                <i class="bi bi-search me-2"></i>
-                                搜索知識
-                            </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Knowledge Preparation Section -->
+        <div id="prepare-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-database-add me-2"></i>知識庫準備</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>功能說明</h5>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-warning w-100" onclick="showSection('status')">
-                                <i class="bi bi-info-circle me-2"></i>
-                                系統狀態
-                            </button>
+                        <div class="card-body">
+                            <p>知識庫準備功能會掃描數據庫中的所有表格，分析其結構、約束和樣本數據，然後將這些知識存儲到向量數據庫中，以便後續的自然語言查詢使用。</p>
+                            <div class="alert alert-info">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                <strong>提示：</strong>準備知識庫通常只需要執行一次，除非數據庫結構發生重大變化。
+                            </div>
                         </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-play-circle me-2"></i>執行準備</h5>
+                        </div>
+                        <div class="card-body">
+                            <button class="btn btn-primary btn-lg w-100 mb-3" onclick="prepareKnowledge()">
+                                <i class="bi bi-database-add me-2"></i>
+                                開始準備知識庫
+                            </button>
+                            <div id="prepare-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Section -->
+        <div id="query-section" class="content-section" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-chat-dots me-2"></i>自然語言查詢</h2>
+                <button class="btn btn-outline-secondary" onclick="showSection('dashboard')">
+                    <i class="bi bi-arrow-left me-1"></i>返回儀表板
+                </button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-question-circle me-2"></i>查詢數據庫</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="query-input" class="form-label">請輸入您的問題</label>
+                        <textarea class="form-control" id="query-input" rows="3" placeholder="例如：統計商品銷售記錄、顯示所有客戶的訂單總額、查詢最暢銷的產品..."></textarea>
+                        <div id="query-suggestions" class="mt-2" style="display: none;">
+                            <small class="text-muted">建議：</small>
+                            <div id="suggestions-list" class="d-flex flex-wrap gap-1 mt-1"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-lg" onclick="executeQuery()">
+                        <i class="bi bi-send me-2"></i>
+                        執行查詢
+                    </button>
+                </div>
+            </div>
+
+            <div id="query-results" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-chat-quote me-2"></i>查詢結果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="query-result-content"></div>
                     </div>
                 </div>
             </div>
@@ -969,6 +1063,7 @@
             loadKnowledgeFiles();
             connectProgressWebSocket();
             updateLastUpdate();
+            initializeQuerySuggestions();
         };
 
         // 更新最後更新時間
@@ -980,6 +1075,97 @@
 
         // 每分鐘更新一次時間
         setInterval(updateLastUpdate, 60000);
+
+        async function prepareKnowledge() {
+            const statusDiv = document.getElementById('prepare-status');
+            statusDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>正在準備知識庫，請稍候...</div>';
+
+            try {
+                const response = await fetch('/api/knowledge/prepare', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    statusDiv.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>' + result.message + '</div>';
+                    // 重新載入向量統計信息
+                    setTimeout(() => {
+                        loadVectorStats();
+                    }, 1000);
+                } else {
+                    statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>準備失敗: ' + (result.error || '未知錯誤') + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
+            }
+        }
+
+        async function executeQuery() {
+            const queryInput = document.getElementById('query-input');
+            const resultsDiv = document.getElementById('query-results');
+            const resultContent = document.getElementById('query-result-content');
+
+            const question = queryInput.value.trim();
+            if (!question) {
+                alert('請輸入查詢問題');
+                return;
+            }
+
+            resultContent.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>正在處理查詢...</div>';
+            resultsDiv.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/knowledge/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // 格式化結果顯示
+                    let html = '<div class="alert alert-success mb-3">';
+                    html += '<h6><i class="bi bi-check-circle me-2"></i>查詢成功</h6>';
+                    html += '</div>';
+
+                    // 將結果按行分割並格式化
+                    const lines = result.result.split('\n');
+                    html += '<div class="query-result-content">';
+                    for (const line of lines) {
+                        if (line.trim().startsWith('SQL Command:')) {
+                            html += '<div class="mb-3"><strong>SQL 命令:</strong></div>';
+                        } else if (line.trim().startsWith('SQL Output:')) {
+                            html += '<div class="mb-3"><strong>查詢結果:</strong></div>';
+                        } else if (line.trim()) {
+                            // 檢查是否是 SQL 代碼塊
+                            if (line.includes('```sql') || (line.includes('SELECT') && line.includes('FROM'))) {
+                                html += '<pre class="bg-light p-2 rounded mb-2"><code>' + escapeHtml(line) + '</code></pre>';
+                            } else {
+                                html += '<p class="mb-1">' + escapeHtml(line) + '</p>';
+                            }
+                        } else {
+                            html += '<br>';
+                        }
+                    }
+                    html += '</div>';
+
+                    resultContent.innerHTML = html;
+                } else {
+                    resultContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>查詢失敗: ' + (result.error || '未知錯誤') + '</div>';
+                }
+            } catch (error) {
+                resultContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
+            }
+        }
 
         function displayProgress(progress) {
             const progressBarsDiv = document.getElementById('progress-bars');
@@ -1090,6 +1276,128 @@
                 'phase3': 'Phase 3 - 業務邏輯總結'
             };
             return names[phase] || phase;
+        }
+
+        // 查詢建議功能
+        let suggestionTimeout = null;
+
+        function initializeQuerySuggestions() {
+            const queryInput = document.getElementById('query-input');
+            if (queryInput) {
+                queryInput.addEventListener('input', handleQueryInput);
+                queryInput.addEventListener('focus', showSuggestions);
+                queryInput.addEventListener('blur', hideSuggestionsDelayed);
+            }
+        }
+
+        function handleQueryInput(event) {
+            const partialQuery = event.target.value.trim();
+            
+            // 清除之前的定時器
+            if (suggestionTimeout) {
+                clearTimeout(suggestionTimeout);
+            }
+            
+            // 如果輸入太短，隱藏建議
+            if (partialQuery.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            
+            // 延遲 500ms 後獲取建議，避免過於頻繁的請求
+            suggestionTimeout = setTimeout(() => {
+                fetchQuerySuggestions(partialQuery);
+            }, 500);
+        }
+
+        async function fetchQuerySuggestions(partialQuery) {
+            try {
+                const response = await fetch('/api/knowledge/suggest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        partial_query: partialQuery
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    displaySuggestions(result.suggestions);
+                } else {
+                    hideSuggestions();
+                }
+            } catch (error) {
+                console.error('獲取建議失敗:', error);
+                hideSuggestions();
+            }
+        }
+
+        function displaySuggestions(suggestions) {
+            const suggestionsDiv = document.getElementById('query-suggestions');
+            const suggestionsList = document.getElementById('suggestions-list');
+            
+            if (!suggestions || suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            let html = '';
+            suggestions.forEach((suggestion, index) => {
+                const suggestionId = 'suggestion-' + index;
+                html += '<button type="button" class="btn btn-outline-secondary btn-sm me-1 mb-1 suggestion-btn" id="' + suggestionId + '" data-suggestion="' + escapeHtml(suggestion) + '">';
+                html += '<i class="bi bi-lightbulb me-1"></i>' + escapeHtml(suggestion);
+                html += '</button>';
+            });
+            
+            suggestionsList.innerHTML = html;
+            
+            // 添加事件監聽器
+            document.querySelectorAll('.suggestion-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const suggestion = this.getAttribute('data-suggestion');
+                    selectSuggestion(suggestion);
+                });
+            });
+            
+            suggestionsDiv.style.display = 'block';
+        }
+
+        function hideSuggestions() {
+            const suggestionsDiv = document.getElementById('query-suggestions');
+            suggestionsDiv.style.display = 'none';
+        }
+
+        function hideSuggestionsDelayed() {
+            // 延遲隱藏，讓用戶有時間點擊建議
+            setTimeout(() => {
+                hideSuggestions();
+            }, 200);
+        }
+
+        function showSuggestions() {
+            const queryInput = document.getElementById('query-input');
+            const partialQuery = queryInput.value.trim();
+            
+            if (partialQuery.length >= 2) {
+                const suggestionsDiv = document.getElementById('query-suggestions');
+                if (suggestionsDiv.style.display === 'none') {
+                    // 如果有建議內容，顯示它們
+                    const suggestionsList = document.getElementById('suggestions-list');
+                    if (suggestionsList && suggestionsList.innerHTML.trim()) {
+                        suggestionsDiv.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        function selectSuggestion(suggestion) {
+            const queryInput = document.getElementById('query-input');
+            queryInput.value = suggestion;
+            hideSuggestions();
+            queryInput.focus();
         }
     </script>
 </body>

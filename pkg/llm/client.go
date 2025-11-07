@@ -55,6 +55,11 @@ func (c *Client) generateOpenAICompletion(ctx context.Context, prompt string) (s
 		"temperature": 0.7,
 	}
 
+	// 添加 max_tokens 如果配置了
+	if c.config.LLM.MaxTokens > 0 {
+		requestBody["max_tokens"] = c.config.LLM.MaxTokens
+	}
+
 	jsonData, err := json.Marshal(requestBody)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal request: %w", err)
@@ -116,6 +121,11 @@ func (c *Client) generateLocalOpenAICompletion(ctx context.Context, prompt strin
 			},
 		},
 		"temperature": 0.7,
+	}
+
+	// 添加 max_tokens 如果配置了
+	if c.config.LLM.MaxTokens > 0 {
+		requestBody["max_tokens"] = c.config.LLM.MaxTokens
 	}
 
 	jsonData, err := json.Marshal(requestBody)

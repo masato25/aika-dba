@@ -32,8 +32,11 @@ func (kp *KnowledgePreparer) PrepareKnowledge() error {
 	// 獲取所有表格
 	tables, err := kp.getTables()
 	if err != nil {
+		kp.logger.Printf("獲取表格失敗: %v", err)
 		return fmt.Errorf("獲取表格失敗: %v", err)
 	}
+
+	kp.logger.Printf("找到 %d 個表格", len(tables))
 
 	knowledge := map[string]interface{}{
 		"database": "current_db", // 可從配置獲取
@@ -44,6 +47,8 @@ func (kp *KnowledgePreparer) PrepareKnowledge() error {
 	ignoredTables := []string{}
 
 	for _, tableName := range tables {
+		kp.logger.Printf("處理表格: %s", tableName)
+
 		// 檢查行數
 		rowCount, err := kp.getRowCount(tableName)
 		if err != nil {
@@ -83,9 +88,12 @@ func (kp *KnowledgePreparer) PrepareKnowledge() error {
 	knowledge["ignored_count"] = len(ignoredTables)
 	knowledge["ignored_tables"] = ignoredTables
 
+	kp.logger.Printf("準備存儲知識: analyzed=%d, ignored=%d", analyzedCount, len(ignoredTables))
+
 	// 存儲知識
 	err = kp.km.StorePhaseKnowledge("database_knowledge", knowledge)
 	if err != nil {
+		kp.logger.Printf("存儲知識失敗: %v", err)
 		return fmt.Errorf("存儲知識失敗: %v", err)
 	}
 
@@ -207,4 +215,10 @@ func (kp *KnowledgePreparer) columnsToStrings(columns []ColumnInfo) []string {
 		result = append(result, col.Name)
 	}
 	return result
+}
+
+// quoteIdentifier 正確引用標識符以處理特殊字符
+func (kp *KnowledgePreparer) quoteIdentifier(identifier string) string {
+	// 對於 PostgreSQL，使用雙引號
+	return `"` + strings.ReplaceAll(identifier, `"`, `""`) + `"`
 }
