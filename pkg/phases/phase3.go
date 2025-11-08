@@ -61,6 +61,11 @@ func (p *Phase3Runner) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to save phase 3 result: %w", err)
 	}
 
+	// Store summary in vector database (avoid storing large detailed data)
+	if err := p.storeVectorKnowledge(result); err != nil {
+		return fmt.Errorf("failed to store phase 3 knowledge in vector database: %w", err)
+	}
+
 	fmt.Println("Phase 3 completed successfully")
 	return nil
 }
@@ -321,6 +326,142 @@ func (p *Phase3Runner) identifyBusinessProcesses(analysisResults map[string]Tabl
 	}
 
 	return processes
+}
+
+// storeVectorKnowledge stores a summary of the phase 3 analysis in the vector database
+func (p *Phase3Runner) storeVectorKnowledge(result *Phase3AnalysisResult) error {
+	// Create a summary version for vector storage (avoid storing large detailed data)
+	summaryOutput := map[string]interface{}{
+		"phase":           "phase3",
+		"description":     "Business logic description and analysis summary",
+		"database":        result.DatabaseName,
+		"database_type":   result.DatabaseType,
+		"timestamp":       result.Timestamp,
+		"business_domain": p.extractBusinessDomain(result.BusinessLogicSummary),
+		"summary": map[string]interface{}{
+			"total_table_categories":   len(result.TableCategories),
+			"total_business_processes": len(result.KeyBusinessProcesses),
+			"total_data_flow_patterns": len(result.DataFlowPatterns),
+			"total_recommendations":    len(result.Recommendations),
+			"key_insights":             p.extractKeyInsights(result),
+		},
+	}
+
+	// Store the summary in vector database
+	if err := p.vectorStore.StorePhaseKnowledge("phase3", summaryOutput); err != nil {
+		return fmt.Errorf("failed to store phase 3 knowledge: %w", err)
+	}
+
+	fmt.Println("Phase 3 knowledge summary stored in vector database")
+	return nil
+}
+
+// extractBusinessDomain extracts the main business domain from the business logic summary
+func (p *Phase3Runner) extractBusinessDomain(summary string) string {
+	summary = strings.ToLower(summary)
+
+	// Simple keyword-based domain detection
+	switch {
+	case strings.Contains(summary, "e-commerce") || strings.Contains(summary, "shopping") || strings.Contains(summary, "retail"):
+		return "e-commerce"
+	case strings.Contains(summary, "crm") || strings.Contains(summary, "customer") || strings.Contains(summary, "relationship"):
+		return "customer relationship management"
+	case strings.Contains(summary, "inventory") || strings.Contains(summary, "warehouse") || strings.Contains(summary, "supply chain"):
+		return "inventory management"
+	case strings.Contains(summary, "financial") || strings.Contains(summary, "banking") || strings.Contains(summary, "transaction"):
+		return "financial services"
+	case strings.Contains(summary, "healthcare") || strings.Contains(summary, "medical") || strings.Contains(summary, "patient"):
+		return "healthcare"
+	case strings.Contains(summary, "education") || strings.Contains(summary, "learning") || strings.Contains(summary, "student"):
+		return "education"
+	default:
+		return "general business"
+	}
+}
+
+// extractKeyInsights extracts key insights from the phase 3 analysis result
+func (p *Phase3Runner) extractKeyInsights(result *Phase3AnalysisResult) map[string]interface{} {
+	insights := map[string]interface{}{
+		"primary_business_focus": p.extractBusinessDomain(result.BusinessLogicSummary),
+		"system_complexity":      p.assessSystemComplexity(result),
+		"data_architecture_type": p.determineArchitectureType(result),
+	}
+
+	// Add top categories
+	if len(result.TableCategories) > 0 {
+		topCategories := make([]string, 0, 3)
+		for category := range result.TableCategories {
+			if len(topCategories) < 3 {
+				topCategories = append(topCategories, category)
+			}
+		}
+		insights["top_categories"] = topCategories
+	}
+
+	// Add key processes
+	if len(result.KeyBusinessProcesses) > 0 {
+		keyProcesses := make([]string, 0, 3)
+		for _, process := range result.KeyBusinessProcesses {
+			if len(keyProcesses) < 3 {
+				keyProcesses = append(keyProcesses, process)
+			}
+		}
+		insights["key_processes"] = keyProcesses
+	}
+
+	return insights
+}
+
+// assessSystemComplexity assesses the complexity of the system based on the analysis
+func (p *Phase3Runner) assessSystemComplexity(result *Phase3AnalysisResult) string {
+	totalElements := len(result.TableCategories) + len(result.KeyBusinessProcesses) + len(result.DataFlowPatterns)
+
+	switch {
+	case totalElements < 10:
+		return "simple"
+	case totalElements < 20:
+		return "moderate"
+	case totalElements < 30:
+		return "complex"
+	default:
+		return "highly_complex"
+	}
+}
+
+// determineArchitectureType determines the type of data architecture
+func (p *Phase3Runner) determineArchitectureType(result *Phase3AnalysisResult) string {
+	// Check for common architecture patterns
+	hasUserManagement := false
+	hasTransactions := false
+	hasProducts := false
+	hasPayments := false
+
+	for category := range result.TableCategories {
+		categoryLower := strings.ToLower(category)
+		if strings.Contains(categoryLower, "user") || strings.Contains(categoryLower, "member") {
+			hasUserManagement = true
+		}
+		if strings.Contains(categoryLower, "order") || strings.Contains(categoryLower, "transaction") {
+			hasTransactions = true
+		}
+		if strings.Contains(categoryLower, "product") || strings.Contains(categoryLower, "item") {
+			hasProducts = true
+		}
+		if strings.Contains(categoryLower, "payment") || strings.Contains(categoryLower, "financial") {
+			hasPayments = true
+		}
+	}
+
+	// Determine architecture type
+	if hasUserManagement && hasTransactions && hasProducts && hasPayments {
+		return "e-commerce_platform"
+	} else if hasUserManagement && hasTransactions {
+		return "transaction_system"
+	} else if hasUserManagement {
+		return "user_management_system"
+	} else {
+		return "general_business_system"
+	}
 }
 
 // saveResult saves the phase 3 analysis result to a JSON file

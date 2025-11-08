@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/masato25/aika-dba/config"
@@ -86,12 +87,30 @@ func (p *Phase1Runner) Run() error {
 		return err
 	}
 
-	// 將知識存儲到向量數據庫（只包含非忽略的表格）
-	if err := p.knowledgeMgr.StorePhaseKnowledge("phase1", output); err != nil {
+	// 創建摘要版本用於向量存儲（避免存儲龐大的詳細數據）
+	summaryOutput := map[string]interface{}{
+		"phase":          "phase1",
+		"description":    "Database schema and statistical analysis summary",
+		"database":       p.config.Database.DBName,
+		"database_type":  p.config.Database.Type,
+		"timestamp":      time.Now(),
+		"tables_count":   len(tables),
+		"analyzed_count": len(tableAnalyses),
+		"ignored_count":  len(ignoredTables),
+		"summary": map[string]interface{}{
+			"total_tables_analyzed": len(tableAnalyses),
+			"total_tables_ignored":  len(ignoredTables),
+			"database_overview":     p.generateDatabaseOverview(tableAnalyses),
+			"key_insights":          p.extractKeyInsights(tableAnalyses),
+		},
+	}
+
+	// 將摘要知識存儲到向量數據庫
+	if err := p.knowledgeMgr.StorePhaseKnowledge("phase1", summaryOutput); err != nil {
 		log.Printf("Warning: Failed to store phase1 knowledge in vector store: %v", err)
 		// 不返回錯誤，因為 JSON 文件已經寫入成功
 	} else {
-		log.Printf("Phase 1 knowledge stored in vector database")
+		log.Printf("Phase 1 knowledge summary stored in vector database")
 	}
 
 	return nil
@@ -148,4 +167,134 @@ func (p *Phase1Runner) Close() error {
 		return p.knowledgeMgr.Close()
 	}
 	return nil
+}
+
+// generateDatabaseOverview 生成數據庫總覽
+func (p *Phase1Runner) generateDatabaseOverview(tableAnalyses map[string]interface{}) map[string]interface{} {
+	totalRows := 0
+	totalColumns := 0
+	tableTypes := make(map[string]int)
+
+	for _, analysis := range tableAnalyses {
+		if analysisMap, ok := analysis.(map[string]interface{}); ok {
+			// 統計總行數
+			if stats, ok := analysisMap["stats"].(map[string]interface{}); ok {
+				if rowCount, ok := stats["row_count"]; ok {
+					switch v := rowCount.(type) {
+					case float64:
+						totalRows += int(v)
+					case int:
+						totalRows += v
+					case int64:
+						totalRows += int(v)
+					}
+				}
+			}
+
+			// 統計總列數
+			if columns, ok := analysisMap["columns"].([]interface{}); ok {
+				totalColumns += len(columns)
+			}
+
+			// 統計表格類型（基於表格名稱模式）
+			if tableInfo, ok := analysisMap["table_info"].(map[string]interface{}); ok {
+				if tableName, ok := tableInfo["name"].(string); ok {
+					tableType := p.categorizeTableType(tableName)
+					tableTypes[tableType]++
+				}
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"total_tables":    len(tableAnalyses),
+		"total_rows":      totalRows,
+		"total_columns":   totalColumns,
+		"average_columns": float64(totalColumns) / float64(len(tableAnalyses)),
+		"table_types":     tableTypes,
+	}
+}
+
+// extractKeyInsights 提取關鍵洞察
+func (p *Phase1Runner) extractKeyInsights(tableAnalyses map[string]interface{}) map[string]interface{} {
+	largestTables := make([]map[string]interface{}, 0)
+	smallestTables := make([]map[string]interface{}, 0)
+
+	for tableName, analysis := range tableAnalyses {
+		if analysisMap, ok := analysis.(map[string]interface{}); ok {
+			if stats, ok := analysisMap["stats"].(map[string]interface{}); ok {
+				if rowCount, ok := stats["row_count"]; ok {
+					var rows int
+					switch v := rowCount.(type) {
+					case float64:
+						rows = int(v)
+					case int:
+						rows = v
+					case int64:
+						rows = int(v)
+					}
+
+					tableInfo := map[string]interface{}{
+						"name":      tableName,
+						"row_count": rows,
+					}
+
+					// 收集最大的表格
+					if len(largestTables) < 3 {
+						largestTables = append(largestTables, tableInfo)
+					} else {
+						// 簡單的排序，保持最大的3個
+						for i, t := range largestTables {
+							if existingRows, ok := t["row_count"].(int); ok && rows > existingRows {
+								largestTables[i] = tableInfo
+								break
+							}
+						}
+					}
+
+					// 收集最小的表格
+					if len(smallestTables) < 3 {
+						smallestTables = append(smallestTables, tableInfo)
+					} else {
+						// 簡單的排序，保持最小的3個
+						for i, t := range smallestTables {
+							if existingRows, ok := t["row_count"].(int); ok && rows < existingRows {
+								smallestTables[i] = tableInfo
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"largest_tables":  largestTables,
+		"smallest_tables": smallestTables,
+		"total_tables":    len(tableAnalyses),
+		"analysis_type":   "schema_statistics",
+	}
+}
+
+// categorizeTableType 根據表格名稱分類表格類型
+func (p *Phase1Runner) categorizeTableType(tableName string) string {
+	tableName = strings.ToLower(tableName)
+
+	switch {
+	case strings.Contains(tableName, "user") || strings.Contains(tableName, "customer"):
+		return "user_management"
+	case strings.Contains(tableName, "order") || strings.Contains(tableName, "purchase"):
+		return "transaction"
+	case strings.Contains(tableName, "product") || strings.Contains(tableName, "item"):
+		return "product_catalog"
+	case strings.Contains(tableName, "payment") || strings.Contains(tableName, "billing"):
+		return "financial"
+	case strings.Contains(tableName, "log") || strings.Contains(tableName, "audit"):
+		return "logging"
+	case strings.Contains(tableName, "config") || strings.Contains(tableName, "setting"):
+		return "configuration"
+	default:
+		return "general"
+	}
 }
