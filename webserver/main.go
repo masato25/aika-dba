@@ -3,11 +3,17 @@ package main
 import (
 	"log"
 
+	"github.com/joho/godotenv"
 	"github.com/masato25/aika-dba/internal/app"
 	"github.com/masato25/aika-dba/web"
 )
 
 func main() {
+	// 載入 .env 文件
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
+
 	// 創建應用程序實例
 	app, err := app.NewApp()
 	if err != nil {

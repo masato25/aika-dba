@@ -194,6 +194,49 @@ database:
 - 不要將真實的資料庫憑證提交到版本控制系統
 - 建議使用環境變數或專用的密鑰管理服務
 
+### LLM 配置設定
+
+系統支援多種 LLM 提供者，可以輕鬆切換使用本地模型或雲端 API：
+
+1. **複製環境變數範本**：
+```bash
+cp .env.example .env
+```
+
+2. **編輯 `.env` 文件設定您的 LLM 配置**：
+
+#### 使用 OpenAI GPT (推薦)
+```bash
+# OpenAI API 設定
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4
+
+# 更新 config.yaml
+llm:
+  provider: "openai"
+  model: "gpt-4"
+```
+
+#### 使用本地 LLM 服務
+```bash
+# 本地 LLM 設定 (如使用 Ollama 或其他 OpenAI 兼容服務)
+LLM_HOST=localhost
+LLM_PORT=8080
+LLM_MODEL=your-local-model
+
+# 更新 config.yaml
+llm:
+  provider: "local"  # 或 "ollama"
+  host: "localhost"
+  port: 8080
+```
+
+#### 支援的 LLM 提供者
+- `openai`: OpenAI 官方 API (GPT-3.5, GPT-4)
+- `local`: 本地 OpenAI 兼容 API 服務
+- `ollama`: Ollama 本地模型服務
+
 ## 🤝 開發準則
 
 請參考 [DEVELOPMENT_GUIDELINES.md](./DEVELOPMENT_GUIDELINES.md) 了解專案開發規範。

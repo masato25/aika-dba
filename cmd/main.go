@@ -10,6 +10,7 @@ import (
 _ "github.com/go-sql-driver/mysql"
 _ "github.com/lib/pq"
 
+"github.com/joho/godotenv"
 "github.com/masato25/aika-dba/config"
 "github.com/masato25/aika-dba/pkg/analyzer"
 "github.com/masato25/aika-dba/pkg/llm"
@@ -111,6 +112,11 @@ func runPrepare(db *sql.DB, cfg *config.Config) {
 
 func main() {
 	log.Println("Starting Aika DBA main function...")
+
+	// 載入 .env 文件
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Error loading .env file: %v", err)
+	}
 
 	// 檢查是否有子命令
 	if len(os.Args) < 2 {
