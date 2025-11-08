@@ -189,10 +189,11 @@ func (s *APIServer) handleQuery(c *gin.Context) {
 
 	s.logger.Printf("處理查詢: %s", req.Question)
 
-	// 執行查詢
-	result, err := s.queryIntf.Query(req.Question)
+	// 使用 MarketingQueryRunner 處理營銷查詢
+	runner := phases.NewMarketingQueryRunner(s.config, s.db)
+	result, err := runner.ExecuteMarketingQuery(req.Question)
 	if err != nil {
-		s.logger.Printf("查詢失敗: %v", err)
+		s.logger.Printf("營銷查詢失敗: %v", err)
 		c.JSON(500, map[string]interface{}{
 			"success": false,
 			"error":   err.Error(),
@@ -200,11 +201,29 @@ func (s *APIServer) handleQuery(c *gin.Context) {
 		return
 	}
 
-	s.logger.Println("查詢完成")
-	c.JSON(200, map[string]interface{}{
+	// 格式化回應
+	response := map[string]interface{}{
 		"success": true,
-		"result":  result,
-	})
+		"query":   result.Query,
+		"sql":     result.SQLQuery,
+		"results": result.Results,
+		"count":   len(result.Results),
+	}
+
+	if result.Error != "" {
+		response["error"] = result.Error
+	}
+
+	if result.Explanation != "" {
+		response["explanation"] = result.Explanation
+	}
+
+	if result.BusinessInsights != "" {
+		response["insights"] = result.BusinessInsights
+	}
+
+	s.logger.Printf("查詢完成，返回 %d 個結果", len(result.Results))
+	c.JSON(200, response)
 }
 
 // handleQuerySuggestion 處理查詢建議請求
@@ -458,7 +477,6 @@ func (s *APIServer) handleTriggerPhase(c *gin.Context) {
 	phase := c.Param("phase")
 
 	// 根據 phase 執行相應的操作
-	var err error
 	switch phase {
 	case "phase1":
 		runPhase1(s.db, s.config)
@@ -470,11 +488,6 @@ func (s *APIServer) handleTriggerPhase(c *gin.Context) {
 		runPhase3(s.config)
 	default:
 		c.JSON(400, map[string]string{"error": "Unknown phase: " + phase})
-		return
-	}
-
-	if err != nil {
-		c.JSON(500, map[string]string{"error": err.Error()})
 		return
 	}
 

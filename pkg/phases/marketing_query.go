@@ -160,26 +160,34 @@ func (m *MarketingQueryRunner) generateSQLQuery(naturalLanguageQuery, relevantKn
 		return "", "", fmt.Errorf("failed to get database schema: %v", err)
 	}
 
-	// 構造 LLM 提示 - 強制使用向量知識生成 SQL
-	prompt := fmt.Sprintf(`You are a SQL expert. You MUST use the business knowledge from our vector database to generate accurate SQL queries.
+	// 構造 LLM 提示 - 使用向量知識輔助，但不強制依賴
+	prompt := fmt.Sprintf(`You are a SQL expert analyzing an e-commerce database. Use the business knowledge when available, but generate reasonable SQL based on common e-commerce patterns when knowledge is limited.
 
 Database Schema:
 %s
 
-Business Knowledge from Vector Database:
+Business Knowledge from Vector Database (use when helpful, but don't rely on it exclusively):
 %s
 
 User Question: %s
 
-CRITICAL REQUIREMENTS:
-1. You MUST analyze the business knowledge to understand table relationships and column meanings
-2. Generate ONLY SELECT queries that directly answer the user's question
-3. Use EXACTLY the table names and column names found in the Database Schema above
-4. Do NOT invent column names - use only the columns listed in the schema
-5. For date filtering, use 'created_at' column if available, not 'order_date'
-6. Include appropriate JOINs, WHERE, GROUP BY, ORDER BY clauses as needed
-7. Limit results to maximum 50 rows for performance
-8. If the business knowledge doesn't contain enough information, still attempt to generate the best possible SQL based on the schema
+COMMON E-COMMERCE PATTERNS TO CONSIDER:
+- Products table typically contains: id, name, price, inventory_quantity, category_id, is_active
+- Sales data might be in: product_sales_summary (total_sold, revenue), order_items (quantity), orders (order_date)
+- Customer data: customers, customer_addresses
+- Categories: categories
+- "Best-selling" or "popular" products: sort by total_sold from product_sales_summary, or count from order_items
+- Active products have is_active = true
+- Use JOINs: products.id = product_sales_summary.product_id or products.id = order_items.product_id
+
+REQUIREMENTS:
+1. Generate ONLY SELECT queries that directly answer the user's question
+2. Use EXACTLY the table names and column names found in the Database Schema above
+3. Do NOT invent column names - use only the columns listed in the schema
+4. For "best-selling/popular products": look for sales/order data, sort by quantity sold
+5. Include appropriate JOINs, WHERE, GROUP BY, ORDER BY clauses as needed
+6. Limit results to maximum 50 rows for performance
+7. When in doubt, make reasonable assumptions based on common e-commerce database patterns
 
 Return ONLY the SQL query without any explanations or markdown formatting:`, schemaInfo, relevantKnowledge, naturalLanguageQuery)
 
@@ -367,34 +375,34 @@ func (m *MarketingQueryRunner) executeSQLQuery(sqlQuery string) ([]map[string]in
 // generateBusinessInsights 生成業務洞察
 func (m *MarketingQueryRunner) generateBusinessInsights(query string, results []map[string]interface{}, knowledge string) (string, error) {
 	if len(results) == 0 {
-		return "No data available to generate insights.", nil
+		return "沒有可用的數據來生成洞察。", nil
 	}
 
 	// 構造 LLM 提示
-	resultSummary := fmt.Sprintf("Query returned %d rows with %d columns", len(results), len(results[0]))
+	resultSummary := fmt.Sprintf("查詢返回了 %d 行數據，包含 %d 個欄位", len(results), len(results[0]))
 
-	prompt := fmt.Sprintf(`You are a business analyst. Based on the following query, results, and business knowledge from our vector database, provide key business insights.
+	prompt := fmt.Sprintf(`你是一位商業分析師。根據以下查詢、結果和來自向量數據庫的商業知識，提供關鍵商業洞察。
 
-User Query: %s
+用戶查詢：%s
 
-Query Results Summary: %s
+查詢結果摘要：%s
 
-Business Knowledge from Vector Database: %s
+來自向量數據庫的商業知識：%s
 
-Please provide:
-1. Key findings from the data
-2. Business implications
-3. Recommendations for action
-4. Any trends or patterns observed
+請提供：
+1. 數據中的關鍵發現
+2. 商業影響
+3. 行動建議
+4. 觀察到的趨勢或模式
 
-Keep the response concise but insightful. Focus on actionable business insights.`, query, resultSummary, knowledge)
+請用中文回應，保持簡潔但有洞察力。重點關注可操作的商業洞察。`, query, resultSummary, knowledge)
 
 	// 調用 LLM 生成洞察
 	response, err := m.llmClient.GenerateCompletion(context.Background(), prompt)
 	if err != nil {
 		// 如果 LLM 失敗，提供基本的結果摘要
 		log.Printf("LLM failed for insights: %v", err)
-		return fmt.Sprintf("Query executed successfully, returned %d results. LLM analysis unavailable.", len(results)), nil
+		return fmt.Sprintf("查詢執行成功，返回 %d 個結果。LLM 分析不可用。", len(results)), nil
 	}
 
 	return strings.TrimSpace(response), nil

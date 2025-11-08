@@ -1115,7 +1115,47 @@
                 return;
             }
 
-            resultContent.innerHTML = '<div class="text-muted"><i class="bi bi-hourglass-split me-2"></i>正在處理查詢...</div>';
+            // 顯示進度條
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'mb-3';
+            progressContainer.innerHTML = `
+                <div class="alert alert-info">
+                    <h6><i class="bi bi-gear me-2"></i>正在處理查詢...</h6>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="queryProgress"></div>
+                    </div>
+                    <small class="text-muted mt-1" id="progressText">正在分析查詢意圖...</small>
+                </div>
+            `;
+            resultContent.innerHTML = '';
+            resultContent.appendChild(progressContainer);
+
+            const progressBar = document.getElementById('queryProgress');
+            const progressText = document.getElementById('progressText');
+
+            // 模擬進度更新
+            const progressSteps = [
+                { width: '20%', text: '正在分析查詢意圖...', delay: 500 },
+                { width: '40%', text: '正在檢索相關知識...', delay: 1000 },
+                { width: '60%', text: '正在生成 SQL 查詢...', delay: 1500 },
+                { width: '80%', text: '正在執行數據庫查詢...', delay: 2000 },
+                { width: '100%', text: '正在生成業務洞察...', delay: 2500 }
+            ];
+
+            let currentStep = 0;
+            const updateProgress = () => {
+                if (currentStep < progressSteps.length) {
+                    const step = progressSteps[currentStep];
+                    progressBar.style.width = step.width;
+                    progressText.textContent = step.text;
+                    currentStep++;
+                    setTimeout(updateProgress, step.delay);
+                }
+            };
+
+            // 開始進度更新
+            updateProgress();
+
             resultsDiv.style.display = 'block';
 
             try {
@@ -1131,37 +1171,89 @@
 
                 const result = await response.json();
 
-                if (response.ok && result.success) {
-                    // 格式化結果顯示
-                    let html = '<div class="alert alert-success mb-3">';
-                    html += '<h6><i class="bi bi-check-circle me-2"></i>查詢成功</h6>';
-                    html += '</div>';
+                // 完成進度條
+                progressBar.style.width = '100%';
+                progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressText.textContent = '查詢完成！';
 
-                    // 將結果按行分割並格式化
-                    const lines = result.result.split('\n');
-                    html += '<div class="query-result-content">';
-                    for (const line of lines) {
-                        if (line.trim().startsWith('SQL Command:')) {
-                            html += '<div class="mb-3"><strong>SQL 命令:</strong></div>';
-                        } else if (line.trim().startsWith('SQL Output:')) {
-                            html += '<div class="mb-3"><strong>查詢結果:</strong></div>';
-                        } else if (line.trim()) {
-                            // 檢查是否是 SQL 代碼塊
-                            if (line.includes('```sql') || (line.includes('SELECT') && line.includes('FROM'))) {
-                                html += '<pre class="bg-light p-2 rounded mb-2"><code>' + escapeHtml(line) + '</code></pre>';
-                            } else {
-                                html += '<p class="mb-1">' + escapeHtml(line) + '</p>';
-                            }
-                        } else {
-                            html += '<br>';
+                // 延遲一下再顯示結果
+                setTimeout(() => {
+                    if (response.ok && result.success) {
+                        // 格式化結果顯示
+                        let html = '<div class="alert alert-success mb-3">';
+                        html += '<h6><i class="bi bi-check-circle me-2"></i>查詢成功</h6>';
+                        html += '<p class="mb-1"><strong>問題：</strong>' + escapeHtml(result.query) + '</p>';
+                        if (result.count !== undefined) {
+                            html += '<p class="mb-1"><strong>結果數量：</strong>' + result.count + ' 條記錄</p>';
                         }
-                    }
-                    html += '</div>';
+                        html += '</div>';
 
-                    resultContent.innerHTML = html;
-                } else {
-                    resultContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>查詢失敗: ' + (result.error || '未知錯誤') + '</div>';
-                }
+                        // 顯示 SQL 查詢
+                        if (result.sql) {
+                            html += '<div class="mb-3">';
+                            html += '<h6><i class="bi bi-code-slash me-2"></i>生成的 SQL 查詢</h6>';
+                            html += '<pre class="bg-light p-2 rounded"><code>' + escapeHtml(result.sql) + '</code></pre>';
+                            html += '</div>';
+                        }
+
+                        // 顯示查詢結果
+                        if (result.results && result.results.length > 0) {
+                            html += '<div class="mb-3">';
+                            html += '<h6><i class="bi bi-table me-2"></i>查詢結果</h6>';
+                            html += '<div class="table-responsive">';
+                            html += '<table class="table table-striped table-hover">';
+                            
+                            // 表頭
+                            const firstRow = result.results[0];
+                            html += '<thead class="table-dark"><tr>';
+                            Object.keys(firstRow).forEach(key => {
+                                html += '<th>' + escapeHtml(key) + '</th>';
+                            });
+                            html += '</tr></thead>';
+                            
+                            // 數據行
+                            html += '<tbody>';
+                            result.results.forEach(row => {
+                                html += '<tr>';
+                                Object.values(row).forEach(value => {
+                                    const displayValue = value === null ? '<em class="text-muted">NULL</em>' : escapeHtml(String(value));
+                                    html += '<td>' + displayValue + '</td>';
+                                });
+                                html += '</tr>';
+                            });
+                            html += '</tbody></table></div>';
+                            html += '</div>';
+                        }
+
+                        // 顯示解釋
+                        if (result.explanation) {
+                            html += '<div class="mb-3">';
+                            html += '<h6><i class="bi bi-info-circle me-2"></i>查詢解釋</h6>';
+                            html += '<p class="text-muted">' + escapeHtml(result.explanation) + '</p>';
+                            html += '</div>';
+                        }
+
+                        // 顯示業務洞察
+                        if (result.insights) {
+                            html += '<div class="mb-3">';
+                            html += '<h6><i class="bi bi-lightbulb me-2"></i>業務洞察</h6>';
+                            html += '<div class="alert alert-info">' + escapeHtml(result.insights).replace(/\n/g, '<br>') + '</div>';
+                            html += '</div>';
+                        }
+
+                        // 顯示錯誤信息
+                        if (result.error) {
+                            html += '<div class="alert alert-warning">';
+                            html += '<h6><i class="bi bi-exclamation-triangle me-2"></i>注意</h6>';
+                            html += '<p class="mb-0">' + escapeHtml(result.error) + '</p>';
+                            html += '</div>';
+                        }
+
+                        resultContent.innerHTML = html;
+                    } else {
+                        resultContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>查詢失敗: ' + (result.error || '未知錯誤') + '</div>';
+                    }
+                }, 500);
             } catch (error) {
                 resultContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>網路錯誤: ' + error.message + '</div>';
             }
