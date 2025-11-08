@@ -13,6 +13,7 @@ knowledge/
 
 # Configuration files (contains sensitive data)
 config.yaml
+.env
 
 # Test binaries
 *_test*.txt

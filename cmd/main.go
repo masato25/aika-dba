@@ -1,22 +1,22 @@
 package main
 
 import (
-"context"
-"database/sql"
-"flag"
-"log"
-"os"
+	"context"
+	"database/sql"
+	"flag"
+	"log"
+	"os"
 
-_ "github.com/go-sql-driver/mysql"
-_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 
-"github.com/joho/godotenv"
-"github.com/masato25/aika-dba/config"
-"github.com/masato25/aika-dba/pkg/analyzer"
-"github.com/masato25/aika-dba/pkg/llm"
-"github.com/masato25/aika-dba/pkg/phases"
-"github.com/masato25/aika-dba/pkg/vectorstore"
-"github.com/masato25/aika-dba/pkg/web"
+	"github.com/joho/godotenv"
+	"github.com/masato25/aika-dba/config"
+	"github.com/masato25/aika-dba/pkg/analyzer"
+	"github.com/masato25/aika-dba/pkg/llm"
+	"github.com/masato25/aika-dba/pkg/phases"
+	"github.com/masato25/aika-dba/pkg/vectorstore"
+	"github.com/masato25/aika-dba/pkg/web"
 )
 
 // runServer 啟動 HTTP 服務器
@@ -26,19 +26,19 @@ func runServer(db *sql.DB, cfg *config.Config) {
 
 // runPhase1 執行 Phase 1 分析
 func runPhase1(db *sql.DB, cfg *config.Config) {
-log.Println("DEBUG: Starting runPhase1 function")
-dbAnalyzer := analyzer.NewDatabaseAnalyzer(db)
-log.Println("DEBUG: DatabaseAnalyzer created")
-runner, err := phases.NewPhase1Runner(dbAnalyzer, cfg)
-if err != nil {
-log.Fatalf("創建 Phase 1 執行器失敗: %v", err)
-}
-log.Println("DEBUG: Phase1Runner created")
-if err := runner.Run(); err != nil {
-log.Fatalf("Phase 1 分析失敗: %v", err)
-}
-runner.Close()
-log.Println("Phase 1 分析完成！")
+	log.Println("DEBUG: Starting runPhase1 function")
+	dbAnalyzer := analyzer.NewDatabaseAnalyzer(db)
+	log.Println("DEBUG: DatabaseAnalyzer created")
+	runner, err := phases.NewPhase1Runner(dbAnalyzer, cfg)
+	if err != nil {
+		log.Fatalf("創建 Phase 1 執行器失敗: %v", err)
+	}
+	log.Println("DEBUG: Phase1Runner created")
+	if err := runner.Run(); err != nil {
+		log.Fatalf("Phase 1 分析失敗: %v", err)
+	}
+	runner.Close()
+	log.Println("Phase 1 分析完成！")
 }
 
 // runPhase2 執行 Phase 2 AI 分析

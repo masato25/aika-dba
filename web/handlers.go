@@ -218,10 +218,6 @@ func (s *APIServer) handleQuery(c *gin.Context) {
 		response["explanation"] = result.Explanation
 	}
 
-	if result.BusinessInsights != "" {
-		response["insights"] = result.BusinessInsights
-	}
-
 	s.logger.Printf("查詢完成，返回 %d 個結果", len(result.Results))
 	c.JSON(200, response)
 }
@@ -697,11 +693,6 @@ func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
 			}
 			fmt.Println()
 		}
-	}
-
-	if result.BusinessInsights != "" {
-		fmt.Println("\nBusiness Insights:")
-		fmt.Println(result.BusinessInsights)
 	}
 
 	// 保存查詢結果

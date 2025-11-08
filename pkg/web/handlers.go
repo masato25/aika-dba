@@ -675,11 +675,6 @@ func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
 		}
 	}
 
-	if result.BusinessInsights != "" {
-		fmt.Println("\nBusiness Insights:")
-		fmt.Println(result.BusinessInsights)
-	}
-
 	// 保存查詢結果
 	if err := runner.SaveQueryResult(result); err != nil {
 		log.Printf("Warning: Failed to save query result: %v", err)
