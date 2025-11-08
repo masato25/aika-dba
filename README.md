@@ -205,37 +205,30 @@ cp .env.example .env
 
 2. **編輯 `.env` 文件設定您的 LLM 配置**：
 
-#### 使用 OpenAI GPT (推薦)
+#### 使用 OpenAI 嵌入 (推薦)
 ```bash
-# OpenAI API 設定
+# OpenAI 嵌入設定
 OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4
+LLM_MODEL=text-embedding-3-small
 
 # 更新 config.yaml
-llm:
-  provider: "openai"
-  model: "gpt-4"
+vectorstore:
+  embedder_type: "openai"
+  embedding_dimension: 1536  # text-embedding-3-small 的維度
 ```
 
-#### 使用本地 LLM 服務
-```bash
-# 本地 LLM 設定 (如使用 Ollama 或其他 OpenAI 兼容服務)
-LLM_HOST=localhost
-LLM_PORT=8080
-LLM_MODEL=your-local-model
-
-# 更新 config.yaml
-llm:
-  provider: "local"  # 或 "ollama"
-  host: "localhost"
-  port: 8080
+#### 使用本地嵌入
+```yaml
+# config.yaml
+vectorstore:
+  embedder_type: "qwen"  # 或 "simple"
+  embedding_dimension: 256
 ```
 
-#### 支援的 LLM 提供者
-- `openai`: OpenAI 官方 API (GPT-3.5, GPT-4)
-- `local`: 本地 OpenAI 兼容 API 服務
-- `ollama`: Ollama 本地模型服務
+#### 支援的嵌入類型
+- `openai`: OpenAI 嵌入 API (text-embedding-3-small, text-embedding-ada-002)
+- `qwen`: 本地改進文本嵌入生成器
+- `simple`: 簡單哈希嵌入生成器
 
 ## 🤝 開發準則
 

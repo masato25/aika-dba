@@ -29,6 +29,27 @@ func NewKnowledgeManager(cfg *config.Config) (*KnowledgeManager, error) {
 		embedder = NewQwenEmbedder(cfg.VectorStore.QwenModelPath, cfg.VectorStore.EmbeddingDimension)
 	case "simple":
 		embedder = NewSimpleHashEmbedder(cfg.VectorStore.EmbeddingDimension)
+	case "openai":
+		// 從 LLM 配置中獲取 OpenAI 設定
+		apiKey := cfg.LLM.APIKey
+		if apiKey == "" {
+			apiKey = os.Getenv("OPENAI_API_KEY")
+		}
+		baseURL := cfg.LLM.BaseURL
+		if baseURL == "" {
+			baseURL = os.Getenv("OPENAI_BASE_URL")
+		}
+		if baseURL == "" {
+			baseURL = "https://api.openai.com/v1"
+		}
+		model := cfg.LLM.Model
+		if model == "" {
+			model = os.Getenv("LLM_MODEL")
+		}
+		if model == "" {
+			model = "text-embedding-3-small"
+		}
+		embedder = NewOpenAIEmbedder(apiKey, baseURL, model)
 	default:
 		embedder = NewSimpleHashEmbedder(cfg.VectorStore.EmbeddingDimension)
 	}

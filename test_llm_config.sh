@@ -71,9 +71,20 @@ case $PROVIDER in
 esac
 
 echo ""
-echo "測試完成！"
-echo ""
-echo "使用說明："
-echo "1. 編輯 .env 文件設定您的 API 金鑰"
-echo "2. 修改 config.yaml 中的 llm.provider 來切換提供者"
-echo "3. 重新啟動服務器以應用新配置"
+echo "測試嵌入生成器："
+
+# 檢查向量存儲配置
+EMBEDDER_TYPE=$(grep "embedder_type:" config.yaml | head -1 | cut -d'"' -f2)
+echo "嵌入類型: $EMBEDDER_TYPE"
+
+if [ "$EMBEDDER_TYPE" = "openai" ]; then
+    if [ -n "$OPENAI_API_KEY" ]; then
+        echo "✅ OpenAI 嵌入已配置，可以測試"
+        echo "運行測試: go run test_embedding_main.go"
+    else
+        echo "❌ OpenAI 嵌入需要 API 金鑰"
+    fi
+else
+    echo "✅ 使用本地嵌入: $EMBEDDER_TYPE"
+    echo "運行測試: go run test_embedding_main.go"
+fi

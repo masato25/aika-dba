@@ -1,15 +1,18 @@
 package vectorstore
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Embedder 嵌入生成器接口
@@ -350,7 +353,77 @@ func (qe *QwenEmbedder) normalizeVector(vector []float64) {
 	}
 }
 
-// Close 關閉嵌入生成器（無操作）
-func (qe *QwenEmbedder) Close() error {
-	return nil
+// OpenAIEmbedder 使用 OpenAI 嵌入 API 生成嵌入
+type OpenAIEmbedder struct {
+	apiKey  string
+	baseURL string
+	model   string
+	client  *http.Client
+}
+
+// NewOpenAIEmbedder 創建 OpenAI 嵌入生成器
+func NewOpenAIEmbedder(apiKey, baseURL, model string) *OpenAIEmbedder {
+	if baseURL == "" {
+		baseURL = "https://api.openai.com/v1"
+	}
+	if model == "" {
+		model = "text-embedding-3-small" // 或者 text-embedding-ada-002
+	}
+
+	return &OpenAIEmbedder{
+		apiKey:  apiKey,
+		baseURL: baseURL,
+		model:   model,
+		client:  &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+// GenerateEmbedding 使用 OpenAI API 生成嵌入向量
+func (e *OpenAIEmbedder) GenerateEmbedding(text string) ([]float64, error) {
+	requestBody := map[string]interface{}{
+		"model": e.model,
+		"input": text,
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/embeddings", e.baseURL)
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", e.apiKey))
+
+	resp, err := e.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("OpenAI API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var response struct {
+		Data []struct {
+			Embedding []float64 `json:"embedding"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(response.Data) == 0 {
+		return nil, fmt.Errorf("no embedding data in response")
+	}
+
+	return response.Data[0].Embedding, nil
 }
