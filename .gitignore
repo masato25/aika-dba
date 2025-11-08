@@ -1,5 +1,8 @@
+# Binaries
 main
 aika-dba
+bin/
+tmp/
 
 # Database files
 *.db

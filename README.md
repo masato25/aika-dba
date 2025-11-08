@@ -79,20 +79,30 @@
 
 ```
 aika-dba/
-├── cmd/                    # 應用程式入口
+├── cmd/                    # CLI 應用程式入口
+│   └── main.go            # CLI 命令處理 (prepare, query)
+├── webserver/             # Web 服務器入口
+│   └── main.go            # Web 服務器啟動
 ├── internal/
-│   ├── schema/            # 資料庫結構解析
-│   ├── analyzer/          # 資料統計分析器
-│   ├── mcp/               # MCP Server 實作
-│   ├── ai/                # AI 理解與表格定義生成
-│   └── api/               # REST API
+│   └── app/               # 共享應用程式初始化
+│       └── app.go         # App 結構和 NewApp() 函數
+├── web/                   # Web 處理器和靜態檔案
+│   ├── handlers.go        # HTTP 處理器
+│   ├── index.html         # Web 介面
+│   └── static/
+│       └── style.css      # CSS 樣式
 ├── pkg/
 │   ├── phases/            # 各階段處理邏輯
 │   ├── vectorstore/       # 向量知識庫
-│   └── config/            # 設定管理
-├── config/                # 設定檔案
+│   ├── llm/               # LLM 客戶端
+│   ├── query/             # 查詢介面
+│   ├── preparer/          # 知識準備器
+│   ├── progress/          # 進度追蹤
+│   ├── analyzer/          # 資料分析器
+│   └── mcp/               # MCP Server
+├── config/                # 設定管理
 ├── data/                  # 向量資料庫儲存
-├── scripts/               # 工具腳本
+├── bin/                   # 編譯後的二進位檔案
 ├── docs/                  # 文件
 └── knowledge/             # 分析結果與知識庫
     ├── phase1_analysis.json    # Phase 1 統計分析結果
@@ -119,12 +129,46 @@ cd aika-dba
 # 安裝依賴
 go mod download
 
-# 建置
+# 建置 CLI 工具
 go build -o bin/aika-dba ./cmd
 
-# 執行
-./bin/aika-dba
+# 建置 Web 服務器
+go build -o bin/webserver ./webserver
+
+# 執行 CLI 工具
+./bin/aika-dba -command prepare                    # 準備知識庫
+./bin/aika-dba -command query -question "你的問題"  # 查詢知識庫
+
+# 執行 Web 服務器
+./bin/webserver                                    # 啟動 Web 介面
+
+# 開發模式 (熱重載)
+make dev                                           # 使用 air 進行熱重載開發
 ```
+
+### 開發模式說明
+
+專案支援熱重載開發模式，可以在修改代碼後自動重新編譯和重啟服務器：
+
+```bash
+# 使用開發腳本 (推薦)
+./dev.sh
+
+# 或使用 Makefile
+make dev
+
+# 或直接使用 air
+air
+```
+
+熱重載會監視以下檔案類型的變化：
+- `.go` 檔案
+- `.html` 模板檔案
+- `.tmpl` 模板檔案
+
+當這些檔案被修改時，air 會自動重新編譯並重啟服務器，大大提升開發效率。
+
+**注意**: 開發腳本會自動檢查並安裝 air 工具，確保開發環境配置正確。
 
 ### 設定資料庫連接
 
