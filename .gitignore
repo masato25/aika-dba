@@ -6,10 +6,10 @@ tmp/
 
 # Database files
 *.db
-data/
+#data/
 
 # Generated knowledge files
-knowledge/
+#knowledge/
 
 # Configuration files (contains sensitive data)
 config.yaml
