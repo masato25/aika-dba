@@ -46,15 +46,19 @@ type SchemaConfig struct {
 
 // LLMConfig LLM 配置
 type LLMConfig struct {
-	Provider       string `yaml:"provider"`
-	Model          string `yaml:"model"`
-	APIKey         string `yaml:"api_key"`
-	BaseURL        string `yaml:"base_url"`
-	Host           string `yaml:"host"` // 本地 LLM 主機
-	Port           int    `yaml:"port"` // 本地 LLM 端口
-	TimeoutSeconds int    `yaml:"timeout_seconds"`
-	ContextSize    int    `yaml:"context_size"` // 上下文大小 (tokens)
-	MaxTokens      int    `yaml:"max_tokens"`   // 最大響應 tokens
+	Provider       string   `yaml:"provider"`
+	Model          string   `yaml:"model"`
+	APIKey         string   `yaml:"api_key"`
+	BaseURL        string   `yaml:"base_url"`
+	Host           string   `yaml:"host"` // 本地 LLM 主機
+	Port           int      `yaml:"port"` // 本地 LLM 端口
+	TimeoutSeconds int      `yaml:"timeout_seconds"`
+	ContextSize    int      `yaml:"context_size"` // 上下文大小 (tokens)
+	MaxTokens      int      `yaml:"max_tokens"`   // 最大響應 tokens
+	Temperature    float64  `yaml:"temperature"`  // 採樣溫度 (0.0-2.0)
+	TopP           float64  `yaml:"top_p"`        // Top-p 採樣
+	TopK           int      `yaml:"top_k"`        // Top-k 採樣
+	StopWords      []string `yaml:"stop_words"`   // 停止詞
 }
 
 // VectorStoreConfig 向量存儲配置

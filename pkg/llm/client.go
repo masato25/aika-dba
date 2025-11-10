@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/masato25/aika-dba/config"
@@ -16,6 +18,7 @@ import (
 type Client struct {
 	config     *config.Config
 	httpClient *http.Client
+	logger     *log.Logger
 }
 
 // NewClient creates a new LLM client
@@ -25,6 +28,7 @@ func NewClient(cfg *config.Config) *Client {
 		httpClient: &http.Client{
 			Timeout: time.Duration(cfg.LLM.TimeoutSeconds) * time.Second,
 		},
+		logger: log.New(os.Stdout, "llm: ", log.LstdFlags),
 	}
 }
 
@@ -37,6 +41,8 @@ func (c *Client) GenerateCompletion(ctx context.Context, prompt string) (string,
 		return c.generateLocalOpenAICompletion(ctx, prompt)
 	case "ollama":
 		return c.generateOllamaCompletion(ctx, prompt)
+	case "llamacpp":
+		return c.generateLocalLlamaCppCompletion(ctx, prompt)
 	default:
 		return "", fmt.Errorf("unsupported LLM provider: %s", c.config.LLM.Provider)
 	}

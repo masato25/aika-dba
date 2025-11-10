@@ -3,8 +3,10 @@ package phases
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -244,6 +246,111 @@ Return ONLY the SQL SELECT statement, no explanations or markdown.`, schemaInfo,
 
 // getDatabaseSchemaInfo 獲取數據庫架構信息
 func (m *MarketingQueryRunner) getDatabaseSchemaInfo() (string, error) {
+	// 首先嘗試從預生成的 schema 文件讀取詳細信息
+	schemaFilePath := m.config.Schema.OutputFile
+	if schemaFilePath != "" {
+		schemaInfo, err := m.readSchemaFromFile(schemaFilePath)
+		if err == nil {
+			log.Printf("Successfully loaded schema from file: %s", schemaFilePath)
+			return schemaInfo, nil
+		}
+		log.Printf("Warning: Failed to read schema from file %s: %v, falling back to database query", schemaFilePath, err)
+	}
+
+	// 回退到直接查詢數據庫
+	return m.getSchemaFromDatabase()
+}
+
+// readSchemaFromFile 從文件讀取架構信息
+func (m *MarketingQueryRunner) readSchemaFromFile(filePath string) (string, error) {
+	// 讀取 schema 文件
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read schema file: %v", err)
+	}
+
+	// 解析 JSON
+	var schemaData map[string]interface{}
+	if err := json.Unmarshal(data, &schemaData); err != nil {
+		return "", fmt.Errorf("failed to parse schema JSON: %v", err)
+	}
+
+	// 格式化架構信息
+	var schemaInfo strings.Builder
+	schemaInfo.WriteString("Database Tables and Columns (Detailed Analysis):\n\n")
+
+	// 獲取表列表
+	tables, ok := schemaData["tables"].([]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid schema format: missing tables array")
+	}
+
+	for _, tableInterface := range tables {
+		table, ok := tableInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		tableName, _ := table["table_name"].(string)
+		recordCount, _ := table["record_count"].(float64)
+		columnAnalyses, _ := table["column_analyses"].([]interface{})
+
+		schemaInfo.WriteString(fmt.Sprintf("Table: %s (%d records)\n", tableName, int(recordCount)))
+
+		for _, colInterface := range columnAnalyses {
+			col, ok := colInterface.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			columnName, _ := col["column_name"].(string)
+			columnType, _ := col["column_type"].(string)
+			notNullCount, _ := col["not_null_count"].(float64)
+			totalCount, _ := col["total_count"].(float64)
+
+			nullable := "NULL"
+			if notNullCount == totalCount && totalCount > 0 {
+				nullable = "NOT NULL"
+			}
+
+			schemaInfo.WriteString(fmt.Sprintf("  - %s (%s, %s)", columnName, columnType, nullable))
+
+			// 添加樣本值（如果有）
+			sampleValues, hasSamples := col["sample_values"]
+			if hasSamples && sampleValues != nil {
+				if sampleArray, ok := sampleValues.([]interface{}); ok && len(sampleArray) > 0 {
+					samples := make([]string, 0, 3)
+					for i, sample := range sampleArray {
+						if i >= 3 { // 只顯示前3個樣本
+							break
+						}
+						if sample != nil {
+							samples = append(samples, fmt.Sprintf("%v", sample))
+						}
+					}
+					if len(samples) > 0 {
+						schemaInfo.WriteString(fmt.Sprintf(" [samples: %s]", strings.Join(samples, ", ")))
+					}
+				}
+			}
+
+			schemaInfo.WriteString("\n")
+		}
+		schemaInfo.WriteString("\n")
+	}
+
+	// 添加業務邏輯提示
+	schemaInfo.WriteString("Business Logic Notes:\n")
+	schemaInfo.WriteString("- customers 表包含會員信息，可能有 date_of_birth 字段用於生日分析\n")
+	schemaInfo.WriteString("- orders 表包含訂單信息，可以聯接到 customers 表進行會員分析\n")
+	schemaInfo.WriteString("- products 表包含產品信息\n")
+	schemaInfo.WriteString("- reviews 表包含評價信息\n")
+
+	return schemaInfo.String(), nil
+}
+
+// getSchemaFromDatabase 從數據庫直接查詢架構信息（回退方法）
+func (m *MarketingQueryRunner) getSchemaFromDatabase() (string, error) {
 	// 查詢所有表格及其詳細欄位信息
 	rows, err := m.db.Query(`
 		SELECT

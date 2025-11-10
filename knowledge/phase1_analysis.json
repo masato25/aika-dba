@@ -498,7 +498,7 @@
         {
           "created_at": "2025-11-05T03:46:50.136361Z",
           "customer_type": "premium",
-          "date_of_birth": null,
+          "date_of_birth": "1990-01-15T00:00:00Z",
           "email": "alice.johnson@email.com",
           "gender": "female",
           "id": 45,
@@ -510,13 +510,13 @@
           "registration_date": "2025-09-05T03:46:50.137605Z",
           "total_orders": 15,
           "total_spent": "25000.00",
-          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "updated_at": "2025-11-08T08:51:17.819739Z",
           "uuid": "d9817f8d-763a-4d83-bbca-85c754f63c9a"
         },
         {
           "created_at": "2025-11-05T03:46:50.136361Z",
           "customer_type": "regular",
-          "date_of_birth": null,
+          "date_of_birth": "1985-02-20T00:00:00Z",
           "email": "bob.smith@email.com",
           "gender": "male",
           "id": 46,
@@ -528,13 +528,13 @@
           "registration_date": "2025-09-05T03:46:50.137605Z",
           "total_orders": 3,
           "total_spent": "1200.00",
-          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "updated_at": "2025-11-08T08:51:17.819739Z",
           "uuid": "806c7820-ed64-471b-9d98-bf7f9bce35d3"
         },
         {
           "created_at": "2025-11-05T03:46:50.136361Z",
           "customer_type": "vip",
-          "date_of_birth": null,
+          "date_of_birth": "1992-03-10T00:00:00Z",
           "email": "carol.davis@email.com",
           "gender": "female",
           "id": 47,
@@ -546,13 +546,13 @@
           "registration_date": "2025-09-05T03:46:50.137605Z",
           "total_orders": 28,
           "total_spent": "45000.00",
-          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "updated_at": "2025-11-08T08:51:17.819739Z",
           "uuid": "eb0122e0-eb26-4381-9b6a-bdbce01f462e"
         },
         {
           "created_at": "2025-11-05T03:46:50.136361Z",
           "customer_type": "regular",
-          "date_of_birth": null,
+          "date_of_birth": "1988-04-05T00:00:00Z",
           "email": "david.wilson@email.com",
           "gender": "male",
           "id": 48,
@@ -564,13 +564,13 @@
           "registration_date": "2025-09-05T03:46:50.137605Z",
           "total_orders": 1,
           "total_spent": "350.00",
-          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "updated_at": "2025-11-08T08:51:17.819739Z",
           "uuid": "f1b5f2f9-bbee-4b97-a7b6-8ddc5aac9921"
         },
         {
           "created_at": "2025-11-05T03:46:50.136361Z",
           "customer_type": "premium",
-          "date_of_birth": null,
+          "date_of_birth": "1995-05-25T00:00:00Z",
           "email": "emma.brown@email.com",
           "gender": "female",
           "id": 49,
@@ -582,7 +582,7 @@
           "registration_date": "2025-09-05T03:46:50.137605Z",
           "total_orders": 8,
           "total_spent": "8500.00",
-          "updated_at": "2025-11-05T03:46:50.137605Z",
+          "updated_at": "2025-11-08T08:51:17.819739Z",
           "uuid": "491825c4-7290-4688-8830-389dea64052b"
         }
       ],
@@ -2364,5 +2364,5 @@
     }
   },
   "tables_count": 14,
-  "timestamp": "2025-11-08T10:56:05.845681+08:00"
+  "timestamp": "2025-11-10T11:34:03.182938+08:00"
 }
