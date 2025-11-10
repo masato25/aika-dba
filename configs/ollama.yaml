@@ -1,0 +1,19 @@
+# Ollama LLM 和 Vector Store 配置
+llm:
+  provider: "ollama"
+  model: "gemma3"
+  host: "localhost"
+  port: 11434
+  timeout_seconds: 120
+  context_size: 4096
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9
+
+vectorstore:
+  enabled: true
+  database_path: "./data/vectorstore"
+  embedder_type: "simple"
+  embedding_dimension: 512
+  chunk_size: 512
+  chunk_overlap: 128

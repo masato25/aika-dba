@@ -19,7 +19,7 @@ type MCPServer struct {
 	db           *sql.DB
 	analyzer     *analyzer.DatabaseAnalyzer
 	knowledgeMgr *vectorstore.KnowledgeManager
-	config       *config.Config
+	config       *config.MainConfig
 }
 
 // NewMCPServer 創建 MCP 服務器
@@ -28,12 +28,12 @@ func NewMCPServer(db *sql.DB) *MCPServer {
 	cfg, err := config.LoadConfig("")
 	if err != nil {
 		log.Printf("Warning: failed to load config: %v, using defaults", err)
-		cfg = &config.Config{} // 使用默認配置
+		cfg = &config.MainConfig{} // 使用默認配置
 	}
 
 	// 創建知識管理器
 	var knowledgeMgr *vectorstore.KnowledgeManager
-	if cfg.VectorStore.Enabled {
+	if cfg.VectorStore != nil && cfg.VectorStore.Enabled {
 		knowledgeMgr, err = vectorstore.NewKnowledgeManager(cfg)
 		if err != nil {
 			log.Printf("Warning: failed to create knowledge manager: %v", err)
@@ -640,9 +640,16 @@ func (s *MCPServer) getKnowledgeStats(args map[string]interface{}) (interface{},
 		return nil, fmt.Errorf("failed to get knowledge stats: %v", err)
 	}
 
+	vectorStoreEnabled := false
+	databasePath := ""
+	if s.config.VectorStore != nil {
+		vectorStoreEnabled = s.config.VectorStore.Enabled
+		databasePath = s.config.VectorStore.DatabasePath
+	}
+
 	return map[string]interface{}{
 		"knowledge_stats":      stats,
-		"vector_store_enabled": s.config.VectorStore.Enabled,
-		"database_path":        s.config.VectorStore.DatabasePath,
+		"vector_store_enabled": vectorStoreEnabled,
+		"database_path":        databasePath,
 	}, nil
 }

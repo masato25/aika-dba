@@ -3,20 +3,30 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Config 應用程式配置結構
-type Config struct {
-	Database    DatabaseConfig    `yaml:"database"`
-	App         AppConfig         `yaml:"app"`
-	Schema      SchemaConfig      `yaml:"schema"`
+// MainConfig 主配置結構
+type MainConfig struct {
+	Database    DatabaseConfig `yaml:"database"`
+	App         AppConfig      `yaml:"app"`
+	Schema      SchemaConfig   `yaml:"schema"`
+	ModelConfig string         `yaml:"model_config"` // 指向 LLM 配置文件的路徑
+	Security    SecurityConfig `yaml:"security"`
+	Logging     LoggingConfig  `yaml:"logging"`
+
+	// 從模型配置文件載入的配置
+	LLM         *LLMConfig         `yaml:"-"`
+	VectorStore *VectorStoreConfig `yaml:"-"`
+}
+
+// ModelConfig LLM 和向量存儲配置結構
+type ModelConfig struct {
 	LLM         LLMConfig         `yaml:"llm"`
 	VectorStore VectorStoreConfig `yaml:"vectorstore"`
-	Security    SecurityConfig    `yaml:"security"`
-	Logging     LoggingConfig     `yaml:"logging"`
 }
 
 // DatabaseConfig 資料庫配置
@@ -88,22 +98,44 @@ type LoggingConfig struct {
 }
 
 // LoadConfig 載入配置檔案
-func LoadConfig(configPath string) (*Config, error) {
+func LoadConfig(configPath string) (*MainConfig, error) {
 	// 如果沒有指定配置文件，使用預設路徑
 	if configPath == "" {
 		configPath = "config.yaml"
 	}
 
-	// 讀取配置文件
+	// 讀取主配置文件
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", configPath, err)
 	}
 
-	// 解析 YAML
-	var config Config
+	// 解析主配置
+	var config MainConfig
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	// 載入模型配置
+	if config.ModelConfig != "" {
+		// 如果模型配置路徑是相對路徑，則相對於主配置文件的位置
+		if !filepath.IsAbs(config.ModelConfig) {
+			baseDir := filepath.Dir(configPath)
+			config.ModelConfig = filepath.Join(baseDir, config.ModelConfig)
+		}
+
+		modelData, err := os.ReadFile(config.ModelConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read model config file %s: %w", config.ModelConfig, err)
+		}
+
+		var modelConfig ModelConfig
+		if err := yaml.Unmarshal(modelData, &modelConfig); err != nil {
+			return nil, fmt.Errorf("failed to parse model config file: %w", err)
+		}
+
+		config.LLM = &modelConfig.LLM
+		config.VectorStore = &modelConfig.VectorStore
 	}
 
 	// 環境變數覆蓋
@@ -113,7 +145,7 @@ func LoadConfig(configPath string) (*Config, error) {
 }
 
 // overrideWithEnv 使用環境變數覆蓋配置
-func overrideWithEnv(config Config) Config {
+func overrideWithEnv(config MainConfig) MainConfig {
 	// 資料庫配置
 	if dbType := os.Getenv("DB_TYPE"); dbType != "" {
 		config.Database.Type = dbType
@@ -143,32 +175,28 @@ func overrideWithEnv(config Config) Config {
 		}
 	}
 
-	// LLM 配置
-	if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey != "" {
-		config.LLM.APIKey = apiKey
-	}
-	if baseURL := os.Getenv("OPENAI_BASE_URL"); baseURL != "" {
-		config.LLM.BaseURL = baseURL
-	}
-	if model := os.Getenv("LLM_MODEL"); model != "" {
-		config.LLM.Model = model
-	}
-	if llmHost := os.Getenv("LLM_HOST"); llmHost != "" {
-		config.LLM.Host = llmHost
-	}
-	if llmPort := os.Getenv("LLM_PORT"); llmPort != "" {
-		if port, err := strconv.Atoi(llmPort); err == nil {
-			config.LLM.Port = port
+	// LLM 配置（如果已載入）
+	if config.LLM != nil {
+		if model := os.Getenv("LLM_MODEL"); model != "" {
+			config.LLM.Model = model
 		}
-	}
-	if contextSize := os.Getenv("LLM_CONTEXT_SIZE"); contextSize != "" {
-		if size, err := strconv.Atoi(contextSize); err == nil {
-			config.LLM.ContextSize = size
+		if llmHost := os.Getenv("LLM_HOST"); llmHost != "" {
+			config.LLM.Host = llmHost
 		}
-	}
-	if maxTokens := os.Getenv("LLM_MAX_TOKENS"); maxTokens != "" {
-		if tokens, err := strconv.Atoi(maxTokens); err == nil {
-			config.LLM.MaxTokens = tokens
+		if llmPort := os.Getenv("LLM_PORT"); llmPort != "" {
+			if port, err := strconv.Atoi(llmPort); err == nil {
+				config.LLM.Port = port
+			}
+		}
+		if contextSize := os.Getenv("LLM_CONTEXT_SIZE"); contextSize != "" {
+			if size, err := strconv.Atoi(contextSize); err == nil {
+				config.LLM.ContextSize = size
+			}
+		}
+		if maxTokens := os.Getenv("LLM_MAX_TOKENS"); maxTokens != "" {
+			if tokens, err := strconv.Atoi(maxTokens); err == nil {
+				config.LLM.MaxTokens = tokens
+			}
 		}
 	}
 
@@ -176,7 +204,7 @@ func overrideWithEnv(config Config) Config {
 }
 
 // GetDatabaseDSN 獲取資料庫連接字串
-func (c *Config) GetDatabaseDSN() string {
+func (c *MainConfig) GetDatabaseDSN() string {
 	switch c.Database.Type {
 	case "postgres":
 		return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",

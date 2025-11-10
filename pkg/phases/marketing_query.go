@@ -17,14 +17,14 @@ import (
 
 // MarketingQueryRunner 營銷查詢執行器 - 結合向量搜索和 SQL 執行來回答自然語言業務問題
 type MarketingQueryRunner struct {
-	config       *config.Config
+	config       *config.MainConfig
 	db           *sql.DB
 	knowledgeMgr *vectorstore.KnowledgeManager
 	llmClient    *llm.Client
 }
 
 // NewMarketingQueryRunner 創建營銷查詢執行器
-func NewMarketingQueryRunner(cfg *config.Config, db *sql.DB) *MarketingQueryRunner {
+func NewMarketingQueryRunner(cfg *config.MainConfig, db *sql.DB) *MarketingQueryRunner {
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
 	if err != nil {

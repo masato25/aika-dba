@@ -27,7 +27,7 @@ type APIServer struct {
 	router      *gin.Engine
 	db          *sql.DB
 	dbType      string
-	config      *config.Config
+	config      *config.MainConfig
 	llmClient   *llm.Client
 	vectorStore *vectorstore.KnowledgeManager
 	progressMgr *progress.ProgressManager
@@ -35,7 +35,7 @@ type APIServer struct {
 }
 
 // NewAPIServer 創建 API 服務器
-func NewAPIServer(db *sql.DB, dbType string, cfg *config.Config) (*APIServer, error) {
+func NewAPIServer(db *sql.DB, dbType string, cfg *config.MainConfig) (*APIServer, error) {
 	// 創建 LLM 客戶端
 	llmClient := llm.NewClient(cfg)
 
@@ -448,7 +448,7 @@ func (s *APIServer) writeOutput(data interface{}, filename string) error {
 }
 
 // RunServer 啟動 HTTP 服務器
-func RunServer(db *sql.DB, cfg *config.Config) {
+func RunServer(db *sql.DB, cfg *config.MainConfig) {
 	// 建立 API 服務器
 	server, err := NewAPIServer(db, cfg.Database.Type, cfg)
 	if err != nil {
@@ -632,7 +632,7 @@ func (s *APIServer) runPhase3() error {
 }
 
 // runMarketingQuery 執行營銷查詢
-func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
+func runMarketingQuery(db *sql.DB, cfg *config.MainConfig, query string) {
 	if query == "" {
 		log.Fatalf("Query parameter is required for marketing command. Use -query flag.")
 	}
@@ -684,7 +684,7 @@ func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
 }
 
 // runDeleteVectorData 執行向量數據刪除
-func runDeleteVectorData(cfg *config.Config, phasesStr string) {
+func runDeleteVectorData(cfg *config.MainConfig, phasesStr string) {
 	log.Printf("Starting vector data deletion for phases: %s", phasesStr)
 
 	// 創建知識管理器

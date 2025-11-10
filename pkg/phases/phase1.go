@@ -15,12 +15,12 @@ import (
 // Phase1Runner Phase 1 執行器
 type Phase1Runner struct {
 	analyzer     *analyzer.DatabaseAnalyzer
-	config       *config.Config
+	config       *config.MainConfig
 	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewPhase1Runner 創建 Phase 1 執行器
-func NewPhase1Runner(dbAnalyzer *analyzer.DatabaseAnalyzer, cfg *config.Config) (*Phase1Runner, error) {
+func NewPhase1Runner(dbAnalyzer *analyzer.DatabaseAnalyzer, cfg *config.MainConfig) (*Phase1Runner, error) {
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
 	if err != nil {

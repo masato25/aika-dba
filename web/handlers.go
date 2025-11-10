@@ -24,7 +24,7 @@ type APIServer struct {
 	router      *gin.Engine
 	db          *sql.DB
 	dbType      string
-	config      *config.Config
+	config      *config.MainConfig
 	llmClient   *llm.Client
 	vectorStore *vectorstore.KnowledgeManager
 	preparer    *preparer.KnowledgePreparer
@@ -33,7 +33,7 @@ type APIServer struct {
 }
 
 // NewAPIServer 創建 API 服務器
-func NewAPIServer(db *sql.DB, dbType string, cfg *config.Config) (*APIServer, error) {
+func NewAPIServer(db *sql.DB, dbType string, cfg *config.MainConfig) (*APIServer, error) {
 	// 創建 LLM 客戶端
 	llmClient := llm.NewClient(cfg)
 
@@ -565,7 +565,7 @@ func (s *APIServer) handleVectorKnowledge(c *gin.Context) {
 }
 
 // runServer 啟動 HTTP 服務器
-func RunServer(db *sql.DB, cfg *config.Config) {
+func RunServer(db *sql.DB, cfg *config.MainConfig) {
 	// 建立 API 服務器
 	server, err := NewAPIServer(db, cfg.Database.Type, cfg)
 	if err != nil {
@@ -577,7 +577,7 @@ func RunServer(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase1 執行 Phase 1: 統計分析
-func runPhase1(db *sql.DB, cfg *config.Config) {
+func runPhase1(db *sql.DB, cfg *config.MainConfig) {
 	analyzer := analyzer.NewDatabaseAnalyzer(db)
 	runner, err := phases.NewPhase1Runner(analyzer, cfg)
 	if err != nil {
@@ -590,19 +590,19 @@ func runPhase1(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase1Post 執行 Phase 1 後置處理: 數據庫分析和清理
-func runPhase1Post(cfg *config.Config) {
+func runPhase1Post(cfg *config.MainConfig) {
 	// 舊的 Phase 1 Post 功能已被重構移除
 	log.Println("Phase 1 Post functionality has been removed in the refactor")
 }
 
 // runPhase1Put 執行 Phase 1 Put: 根據 post 分析結果更新 phase1
-func runPhase1Put(cfg *config.Config) {
+func runPhase1Put(cfg *config.MainConfig) {
 	// 舊的 Phase 1 Put 功能已被重構移除
 	log.Println("Phase 1 Put functionality has been removed in the refactor")
 }
 
 // runPhase2 執行 Phase 2: AI 分析
-func runPhase2(db *sql.DB, cfg *config.Config) {
+func runPhase2(db *sql.DB, cfg *config.MainConfig) {
 	runner, err := phases.NewPhase2Runner(cfg, db)
 	if err != nil {
 		log.Fatalf("Failed to create Phase 2 runner: %v", err)
@@ -614,7 +614,7 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase2Prefix 執行 Phase 2 前置處理: 欄位深度分析
-func runPhase2Prefix(cfg *config.Config) {
+func runPhase2Prefix(cfg *config.MainConfig) {
 	log.Println("DEBUG: Starting runPhase2Prefix function")
 
 	log.Println("DEBUG: Creating Phase 2 prefix runner...")
@@ -632,7 +632,7 @@ func runPhase2Prefix(cfg *config.Config) {
 }
 
 // runPhase3 執行 Phase 3: 商業邏輯描述生成
-func runPhase3(cfg *config.Config) {
+func runPhase3(cfg *config.MainConfig) {
 	// 創建 LLM 客戶端
 	llmClient := llm.NewClient(cfg)
 
@@ -652,7 +652,7 @@ func runPhase3(cfg *config.Config) {
 }
 
 // runMarketingQuery 執行營銷查詢
-func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
+func runMarketingQuery(db *sql.DB, cfg *config.MainConfig, query string) {
 	if query == "" {
 		log.Fatalf("Query parameter is required for marketing command. Use -query flag.")
 	}
@@ -704,7 +704,7 @@ func runMarketingQuery(db *sql.DB, cfg *config.Config, query string) {
 }
 
 // runDeleteVectorData 執行向量數據刪除
-func runDeleteVectorData(cfg *config.Config, phasesStr string) {
+func runDeleteVectorData(cfg *config.MainConfig, phasesStr string) {
 	log.Printf("Starting vector data deletion for phases: %s", phasesStr)
 
 	// 創建知識管理器

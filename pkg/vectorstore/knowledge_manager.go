@@ -17,11 +17,11 @@ type KnowledgeManager struct {
 	vectorStore *VectorStore
 	embedder    Embedder
 	chunker     *KnowledgeChunker
-	config      *config.Config
+	config      *config.MainConfig
 }
 
 // NewKnowledgeManager 創建知識管理器
-func NewKnowledgeManager(cfg *config.Config) (*KnowledgeManager, error) {
+func NewKnowledgeManager(cfg *config.MainConfig) (*KnowledgeManager, error) {
 	// 創建嵌入生成器
 	var embedder Embedder
 	switch cfg.VectorStore.EmbedderType {
@@ -367,6 +367,14 @@ func (km *KnowledgeManager) chunkTextSmart(text, source string) []KnowledgeChunk
 	// 使用字符數分塊而不是行數
 	chunkSize := km.config.VectorStore.ChunkSize       // 1000 字符
 	chunkOverlap := km.config.VectorStore.ChunkOverlap // 200 字符
+
+	// 如果配置為空或分塊大小為0，使用默認值
+	if chunkSize == 0 {
+		chunkSize = 1000 // 默認分塊大小
+	}
+	if chunkOverlap == 0 {
+		chunkOverlap = 200 // 默認重疊大小
+	}
 
 	runes := []rune(text)
 	textLen := len(runes)

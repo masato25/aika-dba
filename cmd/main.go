@@ -10,7 +10,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 
-	"github.com/joho/godotenv"
 	"github.com/masato25/aika-dba/config"
 	"github.com/masato25/aika-dba/pkg/analyzer"
 	"github.com/masato25/aika-dba/pkg/llm"
@@ -20,12 +19,12 @@ import (
 )
 
 // runServer 啟動 HTTP 服務器
-func runServer(db *sql.DB, cfg *config.Config) {
+func runServer(db *sql.DB, cfg *config.MainConfig) {
 	web.RunServer(db, cfg)
 }
 
 // runPhase1 執行 Phase 1 分析
-func runPhase1(db *sql.DB, cfg *config.Config) {
+func runPhase1(db *sql.DB, cfg *config.MainConfig) {
 	log.Println("DEBUG: Starting runPhase1 function")
 	dbAnalyzer := analyzer.NewDatabaseAnalyzer(db)
 	log.Println("DEBUG: DatabaseAnalyzer created")
@@ -42,7 +41,7 @@ func runPhase1(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase2 執行 Phase 2 AI 分析
-func runPhase2(db *sql.DB, cfg *config.Config) {
+func runPhase2(db *sql.DB, cfg *config.MainConfig) {
 	runner, err := phases.NewPhase2Runner(cfg, db)
 	if err != nil {
 		log.Fatalf("創建 Phase 2 執行器失敗: %v", err)
@@ -57,7 +56,7 @@ func runPhase2(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase3 執行 Phase 3 商業邏輯描述生成
-func runPhase3(db *sql.DB, cfg *config.Config) {
+func runPhase3(db *sql.DB, cfg *config.MainConfig) {
 	llmClient := llm.NewClient(cfg)
 
 	vectorStore, err := vectorstore.NewKnowledgeManager(cfg)
@@ -77,7 +76,7 @@ func runPhase3(db *sql.DB, cfg *config.Config) {
 }
 
 // runPhase4 執行 Phase 4 維度建模
-func runPhase4(db *sql.DB, cfg *config.Config) {
+func runPhase4(db *sql.DB, cfg *config.MainConfig) {
 	runner := phases.NewPhase4Runner(cfg, db)
 
 	if err := runner.Run(); err != nil {
@@ -88,7 +87,7 @@ func runPhase4(db *sql.DB, cfg *config.Config) {
 }
 
 // runPrepare 執行所有 phases
-func runPrepare(db *sql.DB, cfg *config.Config) {
+func runPrepare(db *sql.DB, cfg *config.MainConfig) {
 	log.Println("=== 開始執行完整準備流程 ===")
 
 	// Phase 1: Schema 分析
@@ -112,11 +111,6 @@ func runPrepare(db *sql.DB, cfg *config.Config) {
 
 func main() {
 	log.Println("Starting Aika DBA main function...")
-
-	// 載入 .env 文件
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: Error loading .env file: %v", err)
-	}
 
 	// 檢查是否有子命令
 	if len(os.Args) < 2 {

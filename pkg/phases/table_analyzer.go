@@ -32,7 +32,7 @@ type TableAnalysisTask struct {
 
 // TableAnalysisOrchestrator 表格分析協調器
 type TableAnalysisOrchestrator struct {
-	config       *config.Config
+	config       *config.MainConfig
 	reader       *Phase1ResultReader
 	tasks        []*TableAnalysisTask
 	llmClient    *LLMClient
@@ -43,7 +43,7 @@ type TableAnalysisOrchestrator struct {
 }
 
 // NewTableAnalysisOrchestrator 創建表格分析協調器
-func NewTableAnalysisOrchestrator(cfg *config.Config, reader *Phase1ResultReader, mcpServer MCPServer, knowledgeMgr *vectorstore.KnowledgeManager) *TableAnalysisOrchestrator {
+func NewTableAnalysisOrchestrator(cfg *config.MainConfig, reader *Phase1ResultReader, mcpServer MCPServer, knowledgeMgr *vectorstore.KnowledgeManager) *TableAnalysisOrchestrator {
 	return &TableAnalysisOrchestrator{
 		config:       cfg,
 		reader:       reader,
@@ -449,7 +449,7 @@ func (o *TableAnalysisOrchestrator) GetResults() map[string]*LLMAnalysisResult {
 
 // LLMClient LLM 客戶端
 type LLMClient struct {
-	config *config.Config
+	config *config.MainConfig
 	client *http.Client
 }
 
@@ -459,11 +459,15 @@ type LLMResponse struct {
 }
 
 // NewLLMClient 創建 LLM 客戶端
-func NewLLMClient(cfg *config.Config) *LLMClient {
+func NewLLMClient(cfg *config.MainConfig) *LLMClient {
+	timeoutSeconds := 30 // 默认30秒
+	if cfg.LLM != nil && cfg.LLM.TimeoutSeconds > 0 {
+		timeoutSeconds = cfg.LLM.TimeoutSeconds
+	}
 	return &LLMClient{
 		config: cfg,
 		client: &http.Client{
-			Timeout: time.Duration(cfg.LLM.TimeoutSeconds) * time.Second,
+			Timeout: time.Duration(timeoutSeconds) * time.Second,
 		},
 	}
 }

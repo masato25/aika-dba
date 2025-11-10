@@ -16,13 +16,13 @@ import (
 
 // Client represents an LLM client
 type Client struct {
-	config     *config.Config
+	config     *config.MainConfig
 	httpClient *http.Client
 	logger     *log.Logger
 }
 
 // NewClient creates a new LLM client
-func NewClient(cfg *config.Config) *Client {
+func NewClient(cfg *config.MainConfig) *Client {
 	return &Client{
 		config: cfg,
 		httpClient: &http.Client{

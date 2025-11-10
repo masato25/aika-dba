@@ -16,13 +16,13 @@ import (
 
 // Phase2PrefixRunner Phase 2 前置處理執行器 - 欄位深度分析
 type Phase2PrefixRunner struct {
-	config       *config.Config
+	config       *config.MainConfig
 	llmClient    *llm.Client
 	knowledgeMgr *vectorstore.KnowledgeManager
 }
 
 // NewPhase2PrefixRunner 創建 Phase 2 前置處理執行器
-func NewPhase2PrefixRunner(cfg *config.Config) (*Phase2PrefixRunner, error) {
+func NewPhase2PrefixRunner(cfg *config.MainConfig) (*Phase2PrefixRunner, error) {
 	log.Println("DEBUG: Creating knowledge manager...")
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)

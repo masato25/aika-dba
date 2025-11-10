@@ -14,13 +14,13 @@ import (
 
 // Phase3Runner handles the generation of business logic descriptions
 type Phase3Runner struct {
-	config      *config.Config
+	config      *config.MainConfig
 	llmClient   *llm.Client
 	vectorStore *vectorstore.KnowledgeManager
 }
 
 // NewPhase3Runner creates a new Phase3Runner instance
-func NewPhase3Runner(cfg *config.Config, llmClient *llm.Client, vectorStore *vectorstore.KnowledgeManager) *Phase3Runner {
+func NewPhase3Runner(cfg *config.MainConfig, llmClient *llm.Client, vectorStore *vectorstore.KnowledgeManager) *Phase3Runner {
 	return &Phase3Runner{
 		config:      cfg,
 		llmClient:   llmClient,

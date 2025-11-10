@@ -36,14 +36,14 @@ type FactTable struct {
 
 // Phase4Runner Phase 4 執行器 - 使用 Lua 規則引擎進行維度建模
 type Phase4Runner struct {
-	config       *config.Config
+	config       *config.MainConfig
 	db           *sql.DB
 	knowledgeMgr *vectorstore.KnowledgeManager
 	luaState     *lua.LState
 }
 
 // NewPhase4Runner 創建 Phase 4 執行器
-func NewPhase4Runner(cfg *config.Config, db *sql.DB) *Phase4Runner {
+func NewPhase4Runner(cfg *config.MainConfig, db *sql.DB) *Phase4Runner {
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
 	if err != nil {

@@ -1,0 +1,19 @@
+# OpenAI LLM 和 Vector Store 配置
+llm:
+  provider: "openai"
+  model: "gpt-4"
+  api_key: "${OPENAI_API_KEY}"
+  base_url: "${OPENAI_BASE_URL}"
+  timeout_seconds: 120
+  context_size: 4096
+  max_tokens: 2048
+  temperature: 0.7
+  top_p: 0.9
+
+vectorstore:
+  enabled: true
+  database_path: "./data/vectorstore"
+  embedder_type: "openai"
+  embedding_dimension: 1536
+  chunk_size: 512
+  chunk_overlap: 128

@@ -17,7 +17,7 @@ import (
 
 // Phase2Runner Phase 2 執行器
 type Phase2Runner struct {
-	config       *config.Config
+	config       *config.MainConfig
 	db           *sql.DB
 	knowledgeMgr *vectorstore.KnowledgeManager
 	analyzer     *TableAnalysisOrchestrator
@@ -25,7 +25,7 @@ type Phase2Runner struct {
 }
 
 // NewPhase2Runner 創建 Phase 2 執行器
-func NewPhase2Runner(cfg *config.Config, db *sql.DB) (*Phase2Runner, error) {
+func NewPhase2Runner(cfg *config.MainConfig, db *sql.DB) (*Phase2Runner, error) {
 	// 創建知識管理器
 	knowledgeMgr, err := vectorstore.NewKnowledgeManager(cfg)
 	if err != nil {

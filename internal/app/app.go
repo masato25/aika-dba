@@ -16,7 +16,7 @@ import (
 
 // App 應用程序實例
 type App struct {
-	Config           *config.Config
+	Config           *config.MainConfig
 	DB               *sql.DB
 	LLMClient        *llm.Client
 	KnowledgeManager *vectorstore.KnowledgeManager
@@ -71,7 +71,7 @@ func (a *App) Close() error {
 }
 
 // connectDatabase 連接到資料庫
-func connectDatabase(cfg *config.Config) (*sql.DB, error) {
+func connectDatabase(cfg *config.MainConfig) (*sql.DB, error) {
 	var dsn string
 	switch cfg.Database.Type {
 	case "postgres":
