@@ -186,7 +186,13 @@ BUSINESS KNOWLEDGE:
 
 USER QUERY: %s
 
-IMPORTANT: The customers table has a 'date_of_birth' field (date, NULL) that stores customer birthdays. Use EXTRACT(MONTH FROM date_of_birth) to get the birth month.
+IMPORTANT SQL GUIDELINES:
+1. The customers table has a 'date_of_birth' field (date, NULL) that stores customer birthdays
+2. For birthday statistics by month: Use EXTRACT(MONTH FROM date_of_birth) AS birth_month
+3. For counting birthdays: Use COUNT(*) and GROUP BY EXTRACT(MONTH FROM date_of_birth)
+4. NEVER compare EXTRACT(YEAR FROM date) with current_date - compare dates with dates, numbers with numbers
+5. For age calculation: Use EXTRACT(YEAR FROM AGE(date_of_birth))
+6. Always handle NULL values: Use WHERE date_of_birth IS NOT NULL for birthday queries
 
 Return ONLY the SQL SELECT statement, no explanations or markdown.`, schemaInfo, relevantKnowledge, naturalLanguageQuery)
 

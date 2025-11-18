@@ -97,6 +97,23 @@ func (c *Client) generateOpenAICompletion(ctx context.Context, prompt string) (s
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
+	// 讀取完整的響應體
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// 檢查響應是否以 JSON 開頭
+	bodyStr := string(body)
+	if len(bodyStr) == 0 {
+		return "", fmt.Errorf("empty response from server")
+	}
+
+	// 如果響應不是以 '{' 或 '[' 開頭，可能是錯誤頁面
+	if bodyStr[0] != '{' && bodyStr[0] != '[' {
+		return "", fmt.Errorf("server returned non-JSON response: %s", bodyStr[:min(200, len(bodyStr))])
+	}
+
 	var response struct {
 		Choices []struct {
 			Message struct {
@@ -105,8 +122,8 @@ func (c *Client) generateOpenAICompletion(ctx context.Context, prompt string) (s
 		} `json:"choices"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to decode JSON response: %w, body: %s", err, bodyStr[:min(500, len(bodyStr))])
 	}
 
 	if len(response.Choices) == 0 {
@@ -160,6 +177,23 @@ func (c *Client) generateLocalOpenAICompletion(ctx context.Context, prompt strin
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
+	// 讀取完整的響應體
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// 檢查響應是否以 JSON 開頭
+	bodyStr := string(body)
+	if len(bodyStr) == 0 {
+		return "", fmt.Errorf("empty response from server")
+	}
+
+	// 如果響應不是以 '{' 或 '[' 開頭，可能是錯誤頁面
+	if bodyStr[0] != '{' && bodyStr[0] != '[' {
+		return "", fmt.Errorf("server returned non-JSON response: %s", bodyStr[:min(200, len(bodyStr))])
+	}
+
 	var response struct {
 		Choices []struct {
 			Message struct {
@@ -168,8 +202,8 @@ func (c *Client) generateLocalOpenAICompletion(ctx context.Context, prompt strin
 		} `json:"choices"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to decode JSON response: %w, body: %s", err, bodyStr[:min(500, len(bodyStr))])
 	}
 
 	if len(response.Choices) == 0 {
@@ -212,12 +246,29 @@ func (c *Client) generateOllamaCompletion(ctx context.Context, prompt string) (s
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
+	// 讀取完整的響應體
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// 檢查響應是否以 JSON 開頭
+	bodyStr := string(body)
+	if len(bodyStr) == 0 {
+		return "", fmt.Errorf("empty response from server")
+	}
+
+	// 如果響應不是以 '{' 或 '[' 開頭，可能是錯誤頁面
+	if bodyStr[0] != '{' && bodyStr[0] != '[' {
+		return "", fmt.Errorf("server returned non-JSON response: %s", bodyStr[:min(200, len(bodyStr))])
+	}
+
 	var response struct {
 		Response string `json:"response"`
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to decode JSON response: %w, body: %s", err, bodyStr[:min(500, len(bodyStr))])
 	}
 
 	return response.Response, nil

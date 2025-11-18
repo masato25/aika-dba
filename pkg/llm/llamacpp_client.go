@@ -71,9 +71,26 @@ func (c *Client) generateLocalLlamaCppCompletion(ctx context.Context, prompt str
 		return "", fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
+	// 讀取完整的響應體
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// 檢查響應是否以 JSON 開頭
+	bodyStr := string(body)
+	if len(bodyStr) == 0 {
+		return "", fmt.Errorf("empty response from server")
+	}
+
+	// 如果響應不是以 '{' 或 '[' 開頭，可能是錯誤頁面
+	if bodyStr[0] != '{' && bodyStr[0] != '[' {
+		return "", fmt.Errorf("server returned non-JSON response: %s", bodyStr[:min(200, len(bodyStr))])
+	}
+
 	var response LlamaCppResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to decode JSON response: %w, body: %s", err, bodyStr[:min(500, len(bodyStr))])
 	}
 
 	// 可以在這裡加入日誌，記錄生成時間和其他統計信息
@@ -82,4 +99,12 @@ func (c *Client) generateLocalLlamaCppCompletion(ctx context.Context, prompt str
 	}
 
 	return response.Content, nil
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

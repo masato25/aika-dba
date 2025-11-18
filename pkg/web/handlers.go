@@ -17,7 +17,9 @@ import (
 	"github.com/masato25/aika-dba/pkg/analyzer"
 	"github.com/masato25/aika-dba/pkg/llm"
 	"github.com/masato25/aika-dba/pkg/phases"
+	"github.com/masato25/aika-dba/pkg/preparer"
 	"github.com/masato25/aika-dba/pkg/progress"
+	"github.com/masato25/aika-dba/pkg/query"
 	"github.com/masato25/aika-dba/pkg/vectorstore"
 	"golang.org/x/net/websocket"
 )
@@ -32,6 +34,9 @@ type APIServer struct {
 	vectorStore *vectorstore.KnowledgeManager
 	progressMgr *progress.ProgressManager
 	analyzer    *analyzer.DatabaseAnalyzer
+	preparer    *preparer.KnowledgePreparer
+	queryIntf   *query.QueryInterface
+	logger      *log.Logger
 }
 
 // NewAPIServer 創建 API 服務器
@@ -48,6 +53,15 @@ func NewAPIServer(db *sql.DB, dbType string, cfg *config.MainConfig) (*APIServer
 	// 創建數據庫分析器
 	dbAnalyzer := analyzer.NewDatabaseAnalyzer(db)
 
+	// 創建 logger
+	logger := log.New(os.Stdout, "[WebAPI] ", log.LstdFlags)
+
+	// 創建知識庫準備器
+	preparer := preparer.NewKnowledgePreparer(db, vectorStore, logger)
+
+	// 創建查詢接口
+	queryIntf := query.NewQueryInterface(vectorStore, llmClient, db, logger)
+
 	// 創建 Gin 引擎
 	router := gin.Default()
 
@@ -60,6 +74,9 @@ func NewAPIServer(db *sql.DB, dbType string, cfg *config.MainConfig) (*APIServer
 		vectorStore: vectorStore,
 		progressMgr: progress.NewProgressManager(),
 		analyzer:    dbAnalyzer,
+		preparer:    preparer,
+		queryIntf:   queryIntf,
+		logger:      logger,
 	}
 
 	server.setupRoutes()
@@ -91,6 +108,11 @@ func (s *APIServer) setupRoutes() {
 		api.GET("/vector/stats", s.handleVectorStats)
 		api.GET("/vector/search", s.handleVectorSearch)
 		api.GET("/vector/knowledge/:phase", s.handleVectorKnowledge)
+
+		// 知識庫管理
+		api.POST("/knowledge/prepare", s.handlePrepareKnowledge)
+		api.POST("/knowledge/query", s.handleQuery)
+		api.POST("/knowledge/suggest", s.handleQuerySuggestion)
 
 		// 進度推送 WebSocket
 		api.GET("/ws/progress", s.handleProgressWebsocket)
@@ -140,6 +162,178 @@ func (s *APIServer) handleDatabaseOverview(c *gin.Context) {
 		"time":    time.Now(),
 	}
 	c.JSON(200, response)
+}
+
+// handlePrepareKnowledge 處理知識庫準備請求
+func (s *APIServer) handlePrepareKnowledge(c *gin.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Printf("Panic in handlePrepareKnowledge: %v", r)
+			c.JSON(500, map[string]interface{}{
+				"success": false,
+				"error":   "Internal server error",
+			})
+		}
+	}()
+
+	s.logger.Println("開始準備知識庫...")
+
+	// 執行知識庫準備
+	err := s.preparer.PrepareKnowledge()
+	if err != nil {
+		s.logger.Printf("知識庫準備失敗: %v", err)
+		// 記錄錯誤的詳細信息以調試
+		s.logger.Printf("錯誤類型: %T", err)
+		s.logger.Printf("錯誤字符串: %q", err.Error())
+
+		// 確保錯誤消息是有效的 JSON 字符串
+		errorMsg := strings.ReplaceAll(err.Error(), "\n", " ")
+		errorMsg = strings.ReplaceAll(errorMsg, "\r", " ")
+		errorMsg = strings.ReplaceAll(errorMsg, "\t", " ")
+
+		c.JSON(500, map[string]interface{}{
+			"success": false,
+			"error":   errorMsg,
+		})
+		return
+	}
+
+	s.logger.Println("知識庫準備完成")
+	c.JSON(200, map[string]interface{}{
+		"success": true,
+		"message": "知識庫準備完成",
+	})
+}
+
+// handleQuery 處理自然語言查詢請求
+func (s *APIServer) handleQuery(c *gin.Context) {
+	var req struct {
+		Question string `json:"question" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, map[string]interface{}{
+			"success": false,
+			"error":   "請提供問題內容",
+		})
+		return
+	}
+
+	s.logger.Printf("處理查詢: %s", req.Question)
+
+	// 使用 MarketingQueryRunner 處理營銷查詢
+	runner := phases.NewMarketingQueryRunner(s.config, s.db)
+	result, err := runner.ExecuteMarketingQuery(req.Question)
+	if err != nil {
+		s.logger.Printf("營銷查詢失敗: %v", err)
+		c.JSON(500, map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// 格式化回應
+	response := map[string]interface{}{
+		"success": true,
+		"query":   result.Query,
+		"sql":     result.SQLQuery,
+		"results": result.Results,
+		"count":   len(result.Results),
+	}
+
+	if result.Error != "" {
+		response["error"] = result.Error
+	}
+
+	if result.Explanation != "" {
+		response["explanation"] = result.Explanation
+	}
+
+	s.logger.Printf("查詢完成，返回 %d 個結果", len(result.Results))
+	c.JSON(200, response)
+}
+
+// handleQuerySuggestion 處理查詢建議請求
+func (s *APIServer) handleQuerySuggestion(c *gin.Context) {
+	var req struct {
+		PartialQuery string `json:"partial_query" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, map[string]interface{}{
+			"success": false,
+			"error":   "請提供部分查詢內容",
+		})
+		return
+	}
+
+	if len(req.PartialQuery) < 2 {
+		c.JSON(200, map[string]interface{}{
+			"success":     true,
+			"suggestions": []string{},
+		})
+		return
+	}
+
+	s.logger.Printf("生成查詢建議: %s", req.PartialQuery)
+
+	// 直接使用後備的自然語言建議，因為當前知識庫主要包含技術性內容
+	s.logger.Printf("使用後備自然語言建議 - 輸入: %s", req.PartialQuery)
+	suggestions := s.generateFallbackSuggestions(req.PartialQuery)
+	s.logger.Printf("生成的建議: %v", suggestions)
+
+	// 同時輸出到控制台以便調試
+	fmt.Printf("DEBUG: 建議結果: %v\n", suggestions)
+
+	c.JSON(200, map[string]interface{}{
+		"success":     true,
+		"suggestions": suggestions,
+	})
+}
+
+// generateFallbackSuggestions 生成後備的自然語言建議
+func (s *APIServer) generateFallbackSuggestions(partialQuery string) []string {
+	// 根據輸入的關鍵詞提供相應的自然語言建議
+	switch strings.ToLower(partialQuery) {
+	case "商品":
+		return []string{
+			"顯示所有商品的清單",
+			"找出最暢銷的商品",
+			"計算商品的平均價格",
+		}
+	case "銷售":
+		return []string{
+			"顯示銷售數據統計",
+			"找出銷售額最高的月份",
+			"計算總銷售額",
+		}
+	case "客戶":
+		return []string{
+			"顯示客戶信息清單",
+			"找出最活躍的客戶",
+			"統計客戶總數",
+		}
+	case "訂單":
+		return []string{
+			"顯示最近的訂單",
+			"計算訂單總金額",
+			"找出待處理的訂單",
+		}
+	case "庫存":
+		return []string{
+			"檢查商品庫存狀況",
+			"找出缺貨的商品",
+			"計算庫存總價值",
+		}
+	default:
+		// 通用建議
+		return []string{
+			fmt.Sprintf("顯示所有%s相關的數據", partialQuery),
+			fmt.Sprintf("統計%s的數量", partialQuery),
+			fmt.Sprintf("找出%s的詳細信息", partialQuery),
+		}
+	}
 }
 
 // handleTriggerPhase 處理觸發 phase 的請求
