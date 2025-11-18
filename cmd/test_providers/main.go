@@ -12,8 +12,8 @@ import (
 
 func main() {
 	// 測試 OpenAI 配置
-	openaiCfg := &config.Config{
-		LLM: config.LLMConfig{
+	openaiCfg := &config.MainConfig{
+		LLM: &config.LLMConfig{
 			Provider:       "openai",
 			Model:          "gpt-3.5-turbo",
 			APIKey:         os.Getenv("OPENAI_API_KEY"),
@@ -25,8 +25,8 @@ func main() {
 	}
 
 	// 測試 LlamaCpp 配置
-	llamaCfg := &config.Config{
-		LLM: config.LLMConfig{
+	llamaCfg := &config.MainConfig{
+		LLM: &config.LLMConfig{
 			Provider:       "llamacpp",
 			Model:          "mistral-7b",
 			Host:           "localhost",
